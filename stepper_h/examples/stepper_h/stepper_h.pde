@@ -32,6 +32,7 @@ static void prepare_line2() {
 }
 
 void setup() {
+    Serial.begin(9600);    
     Serial.println("Starting stepper_h test...");
     
     // информация о подключенных моторах
