@@ -211,6 +211,15 @@ void prepare_steps(stepper *smotor, int step_count, int step_delay);
 void prepare_whirl(stepper *smotor, int dir, int step_delay, calibrate_mode_t calibrate_mode);
 
 /**
+ * Подготовить мотор к запуску ограниченной серии шагов с переменной скоростью - задержки на каждом 
+ * шаге вычисляются заранее, передаются в буфере.
+ * 
+ * @param step_count количество шагов, знак задает направление вращения
+ * @param delay_buffer - массив задержек перед каждым следующим шагом, микросекунды
+ */
+void prepare_buffered_steps(stepper *smotor, int step_count, int* delay_buffer);
+
+/**
  * Подготовить мотор к запуску ограниченной серии шагов с переменной скоростью - задать нужное количество 
  * шагов и указатель на функцию, вычисляющую задержку перед каждым шагом для регулирования скорости.
  * 

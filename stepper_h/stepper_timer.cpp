@@ -42,7 +42,22 @@ typedef enum {
     SOFT_END_MIN, 
     
     /** Завершил вращение из-за достижения виртуальной верхней границы */
-    SOFT_END_MAX} motor_cycle_status_t;
+    SOFT_END_MAX
+} motor_cycle_status_t;
+
+/**
+ * Способы вычисления задержки перед следующим шагом
+ */
+typedef enum {
+    /** Константа */
+    CONSTANT, 
+    
+    /** Буфер задержек */
+    BUFFER, 
+    
+    /** Динамическая задержка */
+    DYNAMIC
+} delay_source_t;
 
 /**
  * Структура - статус текущего цикла мотора.
@@ -64,16 +79,17 @@ typedef struct {
     int step_count;
     
     /** 
-     * true: вращение с постоянной скоростью (использовать значение step_delay), 
-     * false: вращение с переменной скоростью (использовать next_step_delay)
+     * CONSTANT: вращение с постоянной скоростью (использовать значение step_delay), 
+     * BUFFER: вращение с переменной скоростью (использовать delay_buffer)
+     * DYNAMIC: вращение с переменной скоростью (использовать next_step_delay)
      */
-    bool const_speed;
+    delay_source_t delay_source;
     
     /**
      * Задержка между 2мя шагами мотора (определяет скорость вращения, 
      * 0 для максимальной скорости), микросекунды
      * 
-     * Используется при const_speed=true
+     * Используется при delay_source=CONSTANT
      * 
      * Задержка в микросекундах, значения int на 32разрядном процессоре более, чем достаточно:
      * для int:
@@ -84,13 +100,19 @@ typedef struct {
     int step_delay;
     
     /**
+     * Массив задержек перед каждым следующим шагом, микросекунды.
+     * Размер массива <= step_count
+     */
+    int* delay_buffer;
+    
+    /**
      * Указатель на объект, содержащий всю необходимую информацию для вычисления
      * времени до следующего шага (должен подходить для параметра curve_context 
      * функции next_step_delay).
      *
      * Для встроенного алгоритма рисования дуги окружности тип curve_context будет circle_context_t
      *
-     * Используется при const_speed=false
+     * Используется при delay_source=DYNAMIC
      */
     void* curve_context;
     
@@ -100,7 +122,7 @@ typedef struct {
      * - при постоянной задержке мотор движется с постоянной скоростью (рисование прямой линии)
      * - при переменной задержке на 2х моторах движение инструмента криволинейно (рисование дуги окружности)
      *
-     * Используется при const_speed=false
+     * Используется при delay_source=DYNAMIC
      *
      * @param curr_step - номер текущего шага
      * @param curve_context - указатель на объект, содержащий всю необходимую информацию для вычисления
@@ -176,7 +198,7 @@ void prepare_steps(stepper *smotor, int step_count, int step_delay) {
     cstatuses[sm_i].step_count = step_count > 0 ? step_count : -step_count;
     
     // скорость вращения
-    cstatuses[sm_i].const_speed = true;
+    cstatuses[sm_i].delay_source = CONSTANT;
     if(step_delay <= smotors[sm_i]->pulse_delay) {
         // не будем делать шаги чаще, чем может мотор
         cstatuses[sm_i].step_delay = smotors[sm_i]->pulse_delay;
@@ -189,6 +211,7 @@ void prepare_steps(stepper *smotor, int step_count, int step_delay) {
   
     // Взводим счетчики
     cstatuses[sm_i].step_counter = cstatuses[sm_i].step_count;
+    // задержка перед первым шагом
     cstatuses[sm_i].step_timer = cstatuses[sm_i].step_delay;
     
     // ожидаем пуска
@@ -229,7 +252,7 @@ void prepare_whirl(stepper *smotor, int dir, int step_delay, calibrate_mode_t ca
     cstatuses[sm_i].non_stop = true;
     
     // скорость вращения
-    cstatuses[sm_i].const_speed = true;
+    cstatuses[sm_i].delay_source = CONSTANT;
     if(step_delay <= smotors[sm_i]->pulse_delay) {
         // не будем делать шаги чаще, чем может мотор
         cstatuses[sm_i].step_delay = smotors[sm_i]->pulse_delay;
@@ -241,11 +264,58 @@ void prepare_whirl(stepper *smotor, int dir, int step_delay, calibrate_mode_t ca
     cstatuses[sm_i].calibrate_mode = calibrate_mode;
   
     // взводим счетчики
+    // задержка перед первым шагом
     cstatuses[sm_i].step_timer = cstatuses[sm_i].step_delay;
     
     // на всякий случай обнулим
     cstatuses[sm_i].step_count = 0;
     cstatuses[sm_i].step_counter = 0;
+    
+    // ожидаем пуска
+    cstatuses[sm_i].cycle_status = IDLE;
+}
+
+/**
+ * Подготовить мотор к запуску ограниченной серии шагов с переменной скоростью - задержки на каждом 
+ * шаге вычисляются заранее, передаются в буфере.
+ * 
+ * @param step_count количество шагов, знак задает направление вращения
+ * @param delay_buffer - массив задержек перед каждым следующим шагом, микросекунды
+ */
+void prepare_buffered_steps(stepper *smotor, int step_count, int* delay_buffer) {
+    // резерв нового места на мотор в списке
+    int sm_i = stepper_count;
+    stepper_count++;
+    
+    // ссылка на мотор
+    smotors[sm_i] = smotor;
+        
+    // Подготовить движение
+  
+    // задать направление
+    cstatuses[sm_i].dir = step_count > 0 ? 1 : -1;
+    if(cstatuses[sm_i].dir * smotor->dir_inv > 0) {
+        digitalWrite(smotors[sm_i]->pin_dir, HIGH); // туда
+    } else {
+        digitalWrite(smotors[sm_i]->pin_dir, LOW); // обратно
+    }
+    
+    // шагаем ограниченное количество шагов
+    cstatuses[sm_i].non_stop = false;
+    // сделать step_count положительным
+    cstatuses[sm_i].step_count = step_count > 0 ? step_count : -step_count;
+    
+    // скорость вращения
+    cstatuses[sm_i].delay_source = BUFFER;
+    cstatuses[sm_i].delay_buffer = delay_buffer;
+    
+    // выключить режим калибровки
+    cstatuses[sm_i].calibrate_mode = NONE;
+  
+    // Взводим счетчики
+    cstatuses[sm_i].step_counter = cstatuses[sm_i].step_count;
+    // задержка перед первым шагом
+    cstatuses[sm_i].step_timer = cstatuses[sm_i].delay_buffer[0];
     
     // ожидаем пуска
     cstatuses[sm_i].cycle_status = IDLE;
@@ -284,7 +354,7 @@ void prepare_curved_steps(stepper *smotor, int step_count, void* curve_context, 
     cstatuses[sm_i].step_count = step_count > 0 ? step_count : -step_count;
     
     // скорость вращения
-    cstatuses[sm_i].const_speed = false;
+    cstatuses[sm_i].delay_source = DYNAMIC;
     cstatuses[sm_i].curve_context = curve_context;
     cstatuses[sm_i].next_step_delay = next_step_delay;
     
@@ -293,6 +363,7 @@ void prepare_curved_steps(stepper *smotor, int step_count, void* curve_context, 
   
     // Взводим счетчики
     cstatuses[sm_i].step_counter = cstatuses[sm_i].step_count;
+    // задержка перед первым шагом
     cstatuses[sm_i].step_timer = cstatuses[sm_i].next_step_delay(0, cstatuses[sm_i].curve_context);
     
     // ожидаем пуска
@@ -430,7 +501,8 @@ void handle_interrupts(int timer) {
         
         // TODO: перенести проверку концевиков ниже к моменту перед поворотом мотора или сразу после поворота,
         // чтобы digitalRead не ел процессор на каждой итерации таймера
-        if( (smotors[i]->pin_min != -1 && digitalRead(smotors[i]->pin_min)) || (smotors[i]->pin_max != -1 && digitalRead(smotors[i]->pin_max)) ) {
+        if( (smotors[i]->pin_min != -1 && digitalRead(smotors[i]->pin_min)) 
+                || (smotors[i]->pin_max != -1 && digitalRead(smotors[i]->pin_max)) ) {
             // сработал один из аппаратных концевых датчиков - завершаем вращение для этого мотора
             
             // обновим статус мотора
@@ -519,18 +591,36 @@ void handle_interrupts(int timer) {
                 }
                 
                 // взведём таймер на новый шаг
-                if(cstatuses[i].const_speed) {
+                if(cstatuses[i].delay_source == CONSTANT) {
                     // координата движется с постоянной скоростью
                     
                     // взводим таймер на новый шаг
                     cstatuses[i].step_timer = cstatuses[i].step_delay;
-                } else {
-                    // координата движется с переменной скоростью (например, рисуем дугу)
+                } if(cstatuses[i].delay_source == BUFFER) {
+                    // координата движется с переменной скоростью,
+                    // значения задержек получаем из буфера
                     
-                    // вычислим время до следующего шага
-                    int step_delay = cstatuses[i].next_step_delay(cstatuses[i].step_count - cstatuses[i].step_counter + 1, 
-                        cstatuses[i].curve_context);
+                    // вычислим время до следующего шага (step_counter уже уменьшили)
+                    int step_delay = cstatuses[i].delay_buffer[cstatuses[i].step_count - cstatuses[i].step_counter];
+                    
                     // не будем делать шаги чаще, чем может мотор
+                    // TODO: не очень хорошее место для тихой коррекции задержек в процессе рисования,
+                    // лучше выводить ошибку или предупреждение
+                    step_delay = step_delay >= smotors[i]->pulse_delay ? step_delay : smotors[i]->pulse_delay;
+                    
+                    // взводим таймер на новый шаг
+                    cstatuses[i].step_timer = step_delay;
+                } else if(cstatuses[i].delay_source == DYNAMIC) {
+                    // координата движется с переменной скоростью (например, рисуем дугу),
+                    // значения задержек вычисляем динамически
+                    
+                    // вычислим время до следующего шага (step_counter уже уменьшили)
+                    int step_delay = cstatuses[i].next_step_delay(cstatuses[i].step_count - cstatuses[i].step_counter, 
+                        cstatuses[i].curve_context);
+                        
+                    // не будем делать шаги чаще, чем может мотор
+                    // TODO: не очень хорошее место для тихой коррекции задержек в процессе рисования,
+                    // лучше выводить ошибку или предупреждение
                     step_delay = step_delay >= smotors[i]->pulse_delay ? step_delay : smotors[i]->pulse_delay;
                     
                     // взводим таймер на новый шаг
