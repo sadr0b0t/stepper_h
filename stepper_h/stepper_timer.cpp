@@ -105,6 +105,11 @@ typedef struct {
      */
     int* delay_buffer;
     
+    /** 
+     * Масштабирование шагов (повтор шагов с одинаковой задержкой при использовании буфера задержек) 
+     */
+    int scale;
+    
     /**
      * Указатель на объект, содержащий всю необходимую информацию для вычисления
      * времени до следующего шага (должен подходить для параметра curve_context 
@@ -277,12 +282,51 @@ void prepare_whirl(stepper *smotor, int dir, int step_delay, calibrate_mode_t ca
 
 /**
  * Подготовить мотор к запуску ограниченной серии шагов с переменной скоростью - задержки на каждом 
- * шаге вычисляются заранее, передаются в буфере.
+ * шаге вычисляются заранее, передаются в буфере delay_buffer.
  * 
- * @param step_count количество шагов, знак задает направление вращения
+ * Масштабирование шага позволяет экономить место в буфере delay_buffer, жертвуя точностью 
+ * (минимальной длиной шага в цикле); если цикл содержит серии шагов с одинаковой задержкой,
+ * реальноая точность не пострадает. Буфер delay_buffer содержит временные задержки перед каждым следующим шагом.
+ * Можно использовать одну и ту же задержку (один элемент буфера) для нескольких последовательных шагов
+ * при помощи параметра scale (масштаб). 
+ * 
+ * При scale=1 на каждый элемент буфера delay_buffer ("виртуальный" шаг) мотор будет делать 
+ *     один реальный (аппаратный) шаг из delay_buffer.
+ * При scale=2 на каждый элемент буфера delay_buffer (виртуальный шаг) мотор будет делать 
+ *     два реальных (аппаратных) шага с одной и той же задержкой из delay_buffer.
+ * При scale=3 на каждый элемент буфера delay_buffer (виртуальный шаг) мотор будет делать 
+ *     три реальных (аппаратных) шага с одной и той же задержкой из delay_buffer.
+ * 
+ * Допустим, в delay_buffer 2 элемента (2 виртуальных шага):
+ *     delay_buffer[0]=1000
+ *     delay_buffer[1]=2000
+ * параметр scale=3
+ * 
+ * Мотор сделает 3 аппаратных шага с задержкой delay_buffer[0]=1000 мкс перед каждым шагом и 
+ * 3 аппаратных шага с задержкой delay_buffer[1]=2000мкс. Всего 2*3=6 аппаратных шагов, 
+ * время на все шаги = 1000*3+2000*3=3000+6000=9000мкс
+ * 
+ * Значение параметра step_count указываем 2 (количество элементов в буфере delay_buffer).
+ *
+ * Аналогичный результат можно достигнуть с delay_buffer[6]
+ *     delay_buffer[0]=1000
+ *     delay_buffer[1]=1000
+ *     delay_buffer[2]=1000
+ *     delay_buffer[3]=2000
+ *     delay_buffer[4]=2000
+ *     delay_buffer[5]=2000
+ * scale=1, step_count=6
+ *
+ * Количество аппаратных шагов можно вычислять как step_count*scale.
+ * 
+ * @param step_count количество элементов в буфере delay_buffer (количество виртуальных шагов), 
+ *     знак задает направление вращения мотора.
  * @param delay_buffer - массив задержек перед каждым следующим шагом, микросекунды
+ * @param scale масштабирование шага - количество аппаратных шагов мотора в одном 
+ *     виртуальном шаге. 
+ * Значение по умолчанию scale=1: виртуальные шаги соответствуют аппаратным
  */
-void prepare_buffered_steps(stepper *smotor, int step_count, int* delay_buffer) {
+void prepare_buffered_steps(stepper *smotor, int step_count, int* delay_buffer, int scale) {
     // резерв нового места на мотор в списке
     int sm_i = stepper_count;
     stepper_count++;
@@ -303,11 +347,13 @@ void prepare_buffered_steps(stepper *smotor, int step_count, int* delay_buffer) 
     // шагаем ограниченное количество шагов
     cstatuses[sm_i].non_stop = false;
     // сделать step_count положительным
-    cstatuses[sm_i].step_count = step_count > 0 ? step_count : -step_count;
+    cstatuses[sm_i].step_count = step_count > 0 ? step_count*scale : -step_count*scale;
     
     // скорость вращения
     cstatuses[sm_i].delay_source = BUFFER;
     cstatuses[sm_i].delay_buffer = delay_buffer;
+    cstatuses[sm_i].scale = scale;
+    
     
     // выключить режим калибровки
     cstatuses[sm_i].calibrate_mode = NONE;
@@ -515,7 +561,8 @@ void handle_interrupts(int timer) {
         } else if( cstatuses[i].calibrate_mode == NONE && 
                 (cstatuses[i].dir > 0 ? smotors[i]->current_pos + smotors[i]->distance_per_step > smotors[i]->max_pos :
                                         smotors[i]->current_pos - smotors[i]->distance_per_step < smotors[i]->min_pos) ) {
-            // не в режиме калибровки и собираемся выйти за виртуальные границы во время предстоящего шага - завершаем вращение для этого мотора
+            // не в режиме калибровки и собираемся выйти за виртуальные границы во время предстоящего шага - 
+            // завершаем вращение для этого мотора
             
             // обновим статус мотора
             if(cstatuses[i].dir < 0) {
@@ -601,7 +648,10 @@ void handle_interrupts(int timer) {
                     // значения задержек получаем из буфера
                     
                     // вычислим время до следующего шага (step_counter уже уменьшили)
-                    int step_delay = cstatuses[i].delay_buffer[cstatuses[i].step_count - cstatuses[i].step_counter];
+                    int step_delay = 
+                        cstatuses[i].delay_buffer[
+                          (cstatuses[i].step_count - cstatuses[i].step_counter)/cstatuses[i].scale
+                        ];
                     
                     // не будем делать шаги чаще, чем может мотор
                     // TODO: не очень хорошее место для тихой коррекции задержек в процессе рисования,
