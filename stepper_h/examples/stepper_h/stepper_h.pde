@@ -1,4 +1,5 @@
 #include "stepper.h"
+#include "stepper_math.h"
 
 // Шаговые моторы
 static stepper sm_x, sm_y, sm_z;
