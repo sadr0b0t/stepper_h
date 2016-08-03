@@ -197,8 +197,10 @@ void init_stepper_ends(stepper* smotor,
 void prepare_steps(stepper *smotor, int step_count, int step_delay);
 
 /**
- * Подготовить мотор к запуску на вращение - задать направление и задержку между
+ * Подготовить мотор к запуску на беспрерывное вращение - задать направление и задержку между
  * шагами для регулирования скорости (0 для максимальной скорости).
+ *
+ * Мотор будет вращаться до тех пор, пока не будет вручную остановлен вызовом finish_stepper_cycle()
  *
  * @param dir направление вращения: 1 - вращать вперед, -1 - назад.
  * @param step_delay задержка между двумя шагами, микросекунды (0 для максимальной скорости).
@@ -259,15 +261,26 @@ void prepare_whirl(stepper *smotor, int dir, int step_delay, calibrate_mode_t ca
 void prepare_buffered_steps(stepper *smotor, int step_count, int* delay_buffer, int scale=1);
 
 /**
+ * @param buf_size количество элементов в буфере delay_buffer
+ * @param delay_buffer (step delay buffer) - массив задержек перед каждым следующим шагом, микросекунды
+ * @param step_buffer (step count buffer) - массив с количеством шагов для каждого 
+ *     значения задержки из delay_buffer. Может содержать положительные и отрицательные значения,
+ *     знак задает направление вращения мотора. 
+ *     Должен содержать ровно столько же элементов, сколько delay_buffer.
+ */
+void prepare_buffered_steps2(stepper *smotor, int buf_size, int* delay_buffer, int* step_buffer);
+
+/**
  * Подготовить мотор к запуску ограниченной серии шагов с переменной скоростью - задать нужное количество 
  * шагов и указатель на функцию, вычисляющую задержку перед каждым шагом для регулирования скорости.
  * 
  * @param step_count количество шагов, знак задает направление вращения
  * @param curve_context - указатель на объект, содержащий всю необходимую информацию для вычисления
  *     времени до следующего шага
- * @param next_step_delay указатель на функцию, вычисляющую задержка перед следующим шагом, микросекунды
+ * @param next_step_delay указатель на функцию, вычисляющую задержку перед следующим шагом, микросекунды
  */
-void prepare_curved_steps(stepper *smotor, int step_count, void* curve_context, int (*next_step_delay)(int curr_step, void* curve_context));
+void prepare_curved_steps(stepper *smotor, int step_count, void* curve_context, 
+        int (*next_step_delay)(int curr_step, void* curve_context));
 
 /**
  * Запустить цикл шагов на выполнение - запускаем таймер, обработчик прерываний
@@ -292,54 +305,5 @@ bool is_cycle_running();
  */
 void cycle_status(char* status_str);
 
-////
-// Математика
-
-/**
- * Подготовить линейное перемещение из текущей позиции в заданную точку с заданной скоростью,
- * для одной координаты.
- *
- * @param sm - мотор на выбранной координате
- * @param dl - сдвиг по указанной оси, мм
- * @param spd - скорость перемещения, мм/с, 0 для максимальное скорости
- * 
- */
-void prepare_line(stepper *sm, double dl, double spd=0);
-
-/**
- * Подготовить линейное перемещение из текущей позиции в заданную точку с заданной скоростью,
- * для двух координат.
- *
- * @param dl1 - сдвиг по оси 1, мм
- * @param dl2 - сдвиг по оси 2, мм
- * @param spd - скорость перемещения, мм/с, 0 для максимальное скорости
- */
-void prepare_line_2d(stepper *sm1, stepper *sm2, double dl1, double dl2, double spd=0);
-
-
-void prepare_circle(stepper *sm1, stepper *sm2, double center_c1, double center_c2, double spd);
-
-void prepare_spiral_circle(stepper *sm1, stepper *sm2, stepper *sm3,double target_c3, double center_c1, double center_c2, double spd);
-
-/**
- * @param target_c1 - целевое значение координаты 1, мм
- * @param target_c2 - целевое значение координаты 2, мм
- * @param spd - скорость перемещения, мм/с, 0 для максимальное скорости
- */
-void prepare_arc(stepper *sm1, stepper *sm2, double target_c1, double target_c2, double center_c1, double center_c2, double spd);
-
-void prepare_spiral_arc(stepper *sm1, stepper *sm2, stepper *sm3, double target_c1, double target_c2, double target_c3, double center_c1, double center_c2, double spd);
-
-/**
- * @param target_c1 - целевое значение координаты 1, мм
- * @param target_c2 - целевое значение координаты 2, мм
- * @param spd - скорость перемещения, мм/с, 0 для максимальное скорости
- */
-void prepare_arc2(stepper *sm1, stepper *sm2, double target_c1, double target_c2, double radius, double spd);
-
-void prepare_spiral_arc2(stepper *sm1, stepper *sm2, stepper *sm3, double target_c1, double target_c2, double target_c3, double radius, double spd);
-
 #endif // STEPPER_H
-
-
 
