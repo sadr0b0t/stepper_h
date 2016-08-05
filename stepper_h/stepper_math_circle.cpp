@@ -13,7 +13,7 @@
 #include "stepper.h"
 
 /******************************************************************/
-/* Путешествие по дуге окружости */
+/* Путешествие по дуге окружности */
 
 /**
  * Разная информация о процессе движения точки по дуге окружности.
@@ -58,12 +58,12 @@ typedef struct {
 } circle_context_t;
 
 // контекст для текущей окружности
-circle_context_t circle_context;
+static circle_context_t circle_context;
 
 /**
  * Время до следующего шага по оси X при путешествии по дуге окружности, микросекунды.
  */
-int next_step_delay_circle_x(int curr_step, void* circle_context) {
+static int next_step_delay_circle_x(int curr_step, void* circle_context) {
     #ifdef DEBUG_SERIAL
         // время начала вычисления в микросекундах
         unsigned long t1 = micros();
@@ -138,7 +138,7 @@ int next_step_delay_circle_x(int curr_step, void* circle_context) {
 /**
  * Время до следующего шага по оси Y при путешествии по дуге окружности, микросекунды.
  */
-int next_step_delay_circle_y(int curr_step, void* circle_context) {
+static int next_step_delay_circle_y(int curr_step, void* circle_context) {
     #ifdef DEBUG_SERIAL
         // время начала вычисления в микросекундах
         unsigned long t1 = micros();
@@ -290,14 +290,14 @@ void prepare_arc2(stepper *sm1, stepper *sm2, double target_c1, double target_c2
     // вычисляемые значения
     // радиус в микрометрах
     circle_context.r_mkm = circle_context.r * 1000;
-    // коэффициент для вычисления задежки, микросекунды
+    // коэффициент для вычисления задержки, микросекунды
     circle_context.k = 1000000*circle_context.r/circle_context.f;
             
     ///
     // количество шагов по координате
     // todo
-    int steps_sm1 = (target_x-start_x)*1000000 / sm1->distance_per_step;
-    int steps_sm2 = (target_y-start_y)*1000000 / sm2->distance_per_step;
+    int steps_sm1 = (target_x-start_x)*1000 / sm1->distance_per_step;
+    int steps_sm2 = (target_y-start_y)*1000 / sm2->distance_per_step;
     
     #ifdef DEBUG_SERIAL
         Serial.print("steps-sm1=");
