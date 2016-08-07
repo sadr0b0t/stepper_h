@@ -368,8 +368,8 @@ void prepare_arc2(stepper *sm1, stepper *sm2, double target_c1, double target_c2
     int (*next_step_delay_sm2)(int, void*) = &next_step_delay_circle_y;
     
     // подготовим шаги с переменной скоростью
-    prepare_curved_steps(sm1, steps_sm1, &circle_context, next_step_delay_sm1);
-    prepare_curved_steps(sm2, steps_sm2, &circle_context, next_step_delay_sm2);
+    prepare_dynamic_steps(sm1, steps_sm1, &circle_context, next_step_delay_sm1);
+    prepare_dynamic_steps(sm2, steps_sm2, &circle_context, next_step_delay_sm2);
 }
 
 void prepare_spiral_arc2(stepper *sm1, stepper *sm2, stepper *sm3, double target_c1, double target_c2, double target_c3, double radius, double spd) {

@@ -138,13 +138,6 @@ typedef struct {
     
     /** Режим калибровки */
     calibrate_mode_t calibrate_mode;
-    
-    /**
-     * Проверять выход за виртуальные границы координаты при движении (аппаратные проверяются ВСЕГДА).
-     * true: останавливать вращение при выходе за допустимые границы координаты (0, max_pos), 
-     * false: не проверять границы (сбрасывать current_pos в 0 при каждом шаге).
-     */
-    //bool check_bounds;    
 
 //// Динамика
     /** Счетчик циклов (возрастает) */
@@ -501,7 +494,7 @@ void prepare_buffered_steps(stepper *smotor, int buf_size, int* delay_buffer, in
  * @param stepper_info информация о цикле вращения шагового двигателя, обновляется динамически
  *        в процессе вращения двигателя
  */
-void prepare_curved_steps(stepper *smotor, int step_count, 
+void prepare_dynamic_steps(stepper *smotor, int step_count, 
         void* curve_context, int (*next_step_delay)(int curr_step, void* curve_context), 
         stepper_info_t *stepper_info) {
     // резерв нового места на мотор в списке
@@ -656,7 +649,7 @@ void finish_stepper_cycle() {
  * true - в процессе выполнения,
  * false - ожидает.
  */
-bool is_cycle_running() {
+bool is_stepper_cycle_running() {
     return cycle_running;
 }
 

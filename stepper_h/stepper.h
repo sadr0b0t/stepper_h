@@ -242,7 +242,6 @@ void init_stepper(stepper* smotor,  char name,
  * калибровка текущей позиции curr_pos устанавливает начальное значение в min_pos,
  * калибровка ширины области задает новое значение max_pos (до калибровки используется
  * значение по умолчанию)
- *
  */
 void init_stepper_ends(stepper* smotor,
         int pin_min, int pin_max,
@@ -350,7 +349,7 @@ void prepare_buffered_steps(stepper *smotor, int buf_size, int* delay_buffer, in
  * @param stepper_info информация о цикле вращения шагового двигателя, обновляется динамически
  *        в процессе вращения двигателя
  */
-void prepare_curved_steps(stepper *smotor, int step_count, void* curve_context, 
+void prepare_dynamic_steps(stepper *smotor, int step_count, void* curve_context, 
         int (*next_step_delay)(int curr_step, void* curve_context), stepper_info_t *stepper_info=NULL);
 
 /**
@@ -371,7 +370,7 @@ void finish_stepper_cycle();
  * true - в процессе выполнения,
  * false - ожидает.
  */
-bool is_cycle_running();
+bool is_stepper_cycle_running();
 
 /**
  * Отладочная информация о текущем цикле.

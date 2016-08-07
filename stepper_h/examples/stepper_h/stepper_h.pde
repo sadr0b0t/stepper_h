@@ -64,7 +64,7 @@ void loop() {
     static int prevTime = 0;
     // Отладочные сообщение - печатаем текущую позицию печатающего блока
     int currTime = millis();
-    if(is_cycle_running() && (currTime - prevTime) >= 1000) {
+    if(is_stepper_cycle_running() && (currTime - prevTime) >= 1000) {
         prevTime = currTime;
         Serial.print("X.pos=");
         Serial.print(sm_x.current_pos, DEC);
