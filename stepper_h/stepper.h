@@ -286,25 +286,25 @@ void prepare_whirl(stepper *smotor, int dir, int step_delay, calibrate_mode_t ca
  * (минимальной длиной шага в цикле); если цикл содержит серии шагов с одинаковой задержкой,
  * реальноая точность не пострадает. Буфер delay_buffer содержит временные задержки перед каждым следующим шагом.
  * Можно использовать одну и ту же задержку (один элемент буфера) для нескольких последовательных шагов
- * при помощи параметра scale (масштаб). 
+ * при помощи параметра step_count (масштаб). 
  * 
- * При scale=1 на каждый элемент буфера delay_buffer ("виртуальный" шаг) мотор будет делать 
+ * При step_count=1 на каждый элемент буфера delay_buffer ("виртуальный" шаг) мотор будет делать 
  *     один реальный (аппаратный) шаг из delay_buffer.
- * При scale=2 на каждый элемент буфера delay_buffer (виртуальный шаг) мотор будет делать 
+ * При step_count=2 на каждый элемент буфера delay_buffer (виртуальный шаг) мотор будет делать 
  *     два реальных (аппаратных) шага с одной и той же задержкой из delay_buffer.
- * При scale=3 на каждый элемент буфера delay_buffer (виртуальный шаг) мотор будет делать 
+ * При step_count=3 на каждый элемент буфера delay_buffer (виртуальный шаг) мотор будет делать 
  *     три реальных (аппаратных) шага с одной и той же задержкой из delay_buffer.
  * 
  * Допустим, в delay_buffer 2 элемента (2 виртуальных шага):
  *     delay_buffer[0]=1000
  *     delay_buffer[1]=2000
- * параметр scale=3
+ * параметр step_count=3
  * 
  * Мотор сделает 3 аппаратных шага с задержкой delay_buffer[0]=1000 мкс перед каждым шагом и 
  * 3 аппаратных шага с задержкой delay_buffer[1]=2000мкс. Всего 2*3=6 аппаратных шагов, 
  * время на все шаги = 1000*3+2000*3=3000+6000=9000мкс
  * 
- * Значение параметра step_count указываем 2 (количество элементов в буфере delay_buffer).
+ * Значение параметра buf_size указываем 2 (количество элементов в буфере delay_buffer).
  *
  * Аналогичный результат можно достигнуть с delay_buffer[6]
  *     delay_buffer[0]=1000
@@ -313,20 +313,19 @@ void prepare_whirl(stepper *smotor, int dir, int step_delay, calibrate_mode_t ca
  *     delay_buffer[3]=2000
  *     delay_buffer[4]=2000
  *     delay_buffer[5]=2000
- * scale=1, step_count=6
+ * step_count=1, buf_size=6
  *
- * Количество аппаратных шагов можно вычислять как step_count*scale.
+ * Количество аппаратных шагов можно вычислять как buf_size*step_count.
  * 
- * @param step_count количество элементов в буфере delay_buffer (количество виртуальных шагов), 
- *     знак задает направление вращения мотора.
+ * @param buf_size количество элементов в буфере delay_buffer (количество виртуальных шагов)
  * @param delay_buffer - массив задержек перед каждым следующим шагом, микросекунды
- * @param scale масштабирование шага - количество аппаратных шагов мотора в одном 
- *     виртуальном шаге
- * Значение по умолчанию scale=1: виртуальные шаги соответствуют аппаратным
+ * @param step_count масштабирование шага - количество аппаратных шагов мотора в одном 
+ *     виртуальном шаге, знак задает направление вращения мотора.
+ * Значение по умолчанию step_count=1: виртуальные шаги соответствуют аппаратным
  * @param stepper_info информация о цикле вращения шагового двигателя, обновляется динамически
  *        в процессе вращения двигателя
  */
-void prepare_buffered_steps(stepper *smotor, int step_count, int* delay_buffer, int scale=1, stepper_info_t *stepper_info=NULL);
+void prepare_simple_buffered_steps(stepper *smotor, int buf_size, int* delay_buffer, int step_count=1, stepper_info_t *stepper_info=NULL);
 
 /**
  * @param buf_size количество элементов в буфере delay_buffer
@@ -338,7 +337,7 @@ void prepare_buffered_steps(stepper *smotor, int step_count, int* delay_buffer, 
  * @param stepper_info информация о цикле вращения шагового двигателя, обновляется динамически
  *        в процессе вращения двигателя
  */
-void prepare_buffered_steps2(stepper *smotor, int buf_size, int* delay_buffer, int* step_buffer, stepper_info_t *stepper_info=NULL);
+void prepare_buffered_steps(stepper *smotor, int buf_size, int* delay_buffer, int* step_buffer, stepper_info_t *stepper_info=NULL);
 
 /**
  * Подготовить мотор к запуску ограниченной серии шагов с переменной скоростью - задать нужное количество 

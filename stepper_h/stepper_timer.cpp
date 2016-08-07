@@ -223,12 +223,7 @@ void prepare_steps(stepper *smotor, int step_count, int step_delay, stepper_info
     
     // скорость вращения - постоянная
     cstatuses[sm_i].delay_source = CONSTANT;
-    if(step_delay <= smotors[sm_i]->pulse_delay) {
-        // не будем делать шаги чаще, чем может мотор
-        cstatuses[sm_i].step_delay = smotors[sm_i]->pulse_delay;
-    } else {
-        cstatuses[sm_i].step_delay = step_delay;
-    }
+    cstatuses[sm_i].step_delay = step_delay;
     
     // выключить режим калибровки
     cstatuses[sm_i].calibrate_mode = NONE;
@@ -294,12 +289,7 @@ void prepare_whirl(stepper *smotor, int dir, int step_delay, calibrate_mode_t ca
     
     // скорость вращения - постоянная
     cstatuses[sm_i].delay_source = CONSTANT;
-    if(step_delay <= smotors[sm_i]->pulse_delay) {
-        // не будем делать шаги чаще, чем может мотор
-        cstatuses[sm_i].step_delay = smotors[sm_i]->pulse_delay;
-    } else {
-        cstatuses[sm_i].step_delay = step_delay;
-    }
+    cstatuses[sm_i].step_delay = step_delay;
     
     // режим калибровки
     cstatuses[sm_i].calibrate_mode = calibrate_mode;
@@ -335,25 +325,25 @@ void prepare_whirl(stepper *smotor, int dir, int step_delay, calibrate_mode_t ca
  * (минимальной длиной шага в цикле); если цикл содержит серии шагов с одинаковой задержкой,
  * реальноая точность не пострадает. Буфер delay_buffer содержит временные задержки перед каждым следующим шагом.
  * Можно использовать одну и ту же задержку (один элемент буфера) для нескольких последовательных шагов
- * при помощи параметра scale (масштаб). 
+ * при помощи параметра step_count (масштаб). 
  * 
- * При scale=1 на каждый элемент буфера delay_buffer ("виртуальный" шаг) мотор будет делать 
+ * При step_count=1 на каждый элемент буфера delay_buffer ("виртуальный" шаг) мотор будет делать 
  *     один реальный (аппаратный) шаг из delay_buffer.
- * При scale=2 на каждый элемент буфера delay_buffer (виртуальный шаг) мотор будет делать 
+ * При step_count=2 на каждый элемент буфера delay_buffer (виртуальный шаг) мотор будет делать 
  *     два реальных (аппаратных) шага с одной и той же задержкой из delay_buffer.
- * При scale=3 на каждый элемент буфера delay_buffer (виртуальный шаг) мотор будет делать 
+ * При step_count=3 на каждый элемент буфера delay_buffer (виртуальный шаг) мотор будет делать 
  *     три реальных (аппаратных) шага с одной и той же задержкой из delay_buffer.
  * 
  * Допустим, в delay_buffer 2 элемента (2 виртуальных шага):
  *     delay_buffer[0]=1000
  *     delay_buffer[1]=2000
- * параметр scale=3
+ * параметр step_count=3
  * 
  * Мотор сделает 3 аппаратных шага с задержкой delay_buffer[0]=1000 мкс перед каждым шагом и 
  * 3 аппаратных шага с задержкой delay_buffer[1]=2000мкс. Всего 2*3=6 аппаратных шагов, 
  * время на все шаги = 1000*3+2000*3=3000+6000=9000мкс
  * 
- * Значение параметра step_count указываем 2 (количество элементов в буфере delay_buffer).
+ * Значение параметра buf_size указываем 2 (количество элементов в буфере delay_buffer).
  *
  * Аналогичный результат можно достигнуть с delay_buffer[6]
  *     delay_buffer[0]=1000
@@ -362,21 +352,20 @@ void prepare_whirl(stepper *smotor, int dir, int step_delay, calibrate_mode_t ca
  *     delay_buffer[3]=2000
  *     delay_buffer[4]=2000
  *     delay_buffer[5]=2000
- * scale=1, step_count=6
+ * step_count=1, buf_size=6
  *
- * Количество аппаратных шагов можно вычислять как step_count*scale.
+ * Количество аппаратных шагов можно вычислять как buf_size*step_count.
  * 
- * @param step_count количество элементов в буфере delay_buffer (количество виртуальных шагов), 
- *     знак задает направление вращения мотора.
+ * @param buf_size количество элементов в буфере delay_buffer (количество виртуальных шагов)
  * @param delay_buffer - массив задержек перед каждым следующим шагом, микросекунды
- * @param scale масштабирование шага - количество аппаратных шагов мотора в одном 
- *     виртуальном шаге. 
- * Значение по умолчанию scale=1: виртуальные шаги соответствуют аппаратным
+ * @param step_count масштабирование шага - количество аппаратных шагов мотора в одном 
+ *     виртуальном шаге, знак задает направление вращения мотора.
+ * Значение по умолчанию step_count=1: виртуальные шаги соответствуют аппаратным
  * @param stepper_info информация о цикле вращения шагового двигателя, обновляется динамически
  *        в процессе вращения двигателя
  */
-void prepare_buffered_steps(stepper *smotor, int step_count, int* delay_buffer, int scale, 
-        stepper_info_t *stepper_info) {
+void prepare_simple_buffered_steps(stepper *smotor, int buf_size, int* delay_buffer, 
+        int step_count, stepper_info_t *stepper_info) {
     // резерв нового места на мотор в списке
     int sm_i = stepper_count;
     stepper_count++;
@@ -400,12 +389,12 @@ void prepare_buffered_steps(stepper *smotor, int step_count, int* delay_buffer, 
     // шагаем ограниченное количество шагов
     cstatuses[sm_i].non_stop = false;
     // сделать step_count положительным
-    cstatuses[sm_i].step_count = step_count > 0 ? step_count*scale : -step_count*scale;
+    cstatuses[sm_i].step_count = buf_size > 0 ? buf_size*step_count : -buf_size*step_count;
     
     // настройки переменной скорости вращения
     cstatuses[sm_i].delay_source = BUFFER;
     cstatuses[sm_i].delay_buffer = delay_buffer;
-    cstatuses[sm_i].scale = scale;
+    cstatuses[sm_i].scale = step_count;
     
     
     // выключить режим калибровки
@@ -441,7 +430,7 @@ void prepare_buffered_steps(stepper *smotor, int step_count, int* delay_buffer, 
  * @param stepper_info информация о цикле вращения шагового двигателя, обновляется динамически
  *        в процессе вращения двигателя
  */
-void prepare_buffered_steps2(stepper *smotor, int buf_size, int* delay_buffer, int* step_buffer, 
+void prepare_buffered_steps(stepper *smotor, int buf_size, int* delay_buffer, int* step_buffer, 
         stepper_info_t *stepper_info) {
     // резерв нового места на мотор в списке
     int sm_i = stepper_count;
@@ -608,7 +597,7 @@ void start_stepper_cycle(stepper_cycle_info_t *cycle_info) {
     //timer_freq_us = 5;
     //initTimerISR(TIMER3, TIMER_PRESCALER_1_8, 50);
     
-    // ок для движения по линии, совсем не ок для движения по дуге (90мкс на acos/asin)
+    // ок для движения по линии, совсем не ок для движения по дуге (по 90мкс на acos/asin)
     // Запустим таймер с периодом 10 микросекунд (100тыс вызовов в секунду):
     // 80000000/8/100000=100=0x64
     //timer_freq_us = 10;
@@ -624,13 +613,13 @@ void start_stepper_cycle(stepper_cycle_info_t *cycle_info) {
     //timer_freq_us = 80;
     //initTimerISR(TIMER3, TIMER_PRESCALER_1_8, 800);
     
-    // Запустим таймер с периодом 100 микросекунд (12.5тыс вызовов в секунду):
+    // Запустим таймер с периодом 100 микросекунд (10тыс вызовов в секунду):
     // 80000000/8/10000=1000
     //timer_freq_us = 100;
     //initTimerISR(TIMER3, TIMER_PRESCALER_1_8, 1000);
     
     
-    // ок для движения движения по дуге (90мкс на acos/asin)
+    // ок для движения движения по дуге (по 90мкс на acos/asin)
     // Запустим таймер с периодом 100 микросекунд (12.5тыс вызовов в секунду):
     // 80000000/8/5000=2000
     timer_freq_us = 200;
@@ -704,9 +693,10 @@ void cycle_debug_status(char* status_str) {
  * алгоритм, сейчас не рализовано).
  */
 void handle_interrupts(int timer) {
-    // TODO: ввести настройки для обработки ошибок: останов с кодом ошибки, игнор, исправление по возможности,
-    // код ошибки/предупреждения помещать в объект статуса
-    // ошибки: 
+    // вращаем моторы - делаем шаги, как запланировали
+    // способы обработки ошибок в процессе: останов с кодом ошибки, игнор, исправление по возможности,
+    // код ошибки/предупреждения помещаем в объект со статусом мотора
+    // возможные ошибки: 
     // - выход за виртуальные границы координаты (останов всего цикла или запрет движения только одного мотора), 
     // - концевой датчик (останов всего цикла или запрет движения только одного мотора), 
     // - задержка между двумя импульсами меньше, чем оптимальное значение (smotors[i]->pulse_delay)
@@ -719,12 +709,14 @@ void handle_interrupts(int timer) {
     // завершился ли цикл - все моторы закончили движение
     bool finished = true;
     
+    // цикл по всем моторам
     for(int i = 0; i < stepper_count; i++) {
         cstatuses[i].step_timer -= timer_freq_us;
         
         if( (cstatuses[i].non_stop || cstatuses[i].step_counter > 0) && !cstatuses[i].stopped) {
         
-            // если хотя бы у одного мотора остались шаги или он запущен нон-стоп,
+            // если хотя бы у одного мотора остались шаги или он запущен нон-стоп, при этом
+            // не остановлен по другой причине (например, из-за концевого датчика), 
             // то мы еще не закончили
             finished = false;
         
@@ -735,29 +727,38 @@ void handle_interrupts(int timer) {
                 // (если все ок, то на следующем импульсе пин мотора пойдет в HIGH, а еще на следующем - в LOW)
                 
                 
-                // TODO: различать левый и правый концевой датчик: 
+                // различать левый и правый концевой датчик: 
                 // при срабатывании левого датчика запрещать движение влево, но разрешать движение вправо,
                 // при срабатывании правого датчика запрещать движение вправо, но разрешать движение влево
                 // запрет приоритетнее разрешения (если подключить оба датчика в один вход, мотор не будет крутиться вообще)
+                // Это важно, т.к. если мы в одном цикле, например, зажали левый концевой датчик и заблокировали
+                // мотор, при старте следующего цикла датчик все еще будет нажат и у нас должна быть возможность
+                // уйти вправо (влево блок, как и в прошлый раз).
                 
-                if( (smotors[i]->pin_min != -1 && digitalRead(smotors[i]->pin_min)) 
-                        || (smotors[i]->pin_max != -1 && digitalRead(smotors[i]->pin_max)) ) {
-                    // сработал один из аппаратных концевых датчиков - завершаем вращение для этого мотора
+                if(smotors[i]->pin_min != -1 && digitalRead(smotors[i]->pin_min) && cstatuses[i].dir < 0) {
+                    // сработал левый аппаратный концевой датчик и мы движемся влево -
+                    // завершаем вращение для этого мотора
                     cstatuses[i].stopped = true;
                     
+                    // обновим статус мотора
                     if(cstatuses[i].stepper_info != NULL) {
                         cstatuses[i].stepper_info->status = STEPPER_STATUS_FINISHED;
-                    }
                     
-                    // обозначим ошибку мотора
-                    if(cstatuses[i].dir < 0) {
-                        if(cstatuses[i].stepper_info != NULL) {
-                            cstatuses[i].stepper_info->error_hard_end_min = true;
-                        }
-                    } else {
-                        if(cstatuses[i].stepper_info != NULL) {
-                            cstatuses[i].stepper_info->error_hard_end_max = true;
-                        }
+                        // обозначим ошибку
+                        cstatuses[i].stepper_info->error_hard_end_min = true;
+                    }
+                } else if(smotors[i]->pin_max != -1 && digitalRead(smotors[i]->pin_max) && cstatuses[i].dir > 0) {
+                    // сработал правый аппаратный концевой датчик и мы движемся вправо - 
+                    // завершаем вращение для этого мотора
+                    cstatuses[i].stopped = true;
+                    
+                    
+                    // обновим статус мотора
+                    if(cstatuses[i].stepper_info != NULL) {
+                        cstatuses[i].stepper_info->status = STEPPER_STATUS_FINISHED;
+                        
+                        // обозначим ошибку
+                        cstatuses[i].stepper_info->error_hard_end_max = true;
                     }
                 } else if( cstatuses[i].calibrate_mode == NONE && 
                         (cstatuses[i].dir > 0 ? smotors[i]->current_pos + smotors[i]->distance_per_step > smotors[i]->max_pos :
@@ -766,33 +767,28 @@ void handle_interrupts(int timer) {
                     // завершаем вращение для этого мотора
                     cstatuses[i].stopped = true;
                     
+                    // обновим статус мотора
                     if(cstatuses[i].stepper_info != NULL) {
                         cstatuses[i].stepper_info->status = STEPPER_STATUS_FINISHED;
-                    }
-                    
-                    // обозначим ошибку мотора
-                    if(cstatuses[i].dir < 0) {
-                        if(cstatuses[i].stepper_info != NULL) {
+                        
+                        // обозначим ошибку
+                        if(cstatuses[i].dir < 0) {
                             cstatuses[i].stepper_info->error_soft_end_min = true;
-                        }
-                    } else {
-                        if(cstatuses[i].stepper_info != NULL) {
+                        } else {
                             cstatuses[i].stepper_info->error_soft_end_max = true;
                         }
                     }
-                    
                 } else if( cstatuses[i].calibrate_mode == CALIBRATE_BOUNDS_MAX_POS &&
                         cstatuses[i].dir < 0 && smotors[i]->current_pos - smotors[i]->distance_per_step < smotors[i]->min_pos ) {
                     // в режиме калибровки размера рабочей области собираемся сместиться ниже нижней виртуальной границы
                     // во время предстоящего шага - завершаем вращение для этого мотора
                     cstatuses[i].stopped = true;
                     
+                    // обновим статус мотора
                     if(cstatuses[i].stepper_info != NULL) {
                         cstatuses[i].stepper_info->status = STEPPER_STATUS_FINISHED;
-                    }
-                    
-                    // обозначим ошибку мотора
-                    if(cstatuses[i].stepper_info != NULL) {
+                        
+                        // обозначим ошибку мотора
                         cstatuses[i].stepper_info->error_soft_end_min = true;
                     }
                 }
@@ -871,19 +867,6 @@ void handle_interrupts(int timer) {
                         if(cstatuses[i].stepper_info != NULL) {
                             cstatuses[i].stepper_info->status = STEPPER_STATUS_FINISHED;
                         }
-                    
-                        /*
-                        // вывод сообщений занимает много времени => таймер выбивается из графика
-                        #ifdef DEBUG_SERIAL
-                            Serial.print("Finished motor=");
-                            Serial.print(smotors[i]->name);
-                            Serial.print(".pos:");
-                            Serial.print(smotors[i]->current_pos);
-                            Serial.print("um, curr time=");
-                            Serial.print(millis(), DEC);
-                            Serial.println("ms");
-                        #endif // DEBUG_SERIAL
-                        */
                     }
                 }
                 
