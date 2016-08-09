@@ -12,10 +12,10 @@ It uses PIC32 timer interrupts to generate step signals in background (basic cod
 
 to install, just make git clone https://github.com/1i7/stepper_h to ~/Arduino/libraries (for the new ChipKIT IDE)
 
-Code: Select all
+```bash
 cd ~/Arduino/libraries
 git clone https://github.com/1i7/stepper_h.git
-
+```
 
 basic example should appear in Arduino examples menu: File/Examples/stepper_h/stepper_h
 
