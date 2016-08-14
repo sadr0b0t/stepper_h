@@ -350,8 +350,24 @@ void prepare_buffered_steps(stepper *smotor, int buf_size, int* delay_buffer, in
  * @param stepper_info информация о цикле вращения шагового двигателя, обновляется динамически
  *        в процессе вращения двигателя
  */
-void prepare_dynamic_steps(stepper *smotor, int step_count, void* curve_context, 
-        int (*next_step_delay)(int curr_step, void* curve_context), stepper_info_t *stepper_info=NULL);
+void prepare_dynamic_steps(stepper *smotor, int step_count, 
+        void* curve_context, int (*next_step_delay)(int curr_step, void* curve_context), 
+        stepper_info_t *stepper_info=NULL);
+        
+/**
+ * Подготовить мотор к запуску на беспрерывное вращение с переменной скоростью - задать нужное количество 
+ * шагов и указатель на функцию, вычисляющую задержку перед каждым шагом для регулирования скорости.
+ * 
+ * @param dir направление вращения: 1 - вращать вперед, -1 - назад.
+ * @param curve_context - указатель на объект, содержащий всю необходимую информацию для вычисления
+ *     времени до следующего шага
+ * @param next_step_delay указатель на функцию, вычисляющую задержку перед следующим шагом, микросекунды
+ * @param stepper_info информация о цикле вращения шагового двигателя, обновляется динамически
+ *        в процессе вращения двигателя
+ */
+void prepare_dynamic_whirl(stepper *smotor, int dir, 
+        void* curve_context, int (*next_step_delay)(int curr_step, void* curve_context), 
+        stepper_info_t *stepper_info=NULL);
 
 /**
  * Запустить цикл шагов на выполнение - запускаем таймер, обработчик прерываний

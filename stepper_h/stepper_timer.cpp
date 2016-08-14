@@ -551,6 +551,74 @@ void prepare_dynamic_steps(stepper *smotor, int step_count,
 }
 
 /**
+ * Подготовить мотор к запуску на беспрерывное вращение с переменной скоростью - задать нужное количество 
+ * шагов и указатель на функцию, вычисляющую задержку перед каждым шагом для регулирования скорости.
+ * 
+ * @param dir направление вращения: 1 - вращать вперед, -1 - назад.
+ * @param curve_context - указатель на объект, содержащий всю необходимую информацию для вычисления
+ *     времени до следующего шага
+ * @param next_step_delay указатель на функцию, вычисляющую задержку перед следующим шагом, микросекунды
+ * @param stepper_info информация о цикле вращения шагового двигателя, обновляется динамически
+ *        в процессе вращения двигателя
+ */
+void prepare_dynamic_whirl(stepper *smotor, int dir, 
+        void* curve_context, int (*next_step_delay)(int curr_step, void* curve_context), 
+        stepper_info_t *stepper_info) {
+    // резерв нового места на мотор в списке
+    int sm_i = stepper_count;
+    stepper_count++;
+    
+    // ссылка на мотор
+    smotors[sm_i] = smotor;
+    
+    // динамический статус мотора
+    cstatuses[sm_i].stepper_info = stepper_info;
+        
+    // Подготовить движение
+  
+    // задать направление
+    cstatuses[sm_i].dir = dir;
+    if(cstatuses[sm_i].dir * smotors[sm_i]->dir_inv > 0) {
+        digitalWrite(smotors[sm_i]->pin_dir, HIGH); // туда
+    } else {
+        digitalWrite(smotors[sm_i]->pin_dir, LOW); // обратно
+    }
+    
+    // шагаем без остановки
+    cstatuses[sm_i].non_stop = true;
+    
+    // настройки переменной скорости вращения
+    cstatuses[sm_i].delay_source = DYNAMIC;
+    cstatuses[sm_i].curve_context = curve_context;
+    cstatuses[sm_i].next_step_delay = next_step_delay;
+    
+    // выключить режим калибровки
+    cstatuses[sm_i].calibrate_mode = NONE;
+  
+    // Взводим счетчики
+    // задержка перед первым шагом
+    cstatuses[sm_i].step_timer = cstatuses[sm_i].next_step_delay(0, cstatuses[sm_i].curve_context);
+    
+    // на всякий случай обнулим
+    cstatuses[sm_i].step_count = 0;
+    cstatuses[sm_i].step_counter = 0;
+    
+    // ожидаем пуска
+    if(cstatuses[sm_i].stepper_info != NULL) {
+        cstatuses[sm_i].stepper_info->status = STEPPER_STATUS_IDLE;
+       
+        // обнулим ошибки
+        cstatuses[sm_i].stepper_info->error_soft_end_min = false;
+        cstatuses[sm_i].stepper_info->error_soft_end_max = false;
+        cstatuses[sm_i].stepper_info->error_hard_end_min = false;
+        cstatuses[sm_i].stepper_info->error_hard_end_max = false;
+        cstatuses[sm_i].stepper_info->error_pulse_delay_small = false;
+    }
+    
+    cstatuses[sm_i].stopped = false;
+}
+
+/**
  * Запустить цикл шагов на выполнение - запускаем таймер, обработчик прерываний
  * отрабатывать подготовленную программу.
  *
