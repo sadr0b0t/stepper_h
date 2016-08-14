@@ -754,9 +754,13 @@ void handle_interrupts(int timer) {
                         cstatuses[i].stepper_info->error_hard_end_max = true;
                     }
                 } else if( cstatuses[i].calibrate_mode == NONE && 
-                        (cstatuses[i].dir > 0 ? smotors[i]->current_pos + smotors[i]->distance_per_step > smotors[i]->max_pos :
-                                                smotors[i]->current_pos - smotors[i]->distance_per_step < smotors[i]->min_pos) ) {
-                    // не в режиме калибровки и собираемся выйти за виртуальные границы во время предстоящего шага - 
+                        (cstatuses[i].dir > 0 ? 
+                            smotors[i]->max_end_strategy != INF && 
+                                smotors[i]->current_pos + smotors[i]->distance_per_step > smotors[i]->max_pos :
+                            smotors[i]->min_end_strategy != INF && 
+                                smotors[i]->current_pos - smotors[i]->distance_per_step < smotors[i]->min_pos) ) {
+                    // не в режиме калибровки, включены виртуальные границы координаты и 
+                    // собираемся выйти за виртуальные границы во время предстоящего шага - 
                     // завершаем вращение для этого мотора
                     cstatuses[i].stopped = true;
                     

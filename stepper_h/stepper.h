@@ -18,7 +18,8 @@
  * - CONST: значение координаты задается константой в настройках мотора (min/max _pos)
  * - AUTO: использовать калибровку для определения конечной позиции в этом направлении 
  *       (значение min/max _pos обновляется после калибровки; после калибровки аналогично CONST)
- * - INF: не органичивать движение координаты в этом направлении (значение min/max _pos игнорируется)
+ * - INF: не органичивать движение координаты в этом направлении (значение min/max _pos игнорируется,
+ *       концевой датчик, если подключен, обрабатывается в любом случае)
  */
 typedef enum {CONST, AUTO, INF} end_strategy_t;
 
@@ -275,7 +276,7 @@ void prepare_steps(stepper *smotor, int step_count, int step_delay, stepper_info
  * @param stepper_info информация о цикле вращения шагового двигателя, обновляется динамически
  *        в процессе вращения двигателя
  */
-void prepare_whirl(stepper *smotor, int dir, int step_delay, calibrate_mode_t calibrate_mode, stepper_info_t *stepper_info=NULL);
+void prepare_whirl(stepper *smotor, int dir, int step_delay, calibrate_mode_t calibrate_mode=NONE, stepper_info_t *stepper_info=NULL);
 
 /**
  * Подготовить мотор к запуску ограниченной серии шагов с переменной скоростью - задержки на каждом 
