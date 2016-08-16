@@ -640,7 +640,9 @@ void start_stepper_cycle(stepper_cycle_info_t *cycle_info) {
         if(cstatuses[i].stepper_info != NULL) {
             cstatuses[i].stepper_info->status = STEPPER_STATUS_RUNNING;
         }
-        digitalWrite(smotors[i]->pin_en, LOW);
+        if(smotors[i]->pin_en != -1) {
+            digitalWrite(smotors[i]->pin_en, LOW);
+        }
     }
     
     // частота ядра PIC32MX - 80МГц=80млн операций в секунду
@@ -695,9 +697,11 @@ void finish_stepper_cycle() {
     stopTimerISR(TIMER3);
         
     // выключим все моторы
-    for(int i = 0; i < stepper_count; i++) {
-        // выключить мотор
-        digitalWrite(smotors[i]->pin_en, HIGH);
+    if(smotors[i]->pin_en != -1) {
+        for(int i = 0; i < stepper_count; i++) {
+            // выключить мотор
+            digitalWrite(smotors[i]->pin_en, HIGH);
+        }
     }
     
     // цикл завершился
