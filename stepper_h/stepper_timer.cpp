@@ -173,9 +173,22 @@ static bool cycle_running = false;
 static stepper_cycle_info_t* _cycle_info;
 
 // Стратегия реакции на ошибки
-static error_handle_strategy_t soft_end_handle = STOP_MOTOR;//CANCEL_CYCLE;
-static error_handle_strategy_t hard_end_handle = STOP_MOTOR;//CANCEL_CYCLE;
-static error_handle_strategy_t small_pulse_delay_handle = IGNORE;//STOP_MOTOR;//FIX;//CANCEL_CYCLE;
+// STOP_MOTOR/CANCEL_CYCLE
+//static error_handle_strategy_t hard_end_handle = STOP_MOTOR;
+static error_handle_strategy_t hard_end_handle = CANCEL_CYCLE;
+
+// STOP_MOTOR/CANCEL_CYCLE
+//static error_handle_strategy_t soft_end_handle = STOP_MOTOR;
+static error_handle_strategy_t soft_end_handle = CANCEL_CYCLE;
+
+// FIX/STOP_MOTOR/CANCEL_CYCLE/IGNORE
+static error_handle_strategy_t small_pulse_delay_handle = FIX;
+//static error_handle_strategy_t small_pulse_delay_handle = STOP_MOTOR;
+//static error_handle_strategy_t small_pulse_delay_handle = CANCEL_CYCLE;
+//static error_handle_strategy_t small_pulse_delay_handle = IGNORE;
+
+// IGNORE/CANCEL_CYCLE
+static error_handle_strategy_t cycle_timing_exceed_handle = CANCEL_CYCLE;
 
 
 /**
@@ -637,9 +650,11 @@ void start_stepper_cycle(stepper_cycle_info_t *cycle_info) {
     
     // включить моторы
     for(int i = 0; i < stepper_count; i++) {
+        // обновим статусы
         if(cstatuses[i].stepper_info != NULL) {
             cstatuses[i].stepper_info->status = STEPPER_STATUS_RUNNING;
         }
+        // аппаратная ножка Enable->LOW (вкл), если задана
         if(smotors[i]->pin_en != -1) {
             digitalWrite(smotors[i]->pin_en, LOW);
         }
@@ -697,10 +712,15 @@ void finish_stepper_cycle() {
     stopTimerISR(TIMER3);
         
     // выключим все моторы
-    if(smotors[i]->pin_en != -1) {
-        for(int i = 0; i < stepper_count; i++) {
-            // выключить мотор
+    for(int i = 0; i < stepper_count; i++) {
+        // аппаратная ножка Enable->HIGH (выкл), если задана
+        if(smotors[i]->pin_en != -1) {
             digitalWrite(smotors[i]->pin_en, HIGH);
+        }
+        
+        // обновим статусы (на случай, если это уже не сделано заранее)
+        if(cstatuses[i].stepper_info != NULL) {
+            cstatuses[i].stepper_info->status = STEPPER_STATUS_FINISHED;
         }
     }
     
@@ -773,9 +793,11 @@ void handle_interrupts(int timer) {
     
     // завершился ли цикл - все моторы закончили движение
     bool finished = true;
+    // завершился ли цикл - что-то пошло не так, сворачиваемся раньше времени
+    bool canceled = false;
     
     // цикл по всем моторам
-    for(int i = 0; i < stepper_count; i++) {
+    for(int i = 0; i < stepper_count && !canceled; i++) {
         cstatuses[i].step_timer -= timer_freq_us;
         
         if( (cstatuses[i].non_stop || cstatuses[i].step_counter > 0) && !cstatuses[i].stopped) {
@@ -812,6 +834,14 @@ void handle_interrupts(int timer) {
                         // обозначим ошибку
                         cstatuses[i].stepper_info->error_hard_end_min = true;
                     }
+                    
+                    // как себя вести - остановить только этот мотор (в любом случае) или
+                    // сразу завершить весь цикл
+                    if(hard_end_handle == CANCEL_CYCLE) {
+                        // завершаем весь цикл
+                        canceled = true;
+                    } // иначе STOP_MOTOR - останавливается только этот мотор 
+                    
                 } else if(smotors[i]->pin_max != -1 && digitalRead(smotors[i]->pin_max) && cstatuses[i].dir > 0) {
                     // сработал правый аппаратный концевой датчик и мы движемся вправо - 
                     // завершаем вращение для этого мотора
@@ -825,12 +855,21 @@ void handle_interrupts(int timer) {
                         // обозначим ошибку
                         cstatuses[i].stepper_info->error_hard_end_max = true;
                     }
+                    
+                    // как себя вести - остановить только этот мотор (в любом случае) или
+                    // сразу завершить весь цикл
+                    if(hard_end_handle == CANCEL_CYCLE) {
+                        // завершаем весь цикл
+                        canceled = true;
+                    } // иначе STOP_MOTOR - останавливается только этот мотор
+                    
                 } else if( cstatuses[i].calibrate_mode == NONE && 
                         (cstatuses[i].dir > 0 ? 
                             smotors[i]->max_end_strategy != INF && 
                                 smotors[i]->current_pos + smotors[i]->distance_per_step > smotors[i]->max_pos :
                             smotors[i]->min_end_strategy != INF && 
                                 smotors[i]->current_pos - smotors[i]->distance_per_step < smotors[i]->min_pos) ) {
+                    // выход за пределы виртуальной границы:
                     // не в режиме калибровки, включены виртуальные границы координаты и 
                     // собираемся выйти за виртуальные границы во время предстоящего шага - 
                     // завершаем вращение для этого мотора
@@ -847,9 +886,18 @@ void handle_interrupts(int timer) {
                             cstatuses[i].stepper_info->error_soft_end_max = true;
                         }
                     }
+                    
+                    // как себя вести - остановить только этот мотор (в любом случае) или
+                    // сразу завершить весь цикл
+                    if(soft_end_handle == CANCEL_CYCLE) {
+                        // завершаем весь цикл
+                        canceled = true;
+                    } // иначе STOP_MOTOR - останавливается только этот мотор
+                    
                 } else if( cstatuses[i].calibrate_mode == CALIBRATE_BOUNDS_MAX_POS &&
                         cstatuses[i].dir < 0 && smotors[i]->current_pos - smotors[i]->distance_per_step < smotors[i]->min_pos ) {
-                    // в режиме калибровки размера рабочей области собираемся сместиться ниже нижней виртуальной границы
+                    // в режиме калибровки размера рабочей области при движении влево
+                    // собираемся сместиться ниже нижней виртуальной границы
                     // во время предстоящего шага - завершаем вращение для этого мотора
                     cstatuses[i].stopped = true;
                     
@@ -860,6 +908,14 @@ void handle_interrupts(int timer) {
                         // обозначим ошибку мотора
                         cstatuses[i].stepper_info->error_soft_end_min = true;
                     }
+                    
+                    // как себя вести - остановить только этот мотор (в любом случае) или
+                    // сразу завершить весь цикл
+                    if(soft_end_handle == CANCEL_CYCLE) {
+                        // завершаем весь цикл
+                        canceled = true;
+                    } // иначе STOP_MOTOR - останавливается только этот мотор
+                    
                 }
             } else if(cstatuses[i].step_timer < timer_freq_us*2 && cstatuses[i].step_timer >= timer_freq_us) {
                 // >>>За 1 импульс до обнуления таймера
@@ -986,6 +1042,9 @@ void handle_interrupts(int timer) {
                         if(cstatuses[i].stepper_info != NULL) {
                             cstatuses[i].stepper_info->status = STEPPER_STATUS_FINISHED;
                         }
+                    } else if(small_pulse_delay_handle == CANCEL_CYCLE) {
+                        // завершаем весь цикл
+                        canceled = true;
                     }
                     // иначе, игнорируем
                    
@@ -1001,7 +1060,7 @@ void handle_interrupts(int timer) {
         }
     }
     
-    if(finished) {
+    if(finished || canceled) {
         // все моторы сделали все шаги, цикл завершился
         finish_stepper_cycle();
     }
@@ -1015,8 +1074,13 @@ void handle_interrupts(int timer) {
         // обновим информацию о цикле для внешнего мира
         if(_cycle_info != NULL) {
             _cycle_info->error_status = CYCLE_ERROR_HANDLER_TIMING_EXCEEDED;
-            _cycle_info->is_running = true;
         }
+        
+        // что с этим делать
+        if(cycle_timing_exceed_handle == CANCEL_CYCLE) {
+            // ничего хорошего - все завершаем
+            finish_stepper_cycle();
+        } // иначе игнорируем
         
         // Serial.print заведомо не уложится в период таймера, включать только для 
         // единичных запусков при отладке вручную
