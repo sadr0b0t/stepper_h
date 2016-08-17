@@ -169,6 +169,8 @@ static int timer_freq_us;
 
 // Текущий статус цикла
 static bool cycle_running = false;
+// Цикл на паузе (типа работаем, но шаги не делаем)
+static bool cycle_paused = false;
 // для внешнего мира
 static stepper_cycle_info_t* _cycle_info;
 
@@ -638,14 +640,21 @@ void prepare_dynamic_whirl(stepper *smotor, int dir,
  * @param cycle_info информация о цикле, обновляется динамически в процессе работы цикла
  */
 void start_stepper_cycle(stepper_cycle_info_t *cycle_info) {
+    // не запускать новый цикл, если старый не отработал
+    if(cycle_running) {
+        return;
+    }
+
     _cycle_info = cycle_info;
 
     cycle_running = true;
+    cycle_paused = false;
     
     // обновим информацию о цикле для внешнего мира
     if(_cycle_info != NULL) {
         _cycle_info->error_status = CYCLE_ERROR_NONE;
         _cycle_info->is_running = true;
+        _cycle_info->is_paused = false;
     }
     
     // включить моторы
@@ -726,6 +735,7 @@ void finish_stepper_cycle() {
     
     // цикл завершился
     cycle_running = false;
+    cycle_paused = false;
     
     // обнулим список моторов
     stepper_count = 0;
@@ -733,16 +743,50 @@ void finish_stepper_cycle() {
     // обновим информацию о цикле для внешнего мира
     if(_cycle_info != NULL) {
         _cycle_info->is_running = false;
+        _cycle_info->is_paused = false;
+    }
+}
+
+/**
+ * Поставить вращение на паузу, не прирывая всего цикла
+ */
+void pause_stepper_cycle() {
+    cycle_paused = true;
+    
+    // обновим информацию о цикле для внешнего мира
+    if(_cycle_info != NULL) {
+        _cycle_info->is_paused = true;
+    }
+}
+
+/**
+ * Продолжить вращение, если оно было поставлено на паузу
+ */
+void continue_stepper_cycle() {
+    cycle_paused = false;
+    
+    // обновим информацию о цикле для внешнего мира
+    if(_cycle_info != NULL) {
+        _cycle_info->is_paused = false;
     }
 }
 
 /**
  * Текущий статус цикла:
  * true - в процессе выполнения,
- * false - ожидает.
+ * false - ожидает запуска.
  */
 bool is_stepper_cycle_running() {
     return cycle_running;
+}
+
+/**
+ * Проверить, на паузе ли цикл:
+ * true - цикл на паузе (выполняется)
+ * false - цикл не на паузе (выполняется или остановлен).
+ */
+bool is_stepper_cycle_paused() {
+    return cycle_paused;
 }
 
 /**
@@ -778,6 +822,12 @@ void cycle_debug_status(char* status_str) {
  * алгоритм, сейчас не рализовано).
  */
 void handle_interrupts(int timer) {
+
+    // если на паузе, вообще ничего не трогаем
+    if(cycle_paused) {
+        return;
+    }
+
     // вращаем моторы - делаем шаги, как запланировали
     // способы обработки ошибок в процессе: останов с кодом ошибки, игнор, исправление по возможности,
     // код ошибки/предупреждения помещаем в объект со статусом мотора

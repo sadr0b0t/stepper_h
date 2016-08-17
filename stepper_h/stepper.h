@@ -213,6 +213,14 @@ typedef struct {
      */
     bool is_running = false;
     
+    
+    /**
+     * Цикл на паузе:
+     * true - цикл на паузе (выполняется)
+     * false - цикл не на паузе (выполняется или остановлен).
+     */
+    bool is_paused = false;
+    
     /**
      * Информация об ошибке цикла
      */
@@ -391,11 +399,28 @@ void start_stepper_cycle(stepper_cycle_info_t *cycle_info=NULL);
 void finish_stepper_cycle();
 
 /**
+ * Поставить вращение на паузу, не прирывая всего цикла
+ */
+void pause_stepper_cycle();
+
+/**
+ * Продолжить вращение, если оно было поставлено на паузу
+ */
+void continue_stepper_cycle();
+
+/**
  * Текущий статус цикла:
  * true - в процессе выполнения,
- * false - ожидает.
+ * false - ожидает запуска.
  */
 bool is_stepper_cycle_running();
+
+/**
+ * Проверить, на паузе ли цикл:
+ * true - цикл на паузе (выполняется)
+ * false - цикл не на паузе (выполняется или остановлен).
+ */
+bool is_stepper_cycle_paused();
 
 /**
  * Отладочная информация о текущем цикле.
