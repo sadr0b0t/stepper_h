@@ -42,6 +42,28 @@ void init_stepper(stepper* smotor,  char name,
 
 /**
  * Задать настройки границ рабочей области для шагового мотора.
+ * 
+ * Примеры:
+ * 1) область с заранее известными границами:
+ *   init_stepper_ends(&sm_z, NO_PIN, NO_PIN, CONST, CONST, 0, 100000);
+ * 
+ * Движение влево ограничего значением min_pos, движение вправо ограничего значением max_pos
+ * (min_pos<=curr_pos<=max_pos).
+ * 
+ * При калибровке начальной позиции мотора CALIBRATE_START_MIN_POS 
+ * текущее положение мотора curr_pos сбрасывается в значение min_pos (curr_pos=min_pos)
+ * на каждом шаге.
+ *
+ * При калибровке ширины рабочей области CALIBRATE_BOUNDS_MAX_POS 
+ * текущее положение мотора curr_pos задает значение max_pos (max_pos=curr_pos)
+ * на каждом шаге.
+ *
+ * 2) область с заранее известной позицией min_pos, значение max_pos не ограничено:
+ *   init_stepper_ends(&sm_z, NO_PIN, NO_PIN, CONST, INF, 0, 100000);
+ *
+ * Движение влево ограничего начальной позицией min_pos (curr_pos не может стать меньше, 
+ * чем min_pos), движение вправо ничем не ограничено (curr_pos>=min_pos).
+ *
  */
 void init_stepper_ends(stepper* smotor,
         int pin_min, int pin_max,
