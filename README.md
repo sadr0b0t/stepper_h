@@ -44,35 +44,35 @@ static void prepare_line1() {
 }
 
 void setup() {
-    Serial.begin(9600);   
+    Serial.begin(9600);    
     Serial.println("Starting stepper_h test...");
-   
+    
     // connected stepper motors
-    // init_stepper(stepper* smotor,  char* name,
+    // init_stepper(stepper* smotor,  char* name, 
     //     int pin_step, int pin_dir, int pin_en,
     //     int dir_inv, int pulse_delay,
     //     float distance_per_step)
     // init_stepper_ends(stepper* smotor,
     //     end_strategy min_end_strategy, end_strategy max_end_strategy,
     //     double min_pos, double max_pos);
-   
+    
     // X
-    init_stepper(&sm_x, 'x', 8, 9, 10, 1, 1000, 7.5);
-    init_stepper_ends(&sm_x, -1, -1, CONST, CONST, 0, 300000);
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7.5); 
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000);
     // Y
-    init_stepper(&sm_y, 'y', 5, 6, 7, -1, 1000, 7.5);
-    init_stepper_ends(&sm_y, -1, -1, CONST, CONST, 0, 216000);
+    init_stepper(&sm_y, 'y', 5, 6, 7, true, 1000, 7.5);
+    init_stepper_ends(&sm_y, NO_PIN, NO_PIN, CONST, CONST, 0, 216000);
     // Z
-    init_stepper(&sm_z, 'z', 2, 3, 4, -1, 1000, 7.5);
-    init_stepper_ends(&sm_z, -1, -1, CONST, CONST, 0, 100000);
-     
+    init_stepper(&sm_z, 'z', 2, 3, 4, true, 1000, 7.5);
+    init_stepper_ends(&sm_z, NO_PIN, NO_PIN, CONST, CONST, 0, 100000);
+      
     // configure motors before starting steps
     prepare_line1();
     // start motors, non-blocking
     start_stepper_cycle();
 }
 
-void loop() {
+void loop() { 
     static int prevTime = 0;
     // Debug messages - print current positions of motors once per second
     // while they are rotating, once per 10 seconds when they are stopped
@@ -87,7 +87,7 @@ void loop() {
         Serial.print(sm_z.current_pos, DEC);
         Serial.println();
     }
-   
+    
     // put any code here, it would run while the motors are rotating
 }
 ```
