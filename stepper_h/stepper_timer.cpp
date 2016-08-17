@@ -655,7 +655,7 @@ void start_stepper_cycle(stepper_cycle_info_t *cycle_info) {
             cstatuses[i].stepper_info->status = STEPPER_STATUS_RUNNING;
         }
         // аппаратная ножка Enable->LOW (вкл), если задана
-        if(smotors[i]->pin_en != -1) {
+        if(smotors[i]->pin_en != NO_PIN) {
             digitalWrite(smotors[i]->pin_en, LOW);
         }
     }
@@ -714,7 +714,7 @@ void finish_stepper_cycle() {
     // выключим все моторы
     for(int i = 0; i < stepper_count; i++) {
         // аппаратная ножка Enable->HIGH (выкл), если задана
-        if(smotors[i]->pin_en != -1) {
+        if(smotors[i]->pin_en != NO_PIN) {
             digitalWrite(smotors[i]->pin_en, HIGH);
         }
         
@@ -822,7 +822,7 @@ void handle_interrupts(int timer) {
                 // мотор, при старте следующего цикла датчик все еще будет нажат и у нас должна быть возможность
                 // уйти вправо (влево блок, как и в прошлый раз).
                 
-                if(smotors[i]->pin_min != -1 && digitalRead(smotors[i]->pin_min) && cstatuses[i].dir < 0) {
+                if(smotors[i]->pin_min != NO_PIN && digitalRead(smotors[i]->pin_min) && cstatuses[i].dir < 0) {
                     // сработал левый аппаратный концевой датчик и мы движемся влево -
                     // завершаем вращение для этого мотора
                     cstatuses[i].stopped = true;
@@ -842,7 +842,7 @@ void handle_interrupts(int timer) {
                         canceled = true;
                     } // иначе STOP_MOTOR - останавливается только этот мотор 
                     
-                } else if(smotors[i]->pin_max != -1 && digitalRead(smotors[i]->pin_max) && cstatuses[i].dir > 0) {
+                } else if(smotors[i]->pin_max != NO_PIN && digitalRead(smotors[i]->pin_max) && cstatuses[i].dir > 0) {
                     // сработал правый аппаратный концевой датчик и мы движемся вправо - 
                     // завершаем вращение для этого мотора
                     cstatuses[i].stopped = true;
