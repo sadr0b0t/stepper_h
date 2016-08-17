@@ -34,13 +34,13 @@ void setup() {
     //     double min_pos, double max_pos);
     
     // X
-    init_stepper(&sm_x, 'x', 8, 9, 10, 1, 1000, 7.5); 
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7.5); 
     init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000);
     // Y
-    init_stepper(&sm_y, 'y', 5, 6, 7, -1, 1000, 7.5);
+    init_stepper(&sm_y, 'y', 5, 6, 7, true, 1000, 7.5);
     init_stepper_ends(&sm_y, NO_PIN, NO_PIN, CONST, CONST, 0, 216000);
     // Z
-    init_stepper(&sm_z, 'z', 2, 3, 4, -1, 1000, 7.5);
+    init_stepper(&sm_z, 'z', 2, 3, 4, true, 1000, 7.5);
     init_stepper_ends(&sm_z, NO_PIN, NO_PIN, CONST, CONST, 0, 100000);
       
     // configure motors before starting steps

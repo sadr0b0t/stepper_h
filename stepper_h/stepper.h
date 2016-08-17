@@ -229,10 +229,33 @@ typedef struct {
 
 /**
  * Инициализировать шаговый мотор необходимыми значениями.
+ * 
+ * @param smotor
+ * @param name Имя шагового мотора (один символ: X, Y, Z и т.п.) 
+ * @param pin_step Подача периодического импульса HIGH/LOW будет вращать мотор 
+ *     (шаг происходит по фронту HIGH > LOW)
+ * @param pin_dir Направление вращения
+ *     1 (HIGH): в одну сторону
+ *     0 (LOW): в другую
+ *
+ *     Для движения вправо (в сторону увеличения значения виртуальной координаты): 
+ *     при invert_dir==false: запись 1 (HIGH) в pin_dir
+ *     при invert_dir==true: запись 0 (LOW) в pin_dir
+ *
+ * @param pin_en вкл (0)/выкл (1) мотор 
+ *     -1 (NO_PIN): выход не подключен
+ * @param invert_dir Инверсия направления вращения
+ *     true: инвертировать направление вращение
+ *     false: не инвертировать
+ * @param pulse_delay Минимальная задержка между импульсами, микросекунды 
+ *     (для движения с максимальной скоростью) 
+ * @param distance_per_step Расстояние, проходимое координатой за шаг, микрометры
+ *     (на основе значения distance_per_step счетчик шагов вычисляет
+ *     текущее положение рабочей координаты)
  */
 void init_stepper(stepper* smotor,  char name, 
         int pin_step, int pin_dir, int pin_en,
-        int dir_inv, int pulse_delay,
+        bool invert_dir, int pulse_delay,
         double distance_per_step);
         
 /**
