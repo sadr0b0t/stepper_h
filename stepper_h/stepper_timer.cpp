@@ -17,7 +17,7 @@ extern "C"{
 
 #include "stepper.h"
 
-#define DEBUG_SERIAL
+#include "stepper_lib_config.h"
 
 typedef enum {
     /** Игнорировать проблему, продолжать выполнение */
