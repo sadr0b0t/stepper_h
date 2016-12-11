@@ -724,7 +724,7 @@ void stepper_configure_timer(int target_period_us, int timer, int prescaler, int
  *
  * @param cycle_info информация о цикле, обновляется динамически в процессе работы цикла
  */
-void start_stepper_cycle(stepper_cycle_info_t *cycle_info) {
+void stepper_start_cycle(stepper_cycle_info_t *cycle_info) {
     // не запускать новый цикл, если старый не отработал
     if(_cycle_running) {
         return;
@@ -762,7 +762,7 @@ void start_stepper_cycle(stepper_cycle_info_t *cycle_info) {
 /**
  * Завершить цикл шагов - остановить таймер, обнулить список моторов.
  */
-void finish_stepper_cycle() {
+void stepper_finish_cycle() {
     // остановим таймер
     stopTimerISR(TIMER3);
         
@@ -796,7 +796,7 @@ void finish_stepper_cycle() {
 /**
  * Поставить вращение на паузу, не прирывая всего цикла
  */
-void pause_stepper_cycle() {
+void stepper_pause_cycle() {
     _cycle_paused = true;
     
     // обновим информацию о цикле для внешнего мира
@@ -808,7 +808,7 @@ void pause_stepper_cycle() {
 /**
  * Продолжить вращение, если оно было поставлено на паузу
  */
-void continue_stepper_cycle() {
+void stepper_continue_cycle() {
     _cycle_paused = false;
     
     // обновим информацию о цикле для внешнего мира
@@ -822,7 +822,7 @@ void continue_stepper_cycle() {
  * true - в процессе выполнения,
  * false - ожидает запуска.
  */
-bool is_stepper_cycle_running() {
+bool stepper_is_cycle_running() {
     return _cycle_running;
 }
 
@@ -831,14 +831,14 @@ bool is_stepper_cycle_running() {
  * true - цикл на паузе (выполняется)
  * false - цикл не на паузе (выполняется или остановлен).
  */
-bool is_stepper_cycle_paused() {
+bool stepper_is_cycle_paused() {
     return _cycle_paused;
 }
 
 /**
  * Отладочная информация о текущем цикле.
  */
-void cycle_debug_status(char* status_str) {
+void stepper_cycle_debug_status(char* status_str) {
     sprintf(status_str, "stepper_count=%d", _stepper_count);
     for(int i = 0; i < _stepper_count; i++) {
         sprintf(status_str+strlen(status_str), 
@@ -1158,7 +1158,7 @@ void handle_interrupts(int timer) {
     
     if(finished || canceled) {
         // все моторы сделали все шаги, цикл завершился
-        finish_stepper_cycle();
+        stepper_finish_cycle();
     }
     
     // проверим, уложились ли в желаемое время
@@ -1175,7 +1175,7 @@ void handle_interrupts(int timer) {
         // что с этим делать
         if(_cycle_timing_exceed_handle == CANCEL_CYCLE) {
             // ничего хорошего - все завершаем
-            finish_stepper_cycle();
+            stepper_finish_cycle();
         } // иначе игнорируем
         
         // Serial.print заведомо не уложится в период таймера, включать только для 

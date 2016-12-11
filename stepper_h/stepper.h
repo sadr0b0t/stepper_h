@@ -480,41 +480,41 @@ void stepper_configure_timer(int target_period_us, int timer, int prescaler, int
  *
  * @param cycle_info информация о цикле, обновляется динамически в процессе работы цикла
  */
-void start_stepper_cycle(stepper_cycle_info_t *cycle_info=NULL);
+void stepper_start_cycle(stepper_cycle_info_t *cycle_info=NULL);
 
 /**
  * Завершить цикл шагов - остановить таймер, обнулить список моторов.
  */
-void finish_stepper_cycle();
+void stepper_finish_cycle();
 
 /**
  * Поставить вращение на паузу, не прирывая всего цикла
  */
-void pause_stepper_cycle();
+void stepper_pause_cycle();
 
 /**
  * Продолжить вращение, если оно было поставлено на паузу
  */
-void continue_stepper_cycle();
+void stepper_continue_cycle();
 
 /**
  * Текущий статус цикла:
  * true - в процессе выполнения,
  * false - ожидает запуска.
  */
-bool is_stepper_cycle_running();
+bool stepper_is_cycle_running();
 
 /**
  * Проверить, на паузе ли цикл:
  * true - цикл на паузе (выполняется)
  * false - цикл не на паузе (выполняется или остановлен).
  */
-bool is_stepper_cycle_paused();
+bool stepper_is_cycle_paused();
 
 /**
  * Отладочная информация о текущем цикле.
  */
-void cycle_debug_status(char* status_str);
+void stepper_cycle_debug_status(char* status_str);
 
 #endif // STEPPER_H
 
