@@ -411,6 +411,70 @@ void prepare_dynamic_whirl(stepper *smotor, int dir,
         stepper_info_t *stepper_info=NULL);
 
 /**
+ * Настроить таймер для шагов.
+ * Частота ядра PIC32MX - 80МГц=80млн операций в секунду.
+ * Берем базовый предварительный масштаб таймера 
+ * (например, TIMER_PRESCALER_1_8), дальше подбираем 
+ * частоту под нужный период
+ * 
+ * Example: to set timer clock period to 20ms (50 operations per second)
+ * use prescaler 1:64 (0x0060) and period=0x61A8:
+ * 80000000/64/50=25000=0x61A8
+ * 
+ * для периода 1 микросекунда (1млн вызовов в секунду):
+ * // (уже подглючивает)
+ * 80000000/8/1000000=10=0xA
+ *   target_period_us = 1
+ *   prescalar = TIMER_PRESCALER_1_8 = 8
+ *   period = 10
+ * 
+ * для периода 5 микросекунд (200тыс вызовов в секунду):
+ * 80000000/8/1000000=10
+ *   target_period_us = 5
+ *   prescalar = TIMER_PRESCALER_1_8 = 8
+ *   period = 50
+ * 
+ * для периода 10 микросекунд (100тыс вызовов в секунду):
+ * // ок для движения по линии, совсем не ок для движения по дуге (по 90мкс на acos/asin)
+ * 80000000/8/100000=100=0x64
+ *   target_period_us = 10
+ *   prescalar = TIMER_PRESCALER_1_8 = 8
+ *   period = 100
+ *
+ * для периода 20 микросекунд (50тыс вызовов в секунду):
+ * 80000000/8/50000=200
+ *   target_period_us = 20
+ *   prescalar = TIMER_PRESCALER_1_8 = 8
+ *   period = 200
+ *
+ * для периода 80 микросекунд (12.5тыс вызовов в секунду):
+ * 80000000/8/12500=200
+ *   target_period_us = 80
+ *   prescalar = TIMER_PRESCALER_1_8 = 8
+ *   period = 800
+ *
+ * для периода 100 микросекунд (10тыс вызовов в секунду):
+ * 80000000/8/10000=1000
+ *   target_period_us = 100
+ *   prescalar = TIMER_PRESCALER_1_8 = 8
+ *   period = 1000
+ *
+ * для периода 200 микросекунд (5тыс вызовов в секунду):
+ * // ок для движения по дуге (по 90мкс на acos/asin)
+ * 80000000/8/5000=2000
+ *   target_period_us = 200
+ *   prescalar = TIMER_PRESCALER_1_8 = 8
+ *   period = 2000
+ *
+ * @param target_period_us - целевой период таймера, микросекунды.
+ * @param timer - системный идентификатор таймера (должен поддерживаться аппаратно)
+ * @param prescalar - предварительный масштаб таймера
+ * @param period - значение для периода таймера: делитель частоты таймера
+ *     после того, как к ней применен предварительный масштаб (prescaler)
+ */
+void stepper_configure_timer(int target_period_us, int timer, int prescaler, int period);
+
+/**
  * Запустить цикл шагов на выполнение - запускаем таймер, обработчик прерываний
  * отрабатывать подготовленную программу.
  *

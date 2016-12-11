@@ -43,24 +43,24 @@
 #include "timer_setup.h"
 
 // M00BUG: This is hard coded for specific registers for interrupt priority
-//	flag bits and enable bits. This code happens to work correctly for all
-//  currently existing PIC32 devices, but this needs to be rewritten to be
-//	more generic.
+// flag bits and enable bits. This code happens to work correctly for all
+// currently existing PIC32 devices, but this needs to be rewritten to be
+// more generic.
 
 void __attribute__((interrupt(),nomips16)) T3_IntHandler (void){
- 	handle_interrupts(TIMER3); 
-	IFS0CLR = 0x1000; // Clear timer interrupt status flag
+    handle_interrupts(TIMER3); 
+    IFS0CLR = 0x1000; // Clear timer interrupt status flag
 }
 
 
 void __attribute__((interrupt(),nomips16)) T4_IntHandler (void){
- 	handle_interrupts(TIMER4); 
-	IFS0CLR = 0x10000; // Clear timer interrupt status flag
+    handle_interrupts(TIMER4); 
+    IFS0CLR = 0x10000; // Clear timer interrupt status flag
 }
 
 void __attribute__((interrupt(),nomips16)) T5_IntHandler (void){
- 	handle_interrupts(TIMER5); 
-	IFS0CLR = 0x100000; // Clear timer interrupt status flag
+    handle_interrupts(TIMER5); 
+    IFS0CLR = 0x100000; // Clear timer interrupt status flag
 }
 
 /**
@@ -142,6 +142,4 @@ void stopTimerISR(int timer) {
         IEC0CLR = 0x100000;		// disable T5 interrupt 
     }
 }
-
-
 

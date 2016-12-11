@@ -10,6 +10,8 @@
  */
  
 #include "WProgram.h"
+#include "stdio.h"
+#include "string.h"
 
 extern "C"{
     #include "timer_setup.h"
@@ -164,8 +166,16 @@ static int stepper_count = 0;
 static stepper* smotors[MAX_STEPPERS];
 static motor_cycle_info_t cstatuses[MAX_STEPPERS];
 
-// Частота таймера, мкс
-static int timer_freq_us;
+// Настройки таймера
+// значения по умолчанию для таймера 
+// с периодом 200 микросекунд (5тыс вызовов в секунду)
+// ок для движения по дуге (по 90мкс на acos/asin)
+// 80000000/8/5000=2000
+static int _timer_id = TIMER3;
+static int _timer_prescaler = TIMER_PRESCALER_1_8;
+static int _timer_period = 2000;
+// Период таймера, мкс
+static int timer_period_us = 200;
 
 // Текущий статус цикла
 static bool cycle_running = false;
@@ -203,7 +213,7 @@ static error_handle_strategy_t cycle_timing_exceed_handle = CANCEL_CYCLE;
  *        в процессе вращения двигателя
  */
 void prepare_steps(stepper *smotor, int step_count, int step_delay, stepper_info_t *stepper_info) {
-  
+    
     // резерв нового места на мотор в списке
     int sm_i = stepper_count;
     stepper_count++;
@@ -634,6 +644,81 @@ void prepare_dynamic_whirl(stepper *smotor, int dir,
 }
 
 /**
+ * Настроить таймер для шагов.
+ * Частота ядра PIC32MX - 80МГц=80млн операций в секунду.
+ * Берем базовый предварительный масштаб таймера 
+ * (например, TIMER_PRESCALER_1_8), дальше подбираем 
+ * частоту под нужный период
+ * 
+ * Example: to set timer clock period to 20ms (50 operations per second)
+ * use prescaler 1:64 (0x0060) and period=0x61A8:
+ * 80000000/64/50=25000=0x61A8
+ * 
+ * для периода 1 микросекунда (1млн вызовов в секунду):
+ * // (уже подглючивает)
+ * 80000000/8/1000000=10=0xA
+ *   target_period_us = 1
+ *   prescalar = TIMER_PRESCALER_1_8 = 8
+ *   period = 10
+ * 
+ * для периода 5 микросекунд (200тыс вызовов в секунду):
+ * 80000000/8/1000000=10
+ *   target_period_us = 5
+ *   prescalar = TIMER_PRESCALER_1_8 = 8
+ *   period = 50
+ * 
+ * для периода 10 микросекунд (100тыс вызовов в секунду):
+ * // ок для движения по линии, совсем не ок для движения по дуге (по 90мкс на acos/asin)
+ * 80000000/8/100000=100=0x64
+ *   target_period_us = 10
+ *   prescalar = TIMER_PRESCALER_1_8 = 8
+ *   period = 100
+ *
+ * для периода 20 микросекунд (50тыс вызовов в секунду):
+ * 80000000/8/50000=200
+ *   target_period_us = 20
+ *   prescalar = TIMER_PRESCALER_1_8 = 8
+ *   period = 200
+ *
+ * для периода 80 микросекунд (12.5тыс вызовов в секунду):
+ * 80000000/8/12500=200
+ *   target_period_us = 80
+ *   prescalar = TIMER_PRESCALER_1_8 = 8
+ *   period = 800
+ *
+ * для периода 100 микросекунд (10тыс вызовов в секунду):
+ * 80000000/8/10000=1000
+ *   target_period_us = 100
+ *   prescalar = TIMER_PRESCALER_1_8 = 8
+ *   period = 1000
+ *
+ * для периода 200 микросекунд (5тыс вызовов в секунду):
+ * // ок для движения по дуге (по 90мкс на acos/asin)
+ * 80000000/8/5000=2000
+ *   target_period_us = 200
+ *   prescalar = TIMER_PRESCALER_1_8 = 8
+ *   period = 2000
+ *
+ * @param target_period_us - целевой период таймера, микросекунды.
+ * @param timer - системный идентификатор таймера (должен поддерживаться аппаратно)
+ * @param prescalar - предварительный масштаб таймера
+ * @param period - значение для периода таймера: делитель частоты таймера
+ *     после того, как к ней применен предварительный масштаб (prescaler)
+ */
+void stepper_configure_timer(int target_period_us, int timer, int prescaler, int period) {
+    // не ломать настройки таймера, пока не отарботал старый цикл
+    if(cycle_running) {
+        return;
+    }
+    
+    timer_period_us = target_period_us;
+    
+    _timer_id = timer;
+    _timer_prescaler = prescaler;
+    _timer_period = period;
+}
+
+/**
  * Запустить цикл шагов на выполнение - запускаем таймер, обработчик прерываний
  * отрабатывать подготовленную программу.
  *
@@ -669,48 +754,9 @@ void start_stepper_cycle(stepper_cycle_info_t *cycle_info) {
         }
     }
     
-    // частота ядра PIC32MX - 80МГц=80млн операций в секунду
-    // берем базовый TIMER_PRESCALER_1_8, дальше подбираем 
-    // частоту под нужный период
-    
-    // для периода 1 микросекунда (1млн вызовов в секунду):
-    // 80000000/8/1000000=10=0xA
-    // (уже подглючивает)
-//    timer_freq_us = 1;
-//    initTimerISR(TIMER3, TIMER_PRESCALER_1_8, 0xA);
-    
-    // для периода 5 микросекунд (200тыс вызовов в секунду):
-    // 80000000/8/200000=50
-    //timer_freq_us = 5;
-    //initTimerISR(TIMER3, TIMER_PRESCALER_1_8, 50);
-    
-    // ок для движения по линии, совсем не ок для движения по дуге (по 90мкс на acos/asin)
-    // Запустим таймер с периодом 10 микросекунд (100тыс вызовов в секунду):
-    // 80000000/8/100000=100=0x64
-    //timer_freq_us = 10;
-    //initTimerISR(TIMER3, TIMER_PRESCALER_1_8, 0x64);
-    
-    // Запустим таймер с периодом 20 микросекунд (50тыс вызовов в секунду):
-    // 80000000/8/50000=200
-    //timer_freq_us = 20;
-    //initTimerISR(TIMER3, TIMER_PRESCALER_1_8, 200);
-    
-    // Запустим таймер с периодом 80 микросекунд (12.5тыс вызовов в секунду):
-    // 80000000/8/12500=200
-    //timer_freq_us = 80;
-    //initTimerISR(TIMER3, TIMER_PRESCALER_1_8, 800);
-    
-    // Запустим таймер с периодом 100 микросекунд (10тыс вызовов в секунду):
-    // 80000000/8/10000=1000
-    //timer_freq_us = 100;
-    //initTimerISR(TIMER3, TIMER_PRESCALER_1_8, 1000);
-    
-    
-    // ок для движения движения по дуге (по 90мкс на acos/asin)
-    // Запустим таймер с периодом 100 микросекунд (12.5тыс вызовов в секунду):
-    // 80000000/8/5000=2000
-    timer_freq_us = 200;
-    initTimerISR(TIMER3, TIMER_PRESCALER_1_8, 2000);
+    // Запустим таймер с периодом timer_period_us, для этого
+    // должны быть заданы правильные _timer_prescaler и _timer_period
+    initTimerISR(_timer_id, _timer_prescaler, _timer_period);
 }
 
 /**
@@ -802,10 +848,10 @@ void cycle_debug_status(char* status_str) {
 }
 
 /**
- * Обработчик прерывания от таймера - дёргается каждые timer_freq_us микросекунд.
+ * Обработчик прерывания от таймера - дёргается каждые timer_period_us микросекунд.
  *
  * Этот код должен быть максимально быстрым, каждая итерация должна обязательно уложиться 
- * в значение timer_freq_us (10мкс на PIC32 без рисования дуг, т.е. без тригонометрии, - ок; 
+ * в значение timer_period_us (10мкс на PIC32 без рисования дуг, т.е. без тригонометрии, - ок; 
  * с тригонометрией для дуг таймер должен быть >15мкс) и еще оставить немного времени 
  * на выполнение всяких других задач за пределами таймера из главного цикла программы.
  *
@@ -848,7 +894,7 @@ void handle_interrupts(int timer) {
     
     // цикл по всем моторам
     for(int i = 0; i < stepper_count && !canceled; i++) {
-        cstatuses[i].step_timer -= timer_freq_us;
+        cstatuses[i].step_timer -= timer_period_us;
         
         if( (cstatuses[i].non_stop || cstatuses[i].step_counter > 0) && !cstatuses[i].stopped) {
         
@@ -858,7 +904,7 @@ void handle_interrupts(int timer) {
             finished = false;
         
         
-            if(cstatuses[i].step_timer < timer_freq_us*3 && cstatuses[i].step_timer >= timer_freq_us*2) {
+            if(cstatuses[i].step_timer < timer_period_us*3 && cstatuses[i].step_timer >= timer_period_us*2) {
                 // >>>За 2 импульса до обнуления таймера
                 // проверим пограничные значения координат и концевики непосредственно перед шагом
                 // (если все ок, то на следующем импульсе пин мотора пойдет в HIGH, а еще на следующем - в LOW)
@@ -967,19 +1013,19 @@ void handle_interrupts(int timer) {
                     } // иначе STOP_MOTOR - останавливается только этот мотор
                     
                 }
-            } else if(cstatuses[i].step_timer < timer_freq_us*2 && cstatuses[i].step_timer >= timer_freq_us) {
+            } else if(cstatuses[i].step_timer < timer_period_us*2 && cstatuses[i].step_timer >= timer_period_us) {
                 // >>>За 1 импульс до обнуления таймера
                 // Шаг происходит по фронту сигнала HIGH>LOW, ширина ступени HIGH при этом не важна.
                 // Поэтому сформируем ступень HIGH за один цикл таймера до сброса в LOW
             
-                // cstatuses[i].step_timer ~ timer_freq_us с учетом погрешности таймера (timer_freq_us) =>
+                // cstatuses[i].step_timer ~ timer_period_us с учетом погрешности таймера (timer_period_us) =>
                 // импульс1 - готовим шаг
                 digitalWrite(smotors[i]->pin_step, HIGH);
-            } else if(cstatuses[i].step_timer < timer_freq_us) {
+            } else if(cstatuses[i].step_timer < timer_period_us) {
                 // >>>Таймер обнулился
                 // Шагаем
-                // cstatuses[i].step_timer ~ 0 с учетом погрешности таймера (timer_freq_us) =>
-                // импульс2 (спустя timer_freq_us микросекунд после импульса1) - совершаем шаг
+                // cstatuses[i].step_timer ~ 0 с учетом погрешности таймера (timer_period_us) =>
+                // импульс2 (спустя timer_period_us микросекунд после импульса1) - совершаем шаг
                 digitalWrite(smotors[i]->pin_step, LOW);
                 
                 // шагнули, отметимся в разных местах и приготовимся к следующему шагу (если он будет)
@@ -1072,19 +1118,19 @@ void handle_interrupts(int timer) {
                 if(step_delay < smotors[i]->pulse_delay) {
                     // посмотрим, что делать с ошибкой
                     if(small_pulse_delay_handle == FIX) {
-                        // попробуем исправить:
-                        // не будем делать шаги чаще, чем может мотор
-                        // (следует понимать, что корректность вращения уже нарушена)
-                        step_delay = smotors[i]->pulse_delay;
-                            
-                        #ifdef DEBUG_SERIAL     
-                            Serial.print("***WARNING: fixing step_delay to match pulse_delay ");
+                        #ifdef DEBUG_SERIAL
+                            Serial.print("***WARNING: fixing step_delay to match minimal pulse_delay ");
                             Serial.print("step_delay=");
                             Serial.print(step_delay);
                             Serial.print("us, pulse_delay=");
                             Serial.print(smotors[i]->pulse_delay);
                             Serial.println("us");
                         #endif // DEBUG_SERIAL
+                        
+                        // попробуем исправить:
+                        // не будем делать шаги чаще, чем может мотор
+                        // (следует понимать, что корректность вращения уже нарушена)
+                        step_delay = smotors[i]->pulse_delay;
                     } else if(small_pulse_delay_handle == STOP_MOTOR) {
                         // останавливаем мотор
                         cstatuses[i].stopped = true;
@@ -1118,7 +1164,7 @@ void handle_interrupts(int timer) {
     // проверим, уложились ли в желаемое время
     unsigned long cycle_finish = micros();
     unsigned long cycle_time = cycle_finish - cycle_start;
-    if(cycle_time >= timer_freq_us) {
+    if(cycle_time >= timer_period_us) {
         // обработчик работает дольше, чем таймер генерирует импульсы,
         // тайминг может быть нарушен
         // обновим информацию о цикле для внешнего мира
@@ -1139,7 +1185,7 @@ void handle_interrupts(int timer) {
             Serial.print("cycle time=");
             Serial.print(cycle_time);
             Serial.print("us, timer period=");
-            Serial.print(timer_freq_us);
+            Serial.print(timer_period_us);
             Serial.println("us");
         #endif // DEBUG_SERIAL
     }

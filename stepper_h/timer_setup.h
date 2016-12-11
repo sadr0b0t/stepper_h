@@ -35,10 +35,6 @@
 #ifndef TIMER_SETUP_H
 #define TIMER_SETUP_H
 
-
-#include <WProgram.h> 
-#include <inttypes.h>
-
 // define timer ids
 #define TIMER3 0
 #define TIMER4 1
