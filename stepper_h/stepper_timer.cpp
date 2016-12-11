@@ -162,9 +162,9 @@ typedef struct {
 #define MAX_STEPPERS 6
 #endif
 
-static int stepper_count = 0;
-static stepper* smotors[MAX_STEPPERS];
-static motor_cycle_info_t cstatuses[MAX_STEPPERS];
+static int _stepper_count = 0;
+static stepper* _smotors[MAX_STEPPERS];
+static motor_cycle_info_t _cstatuses[MAX_STEPPERS];
 
 // Настройки таймера
 // значения по умолчанию для таймера 
@@ -175,32 +175,32 @@ static int _timer_id = TIMER3;
 static int _timer_prescaler = TIMER_PRESCALER_1_8;
 static int _timer_period = 2000;
 // Период таймера, мкс
-static int timer_period_us = 200;
+static int _timer_period_us = 200;
 
 // Текущий статус цикла
-static bool cycle_running = false;
+static bool _cycle_running = false;
 // Цикл на паузе (типа работаем, но шаги не делаем)
-static bool cycle_paused = false;
+static bool _cycle_paused = false;
 // для внешнего мира
 static stepper_cycle_info_t* _cycle_info;
 
 // Стратегия реакции на ошибки
 // STOP_MOTOR/CANCEL_CYCLE
-//static error_handle_strategy_t hard_end_handle = STOP_MOTOR;
-static error_handle_strategy_t hard_end_handle = CANCEL_CYCLE;
+//static error_handle_strategy_t _hard_end_handle = STOP_MOTOR;
+static error_handle_strategy_t _hard_end_handle = CANCEL_CYCLE;
 
 // STOP_MOTOR/CANCEL_CYCLE
-//static error_handle_strategy_t soft_end_handle = STOP_MOTOR;
-static error_handle_strategy_t soft_end_handle = CANCEL_CYCLE;
+//static error_handle_strategy_t _soft_end_handle = STOP_MOTOR;
+static error_handle_strategy_t _soft_end_handle = CANCEL_CYCLE;
 
 // FIX/STOP_MOTOR/CANCEL_CYCLE/IGNORE
-static error_handle_strategy_t small_pulse_delay_handle = FIX;
-//static error_handle_strategy_t small_pulse_delay_handle = STOP_MOTOR;
-//static error_handle_strategy_t small_pulse_delay_handle = CANCEL_CYCLE;
-//static error_handle_strategy_t small_pulse_delay_handle = IGNORE;
+static error_handle_strategy_t _small_pulse_delay_handle = FIX;
+//static error_handle_strategy_t _small_pulse_delay_handle = STOP_MOTOR;
+//static error_handle_strategy_t _small_pulse_delay_handle = CANCEL_CYCLE;
+//static error_handle_strategy_t _small_pulse_delay_handle = IGNORE;
 
 // IGNORE/CANCEL_CYCLE
-static error_handle_strategy_t cycle_timing_exceed_handle = CANCEL_CYCLE;
+static error_handle_strategy_t _cycle_timing_exceed_handle = CANCEL_CYCLE;
 
 
 /**
@@ -215,55 +215,55 @@ static error_handle_strategy_t cycle_timing_exceed_handle = CANCEL_CYCLE;
 void prepare_steps(stepper *smotor, int step_count, int step_delay, stepper_info_t *stepper_info) {
     
     // резерв нового места на мотор в списке
-    int sm_i = stepper_count;
-    stepper_count++;
+    int sm_i = _stepper_count;
+    _stepper_count++;
     
     // ссылка на мотор
-    smotors[sm_i] = smotor;
+    _smotors[sm_i] = smotor;
     
     // динамический статус мотора
-    cstatuses[sm_i].stepper_info = stepper_info;
+    _cstatuses[sm_i].stepper_info = stepper_info;
         
     // Подготовить движение
   
     // задать направление
-    cstatuses[sm_i].dir = step_count > 0 ? 1 : -1;
-    if(cstatuses[sm_i].dir * smotors[sm_i]->dir_inv > 0) {
-        digitalWrite(smotors[sm_i]->pin_dir, HIGH); // туда
+    _cstatuses[sm_i].dir = step_count > 0 ? 1 : -1;
+    if(_cstatuses[sm_i].dir * _smotors[sm_i]->dir_inv > 0) {
+        digitalWrite(_smotors[sm_i]->pin_dir, HIGH); // туда
     } else {
-        digitalWrite(smotors[sm_i]->pin_dir, LOW); // обратно
+        digitalWrite(_smotors[sm_i]->pin_dir, LOW); // обратно
     }
     
     // шагаем ограниченное количество шагов
-    cstatuses[sm_i].non_stop = false;
+    _cstatuses[sm_i].non_stop = false;
     // сделать step_count положительным
-    cstatuses[sm_i].step_count = step_count > 0 ? step_count : -step_count;
+    _cstatuses[sm_i].step_count = step_count > 0 ? step_count : -step_count;
     
     // скорость вращения - постоянная
-    cstatuses[sm_i].delay_source = CONSTANT;
-    cstatuses[sm_i].step_delay = step_delay;
+    _cstatuses[sm_i].delay_source = CONSTANT;
+    _cstatuses[sm_i].step_delay = step_delay;
     
     // выключить режим калибровки
-    cstatuses[sm_i].calibrate_mode = NONE;
+    _cstatuses[sm_i].calibrate_mode = NONE;
   
     // Взводим счетчики
-    cstatuses[sm_i].step_counter = cstatuses[sm_i].step_count;
+    _cstatuses[sm_i].step_counter = _cstatuses[sm_i].step_count;
     // задержка перед первым шагом
-    cstatuses[sm_i].step_timer = cstatuses[sm_i].step_delay;
+    _cstatuses[sm_i].step_timer = _cstatuses[sm_i].step_delay;
     
     // ожидаем пуска
-    if(cstatuses[sm_i].stepper_info != NULL) {
-        cstatuses[sm_i].stepper_info->status = STEPPER_STATUS_IDLE;
+    if(_cstatuses[sm_i].stepper_info != NULL) {
+        _cstatuses[sm_i].stepper_info->status = STEPPER_STATUS_IDLE;
        
         // обнулим ошибки
-        cstatuses[sm_i].stepper_info->error_soft_end_min = false;
-        cstatuses[sm_i].stepper_info->error_soft_end_max = false;
-        cstatuses[sm_i].stepper_info->error_hard_end_min = false;
-        cstatuses[sm_i].stepper_info->error_hard_end_max = false;
-        cstatuses[sm_i].stepper_info->error_pulse_delay_small = false;
+        _cstatuses[sm_i].stepper_info->error_soft_end_min = false;
+        _cstatuses[sm_i].stepper_info->error_soft_end_max = false;
+        _cstatuses[sm_i].stepper_info->error_hard_end_min = false;
+        _cstatuses[sm_i].stepper_info->error_hard_end_max = false;
+        _cstatuses[sm_i].stepper_info->error_pulse_delay_small = false;
     }
     
-    cstatuses[sm_i].stopped = false;
+    _cstatuses[sm_i].stopped = false;
 }
 
 /**
@@ -283,56 +283,56 @@ void prepare_steps(stepper *smotor, int step_count, int step_delay, stepper_info
 void prepare_whirl(stepper *smotor, int dir, int step_delay, calibrate_mode_t calibrate_mode, 
         stepper_info_t *stepper_info) {
     // резерв нового места на мотор в списке
-    int sm_i = stepper_count;
-    stepper_count++;
+    int sm_i = _stepper_count;
+    _stepper_count++;
     
     // ссылка на мотор
-    smotors[sm_i] = smotor;
+    _smotors[sm_i] = smotor;
     
     // динамический статус мотора
-    cstatuses[sm_i].stepper_info = stepper_info;
+    _cstatuses[sm_i].stepper_info = stepper_info;
     
     // Подготовить движение
   
     // задать направление
-    cstatuses[sm_i].dir = dir;
-    if(cstatuses[sm_i].dir * smotors[sm_i]->dir_inv > 0) {
-        digitalWrite(smotors[sm_i]->pin_dir, HIGH); // туда
+    _cstatuses[sm_i].dir = dir;
+    if(_cstatuses[sm_i].dir * _smotors[sm_i]->dir_inv > 0) {
+        digitalWrite(_smotors[sm_i]->pin_dir, HIGH); // туда
     } else {
-        digitalWrite(smotors[sm_i]->pin_dir, LOW); // обратно
+        digitalWrite(_smotors[sm_i]->pin_dir, LOW); // обратно
     }
     
     // шагаем без остановки
-    cstatuses[sm_i].non_stop = true;
+    _cstatuses[sm_i].non_stop = true;
     
     // скорость вращения - постоянная
-    cstatuses[sm_i].delay_source = CONSTANT;
-    cstatuses[sm_i].step_delay = step_delay;
+    _cstatuses[sm_i].delay_source = CONSTANT;
+    _cstatuses[sm_i].step_delay = step_delay;
     
     // режим калибровки
-    cstatuses[sm_i].calibrate_mode = calibrate_mode;
+    _cstatuses[sm_i].calibrate_mode = calibrate_mode;
   
     // взводим счетчики
     // задержка перед первым шагом
-    cstatuses[sm_i].step_timer = cstatuses[sm_i].step_delay;
+    _cstatuses[sm_i].step_timer = _cstatuses[sm_i].step_delay;
     
     // на всякий случай обнулим
-    cstatuses[sm_i].step_count = 0;
-    cstatuses[sm_i].step_counter = 0;
+    _cstatuses[sm_i].step_count = 0;
+    _cstatuses[sm_i].step_counter = 0;
     
     // ожидаем пуска
-    if(cstatuses[sm_i].stepper_info != NULL) {
-        cstatuses[sm_i].stepper_info->status = STEPPER_STATUS_IDLE;
+    if(_cstatuses[sm_i].stepper_info != NULL) {
+        _cstatuses[sm_i].stepper_info->status = STEPPER_STATUS_IDLE;
        
         // обнулим ошибки
-        cstatuses[sm_i].stepper_info->error_soft_end_min = false;
-        cstatuses[sm_i].stepper_info->error_soft_end_max = false;
-        cstatuses[sm_i].stepper_info->error_hard_end_min = false;
-        cstatuses[sm_i].stepper_info->error_hard_end_max = false;
-        cstatuses[sm_i].stepper_info->error_pulse_delay_small = false;
+        _cstatuses[sm_i].stepper_info->error_soft_end_min = false;
+        _cstatuses[sm_i].stepper_info->error_soft_end_max = false;
+        _cstatuses[sm_i].stepper_info->error_hard_end_min = false;
+        _cstatuses[sm_i].stepper_info->error_hard_end_max = false;
+        _cstatuses[sm_i].stepper_info->error_pulse_delay_small = false;
     }
     
-    cstatuses[sm_i].stopped = false;
+    _cstatuses[sm_i].stopped = false;
 }
 
 /**
@@ -385,57 +385,57 @@ void prepare_whirl(stepper *smotor, int dir, int step_delay, calibrate_mode_t ca
 void prepare_simple_buffered_steps(stepper *smotor, int buf_size, int* delay_buffer, 
         int step_count, stepper_info_t *stepper_info) {
     // резерв нового места на мотор в списке
-    int sm_i = stepper_count;
-    stepper_count++;
+    int sm_i = _stepper_count;
+    _stepper_count++;
     
     // ссылка на мотор
-    smotors[sm_i] = smotor;
+    _smotors[sm_i] = smotor;
     
     // динамический статус мотора
-    cstatuses[sm_i].stepper_info = stepper_info;
+    _cstatuses[sm_i].stepper_info = stepper_info;
         
     // Подготовить движение
   
     // задать направление
-    cstatuses[sm_i].dir = step_count > 0 ? 1 : -1;
-    if(cstatuses[sm_i].dir * smotors[sm_i]->dir_inv > 0) {
-        digitalWrite(smotors[sm_i]->pin_dir, HIGH); // туда
+    _cstatuses[sm_i].dir = step_count > 0 ? 1 : -1;
+    if(_cstatuses[sm_i].dir * _smotors[sm_i]->dir_inv > 0) {
+        digitalWrite(_smotors[sm_i]->pin_dir, HIGH); // туда
     } else {
-        digitalWrite(smotors[sm_i]->pin_dir, LOW); // обратно
+        digitalWrite(_smotors[sm_i]->pin_dir, LOW); // обратно
     }
     
     // шагаем ограниченное количество шагов
-    cstatuses[sm_i].non_stop = false;
+    _cstatuses[sm_i].non_stop = false;
     // сделать step_count положительным
-    cstatuses[sm_i].step_count = buf_size > 0 ? buf_size*step_count : -buf_size*step_count;
+    _cstatuses[sm_i].step_count = buf_size > 0 ? buf_size*step_count : -buf_size*step_count;
     
     // настройки переменной скорости вращения
-    cstatuses[sm_i].delay_source = BUFFER;
-    cstatuses[sm_i].delay_buffer = delay_buffer;
-    cstatuses[sm_i].scale = step_count;
+    _cstatuses[sm_i].delay_source = BUFFER;
+    _cstatuses[sm_i].delay_buffer = delay_buffer;
+    _cstatuses[sm_i].scale = step_count;
     
     
     // выключить режим калибровки
-    cstatuses[sm_i].calibrate_mode = NONE;
+    _cstatuses[sm_i].calibrate_mode = NONE;
   
     // Взводим счетчики
-    cstatuses[sm_i].step_counter = cstatuses[sm_i].step_count;
+    _cstatuses[sm_i].step_counter = _cstatuses[sm_i].step_count;
     // задержка перед первым шагом
-    cstatuses[sm_i].step_timer = cstatuses[sm_i].delay_buffer[0];
+    _cstatuses[sm_i].step_timer = _cstatuses[sm_i].delay_buffer[0];
     
     // ожидаем пуска
-    if(cstatuses[sm_i].stepper_info != NULL) {
-        cstatuses[sm_i].stepper_info->status = STEPPER_STATUS_IDLE;
+    if(_cstatuses[sm_i].stepper_info != NULL) {
+        _cstatuses[sm_i].stepper_info->status = STEPPER_STATUS_IDLE;
        
         // обнулим ошибки
-        cstatuses[sm_i].stepper_info->error_soft_end_min = false;
-        cstatuses[sm_i].stepper_info->error_soft_end_max = false;
-        cstatuses[sm_i].stepper_info->error_hard_end_min = false;
-        cstatuses[sm_i].stepper_info->error_hard_end_max = false;
-        cstatuses[sm_i].stepper_info->error_pulse_delay_small = false;
+        _cstatuses[sm_i].stepper_info->error_soft_end_min = false;
+        _cstatuses[sm_i].stepper_info->error_soft_end_max = false;
+        _cstatuses[sm_i].stepper_info->error_hard_end_min = false;
+        _cstatuses[sm_i].stepper_info->error_hard_end_max = false;
+        _cstatuses[sm_i].stepper_info->error_pulse_delay_small = false;
     }
     
-    cstatuses[sm_i].stopped = false;
+    _cstatuses[sm_i].stopped = false;
 }
 
 /**
@@ -451,61 +451,61 @@ void prepare_simple_buffered_steps(stepper *smotor, int buf_size, int* delay_buf
 void prepare_buffered_steps(stepper *smotor, int buf_size, int* delay_buffer, int* step_buffer, 
         stepper_info_t *stepper_info) {
     // резерв нового места на мотор в списке
-    int sm_i = stepper_count;
-    stepper_count++;
+    int sm_i = _stepper_count;
+    _stepper_count++;
     
     // ссылка на мотор
-    smotors[sm_i] = smotor;
+    _smotors[sm_i] = smotor;
     
     // динамический статус мотора
-    cstatuses[sm_i].stepper_info = stepper_info;
+    _cstatuses[sm_i].stepper_info = stepper_info;
         
     // Подготовить движение
-    cstatuses[sm_i].cycle_count = buf_size;
-    cstatuses[sm_i].cycle_counter = 0;
-    cstatuses[sm_i].step_buffer = step_buffer;
+    _cstatuses[sm_i].cycle_count = buf_size;
+    _cstatuses[sm_i].cycle_counter = 0;
+    _cstatuses[sm_i].step_buffer = step_buffer;
 
-    int step_count = cstatuses[sm_i].step_buffer[cstatuses[sm_i].cycle_counter];
+    int step_count = _cstatuses[sm_i].step_buffer[_cstatuses[sm_i].cycle_counter];
     // сделать step_count положительным
-    cstatuses[sm_i].step_count = step_count > 0 ? step_count : -step_count;
+    _cstatuses[sm_i].step_count = step_count > 0 ? step_count : -step_count;
     
     // задать направление
-    cstatuses[sm_i].dir = step_count > 0 ? 1 : -1;
-    if(cstatuses[sm_i].dir * smotors[sm_i]->dir_inv > 0) {
-        digitalWrite(smotors[sm_i]->pin_dir, HIGH); // туда
+    _cstatuses[sm_i].dir = step_count > 0 ? 1 : -1;
+    if(_cstatuses[sm_i].dir * _smotors[sm_i]->dir_inv > 0) {
+        digitalWrite(_smotors[sm_i]->pin_dir, HIGH); // туда
     } else {
-        digitalWrite(smotors[sm_i]->pin_dir, LOW); // обратно
+        digitalWrite(_smotors[sm_i]->pin_dir, LOW); // обратно
     }
     
     // скорость вращения - постоянная на каждом цикле
-    cstatuses[sm_i].delay_source = CONSTANT;
-    cstatuses[sm_i].delay_buffer = delay_buffer;
-    int step_delay = cstatuses[sm_i].delay_buffer[cstatuses[sm_i].cycle_counter];
-    if(step_delay <= smotors[sm_i]->pulse_delay) {
+    _cstatuses[sm_i].delay_source = CONSTANT;
+    _cstatuses[sm_i].delay_buffer = delay_buffer;
+    int step_delay = _cstatuses[sm_i].delay_buffer[_cstatuses[sm_i].cycle_counter];
+    if(step_delay <= _smotors[sm_i]->pulse_delay) {
         // не будем делать шаги чаще, чем может мотор
-        cstatuses[sm_i].step_delay = smotors[sm_i]->pulse_delay;
+        _cstatuses[sm_i].step_delay = _smotors[sm_i]->pulse_delay;
     } else {
-        cstatuses[sm_i].step_delay = step_delay;
+        _cstatuses[sm_i].step_delay = step_delay;
     }
                         
     // Взводим счетчики
-    cstatuses[sm_i].step_counter = cstatuses[sm_i].step_count;
+    _cstatuses[sm_i].step_counter = _cstatuses[sm_i].step_count;
     // задержка перед первым шагом
-    cstatuses[sm_i].step_timer = cstatuses[sm_i].step_delay;
+    _cstatuses[sm_i].step_timer = _cstatuses[sm_i].step_delay;
     
     // ожидаем пуска
-    if(cstatuses[sm_i].stepper_info != NULL) {
-        cstatuses[sm_i].stepper_info->status = STEPPER_STATUS_IDLE;
+    if(_cstatuses[sm_i].stepper_info != NULL) {
+        _cstatuses[sm_i].stepper_info->status = STEPPER_STATUS_IDLE;
        
         // обнулим ошибки
-        cstatuses[sm_i].stepper_info->error_soft_end_min = false;
-        cstatuses[sm_i].stepper_info->error_soft_end_max = false;
-        cstatuses[sm_i].stepper_info->error_hard_end_min = false;
-        cstatuses[sm_i].stepper_info->error_hard_end_max = false;
-        cstatuses[sm_i].stepper_info->error_pulse_delay_small = false;
+        _cstatuses[sm_i].stepper_info->error_soft_end_min = false;
+        _cstatuses[sm_i].stepper_info->error_soft_end_max = false;
+        _cstatuses[sm_i].stepper_info->error_hard_end_min = false;
+        _cstatuses[sm_i].stepper_info->error_hard_end_max = false;
+        _cstatuses[sm_i].stepper_info->error_pulse_delay_small = false;
     }
     
-    cstatuses[sm_i].stopped = false;
+    _cstatuses[sm_i].stopped = false;
 }
 
 /**
@@ -523,56 +523,56 @@ void prepare_dynamic_steps(stepper *smotor, int step_count,
         void* curve_context, int (*next_step_delay)(int curr_step, void* curve_context), 
         stepper_info_t *stepper_info) {
     // резерв нового места на мотор в списке
-    int sm_i = stepper_count;
-    stepper_count++;
+    int sm_i = _stepper_count;
+    _stepper_count++;
     
     // ссылка на мотор
-    smotors[sm_i] = smotor;
+    _smotors[sm_i] = smotor;
     
     // динамический статус мотора
-    cstatuses[sm_i].stepper_info = stepper_info;
+    _cstatuses[sm_i].stepper_info = stepper_info;
         
     // Подготовить движение
   
     // задать направление
-    cstatuses[sm_i].dir = step_count > 0 ? 1 : -1;
-    if(cstatuses[sm_i].dir * smotors[sm_i]->dir_inv > 0) {
-        digitalWrite(smotors[sm_i]->pin_dir, HIGH); // туда
+    _cstatuses[sm_i].dir = step_count > 0 ? 1 : -1;
+    if(_cstatuses[sm_i].dir * _smotors[sm_i]->dir_inv > 0) {
+        digitalWrite(_smotors[sm_i]->pin_dir, HIGH); // туда
     } else {
-        digitalWrite(smotors[sm_i]->pin_dir, LOW); // обратно
+        digitalWrite(_smotors[sm_i]->pin_dir, LOW); // обратно
     }
     
     // шагаем ограниченное количество шагов
-    cstatuses[sm_i].non_stop = false;
+    _cstatuses[sm_i].non_stop = false;
     // сделать step_count положительным
-    cstatuses[sm_i].step_count = step_count > 0 ? step_count : -step_count;
+    _cstatuses[sm_i].step_count = step_count > 0 ? step_count : -step_count;
     
     // настройки переменной скорости вращения
-    cstatuses[sm_i].delay_source = DYNAMIC;
-    cstatuses[sm_i].curve_context = curve_context;
-    cstatuses[sm_i].next_step_delay = next_step_delay;
+    _cstatuses[sm_i].delay_source = DYNAMIC;
+    _cstatuses[sm_i].curve_context = curve_context;
+    _cstatuses[sm_i].next_step_delay = next_step_delay;
     
     // выключить режим калибровки
-    cstatuses[sm_i].calibrate_mode = NONE;
+    _cstatuses[sm_i].calibrate_mode = NONE;
   
     // Взводим счетчики
-    cstatuses[sm_i].step_counter = cstatuses[sm_i].step_count;
+    _cstatuses[sm_i].step_counter = _cstatuses[sm_i].step_count;
     // задержка перед первым шагом
-    cstatuses[sm_i].step_timer = cstatuses[sm_i].next_step_delay(0, cstatuses[sm_i].curve_context);
+    _cstatuses[sm_i].step_timer = _cstatuses[sm_i].next_step_delay(0, _cstatuses[sm_i].curve_context);
     
     // ожидаем пуска
-    if(cstatuses[sm_i].stepper_info != NULL) {
-        cstatuses[sm_i].stepper_info->status = STEPPER_STATUS_IDLE;
+    if(_cstatuses[sm_i].stepper_info != NULL) {
+        _cstatuses[sm_i].stepper_info->status = STEPPER_STATUS_IDLE;
        
         // обнулим ошибки
-        cstatuses[sm_i].stepper_info->error_soft_end_min = false;
-        cstatuses[sm_i].stepper_info->error_soft_end_max = false;
-        cstatuses[sm_i].stepper_info->error_hard_end_min = false;
-        cstatuses[sm_i].stepper_info->error_hard_end_max = false;
-        cstatuses[sm_i].stepper_info->error_pulse_delay_small = false;
+        _cstatuses[sm_i].stepper_info->error_soft_end_min = false;
+        _cstatuses[sm_i].stepper_info->error_soft_end_max = false;
+        _cstatuses[sm_i].stepper_info->error_hard_end_min = false;
+        _cstatuses[sm_i].stepper_info->error_hard_end_max = false;
+        _cstatuses[sm_i].stepper_info->error_pulse_delay_small = false;
     }
     
-    cstatuses[sm_i].stopped = false;
+    _cstatuses[sm_i].stopped = false;
 }
 
 /**
@@ -590,57 +590,57 @@ void prepare_dynamic_whirl(stepper *smotor, int dir,
         void* curve_context, int (*next_step_delay)(int curr_step, void* curve_context), 
         stepper_info_t *stepper_info) {
     // резерв нового места на мотор в списке
-    int sm_i = stepper_count;
-    stepper_count++;
+    int sm_i = _stepper_count;
+    _stepper_count++;
     
     // ссылка на мотор
-    smotors[sm_i] = smotor;
+    _smotors[sm_i] = smotor;
     
     // динамический статус мотора
-    cstatuses[sm_i].stepper_info = stepper_info;
+    _cstatuses[sm_i].stepper_info = stepper_info;
         
     // Подготовить движение
   
     // задать направление
-    cstatuses[sm_i].dir = dir;
-    if(cstatuses[sm_i].dir * smotors[sm_i]->dir_inv > 0) {
-        digitalWrite(smotors[sm_i]->pin_dir, HIGH); // туда
+    _cstatuses[sm_i].dir = dir;
+    if(_cstatuses[sm_i].dir * _smotors[sm_i]->dir_inv > 0) {
+        digitalWrite(_smotors[sm_i]->pin_dir, HIGH); // туда
     } else {
-        digitalWrite(smotors[sm_i]->pin_dir, LOW); // обратно
+        digitalWrite(_smotors[sm_i]->pin_dir, LOW); // обратно
     }
     
     // шагаем без остановки
-    cstatuses[sm_i].non_stop = true;
+    _cstatuses[sm_i].non_stop = true;
     
     // настройки переменной скорости вращения
-    cstatuses[sm_i].delay_source = DYNAMIC;
-    cstatuses[sm_i].curve_context = curve_context;
-    cstatuses[sm_i].next_step_delay = next_step_delay;
+    _cstatuses[sm_i].delay_source = DYNAMIC;
+    _cstatuses[sm_i].curve_context = curve_context;
+    _cstatuses[sm_i].next_step_delay = next_step_delay;
     
     // выключить режим калибровки
-    cstatuses[sm_i].calibrate_mode = NONE;
+    _cstatuses[sm_i].calibrate_mode = NONE;
   
     // Взводим счетчики
     // задержка перед первым шагом
-    cstatuses[sm_i].step_timer = cstatuses[sm_i].next_step_delay(0, cstatuses[sm_i].curve_context);
+    _cstatuses[sm_i].step_timer = _cstatuses[sm_i].next_step_delay(0, _cstatuses[sm_i].curve_context);
     
     // на всякий случай обнулим
-    cstatuses[sm_i].step_count = 0;
-    cstatuses[sm_i].step_counter = 0;
+    _cstatuses[sm_i].step_count = 0;
+    _cstatuses[sm_i].step_counter = 0;
     
     // ожидаем пуска
-    if(cstatuses[sm_i].stepper_info != NULL) {
-        cstatuses[sm_i].stepper_info->status = STEPPER_STATUS_IDLE;
+    if(_cstatuses[sm_i].stepper_info != NULL) {
+        _cstatuses[sm_i].stepper_info->status = STEPPER_STATUS_IDLE;
        
         // обнулим ошибки
-        cstatuses[sm_i].stepper_info->error_soft_end_min = false;
-        cstatuses[sm_i].stepper_info->error_soft_end_max = false;
-        cstatuses[sm_i].stepper_info->error_hard_end_min = false;
-        cstatuses[sm_i].stepper_info->error_hard_end_max = false;
-        cstatuses[sm_i].stepper_info->error_pulse_delay_small = false;
+        _cstatuses[sm_i].stepper_info->error_soft_end_min = false;
+        _cstatuses[sm_i].stepper_info->error_soft_end_max = false;
+        _cstatuses[sm_i].stepper_info->error_hard_end_min = false;
+        _cstatuses[sm_i].stepper_info->error_hard_end_max = false;
+        _cstatuses[sm_i].stepper_info->error_pulse_delay_small = false;
     }
     
-    cstatuses[sm_i].stopped = false;
+    _cstatuses[sm_i].stopped = false;
 }
 
 /**
@@ -707,11 +707,11 @@ void prepare_dynamic_whirl(stepper *smotor, int dir,
  */
 void stepper_configure_timer(int target_period_us, int timer, int prescaler, int period) {
     // не ломать настройки таймера, пока не отарботал старый цикл
-    if(cycle_running) {
+    if(_cycle_running) {
         return;
     }
     
-    timer_period_us = target_period_us;
+    _timer_period_us = target_period_us;
     
     _timer_id = timer;
     _timer_prescaler = prescaler;
@@ -726,14 +726,14 @@ void stepper_configure_timer(int target_period_us, int timer, int prescaler, int
  */
 void start_stepper_cycle(stepper_cycle_info_t *cycle_info) {
     // не запускать новый цикл, если старый не отработал
-    if(cycle_running) {
+    if(_cycle_running) {
         return;
     }
 
     _cycle_info = cycle_info;
 
-    cycle_running = true;
-    cycle_paused = false;
+    _cycle_running = true;
+    _cycle_paused = false;
     
     // обновим информацию о цикле для внешнего мира
     if(_cycle_info != NULL) {
@@ -743,18 +743,18 @@ void start_stepper_cycle(stepper_cycle_info_t *cycle_info) {
     }
     
     // включить моторы
-    for(int i = 0; i < stepper_count; i++) {
+    for(int i = 0; i < _stepper_count; i++) {
         // обновим статусы
-        if(cstatuses[i].stepper_info != NULL) {
-            cstatuses[i].stepper_info->status = STEPPER_STATUS_RUNNING;
+        if(_cstatuses[i].stepper_info != NULL) {
+            _cstatuses[i].stepper_info->status = STEPPER_STATUS_RUNNING;
         }
         // аппаратная ножка Enable->LOW (вкл), если задана
-        if(smotors[i]->pin_en != NO_PIN) {
-            digitalWrite(smotors[i]->pin_en, LOW);
+        if(_smotors[i]->pin_en != NO_PIN) {
+            digitalWrite(_smotors[i]->pin_en, LOW);
         }
     }
     
-    // Запустим таймер с периодом timer_period_us, для этого
+    // Запустим таймер с периодом _timer_period_us, для этого
     // должны быть заданы правильные _timer_prescaler и _timer_period
     initTimerISR(_timer_id, _timer_prescaler, _timer_period);
 }
@@ -767,24 +767,24 @@ void finish_stepper_cycle() {
     stopTimerISR(TIMER3);
         
     // выключим все моторы
-    for(int i = 0; i < stepper_count; i++) {
+    for(int i = 0; i < _stepper_count; i++) {
         // аппаратная ножка Enable->HIGH (выкл), если задана
-        if(smotors[i]->pin_en != NO_PIN) {
-            digitalWrite(smotors[i]->pin_en, HIGH);
+        if(_smotors[i]->pin_en != NO_PIN) {
+            digitalWrite(_smotors[i]->pin_en, HIGH);
         }
         
         // обновим статусы (на случай, если это уже не сделано заранее)
-        if(cstatuses[i].stepper_info != NULL) {
-            cstatuses[i].stepper_info->status = STEPPER_STATUS_FINISHED;
+        if(_cstatuses[i].stepper_info != NULL) {
+            _cstatuses[i].stepper_info->status = STEPPER_STATUS_FINISHED;
         }
     }
     
     // цикл завершился
-    cycle_running = false;
-    cycle_paused = false;
+    _cycle_running = false;
+    _cycle_paused = false;
     
     // обнулим список моторов
-    stepper_count = 0;
+    _stepper_count = 0;
     
     // обновим информацию о цикле для внешнего мира
     if(_cycle_info != NULL) {
@@ -797,7 +797,7 @@ void finish_stepper_cycle() {
  * Поставить вращение на паузу, не прирывая всего цикла
  */
 void pause_stepper_cycle() {
-    cycle_paused = true;
+    _cycle_paused = true;
     
     // обновим информацию о цикле для внешнего мира
     if(_cycle_info != NULL) {
@@ -809,7 +809,7 @@ void pause_stepper_cycle() {
  * Продолжить вращение, если оно было поставлено на паузу
  */
 void continue_stepper_cycle() {
-    cycle_paused = false;
+    _cycle_paused = false;
     
     // обновим информацию о цикле для внешнего мира
     if(_cycle_info != NULL) {
@@ -823,7 +823,7 @@ void continue_stepper_cycle() {
  * false - ожидает запуска.
  */
 bool is_stepper_cycle_running() {
-    return cycle_running;
+    return _cycle_running;
 }
 
 /**
@@ -832,26 +832,26 @@ bool is_stepper_cycle_running() {
  * false - цикл не на паузе (выполняется или остановлен).
  */
 bool is_stepper_cycle_paused() {
-    return cycle_paused;
+    return _cycle_paused;
 }
 
 /**
  * Отладочная информация о текущем цикле.
  */
 void cycle_debug_status(char* status_str) {
-    sprintf(status_str, "stepper_count=%d", stepper_count);
-    for(int i = 0; i < stepper_count; i++) {
+    sprintf(status_str, "stepper_count=%d", _stepper_count);
+    for(int i = 0; i < _stepper_count; i++) {
         sprintf(status_str+strlen(status_str), 
             "; cstatuses[%d]: step_count=%d, step_counter=%d, step_timer=%d",
-            i, cstatuses[i].step_count, cstatuses[i].step_counter, cstatuses[i].step_timer);
+            i, _cstatuses[i].step_count, _cstatuses[i].step_counter, _cstatuses[i].step_timer);
     }
 }
 
 /**
- * Обработчик прерывания от таймера - дёргается каждые timer_period_us микросекунд.
+ * Обработчик прерывания от таймера - дёргается каждые _timer_period_us микросекунд.
  *
  * Этот код должен быть максимально быстрым, каждая итерация должна обязательно уложиться 
- * в значение timer_period_us (10мкс на PIC32 без рисования дуг, т.е. без тригонометрии, - ок; 
+ * в значение _timer_period_us (10мкс на PIC32 без рисования дуг, т.е. без тригонометрии, - ок; 
  * с тригонометрией для дуг таймер должен быть >15мкс) и еще оставить немного времени 
  * на выполнение всяких других задач за пределами таймера из главного цикла программы.
  *
@@ -870,7 +870,7 @@ void cycle_debug_status(char* status_str) {
 void handle_interrupts(int timer) {
 
     // если на паузе, вообще ничего не трогаем
-    if(cycle_paused) {
+    if(_cycle_paused) {
         return;
     }
 
@@ -880,7 +880,7 @@ void handle_interrupts(int timer) {
     // возможные ошибки: 
     // - выход за виртуальные границы координаты (останов всего цикла или запрет движения только одного мотора), 
     // - концевой датчик (останов всего цикла или запрет движения только одного мотора), 
-    // - задержка между двумя импульсами меньше, чем оптимальное значение (smotors[i]->pulse_delay)
+    // - задержка между двумя импульсами меньше, чем оптимальное значение (_smotors[i]->pulse_delay)
     // - время выполнения обработчика таймера превышает задержку между двумя вызовами обработчика по таймеру
     // (код слишком медленный) - лучше останавливать весь цикл с ошибкой
 
@@ -893,10 +893,10 @@ void handle_interrupts(int timer) {
     bool canceled = false;
     
     // цикл по всем моторам
-    for(int i = 0; i < stepper_count && !canceled; i++) {
-        cstatuses[i].step_timer -= timer_period_us;
+    for(int i = 0; i < _stepper_count && !canceled; i++) {
+        _cstatuses[i].step_timer -= _timer_period_us;
         
-        if( (cstatuses[i].non_stop || cstatuses[i].step_counter > 0) && !cstatuses[i].stopped) {
+        if( (_cstatuses[i].non_stop || _cstatuses[i].step_counter > 0) && !_cstatuses[i].stopped) {
         
             // если хотя бы у одного мотора остались шаги или он запущен нон-стоп, при этом
             // не остановлен по другой причине (например, из-за концевого датчика), 
@@ -904,7 +904,7 @@ void handle_interrupts(int timer) {
             finished = false;
         
         
-            if(cstatuses[i].step_timer < timer_period_us*3 && cstatuses[i].step_timer >= timer_period_us*2) {
+            if(_cstatuses[i].step_timer < _timer_period_us*3 && _cstatuses[i].step_timer >= _timer_period_us*2) {
                 // >>>За 2 импульса до обнуления таймера
                 // проверим пограничные значения координат и концевики непосредственно перед шагом
                 // (если все ок, то на следующем импульсе пин мотора пойдет в HIGH, а еще на следующем - в LOW)
@@ -918,240 +918,240 @@ void handle_interrupts(int timer) {
                 // мотор, при старте следующего цикла датчик все еще будет нажат и у нас должна быть возможность
                 // уйти вправо (влево блок, как и в прошлый раз).
                 
-                if(smotors[i]->pin_min != NO_PIN && digitalRead(smotors[i]->pin_min) && cstatuses[i].dir < 0) {
+                if(_smotors[i]->pin_min != NO_PIN && digitalRead(_smotors[i]->pin_min) && _cstatuses[i].dir < 0) {
                     // сработал левый аппаратный концевой датчик и мы движемся влево -
                     // завершаем вращение для этого мотора
-                    cstatuses[i].stopped = true;
+                    _cstatuses[i].stopped = true;
                     
                     // обновим статус мотора
-                    if(cstatuses[i].stepper_info != NULL) {
-                        cstatuses[i].stepper_info->status = STEPPER_STATUS_FINISHED;
+                    if(_cstatuses[i].stepper_info != NULL) {
+                        _cstatuses[i].stepper_info->status = STEPPER_STATUS_FINISHED;
                     
                         // обозначим ошибку
-                        cstatuses[i].stepper_info->error_hard_end_min = true;
+                        _cstatuses[i].stepper_info->error_hard_end_min = true;
                     }
                     
                     // как себя вести - остановить только этот мотор (в любом случае) или
                     // сразу завершить весь цикл
-                    if(hard_end_handle == CANCEL_CYCLE) {
+                    if(_hard_end_handle == CANCEL_CYCLE) {
                         // завершаем весь цикл
                         canceled = true;
                     } // иначе STOP_MOTOR - останавливается только этот мотор 
                     
-                } else if(smotors[i]->pin_max != NO_PIN && digitalRead(smotors[i]->pin_max) && cstatuses[i].dir > 0) {
+                } else if(_smotors[i]->pin_max != NO_PIN && digitalRead(_smotors[i]->pin_max) && _cstatuses[i].dir > 0) {
                     // сработал правый аппаратный концевой датчик и мы движемся вправо - 
                     // завершаем вращение для этого мотора
-                    cstatuses[i].stopped = true;
+                    _cstatuses[i].stopped = true;
                     
                     
                     // обновим статус мотора
-                    if(cstatuses[i].stepper_info != NULL) {
-                        cstatuses[i].stepper_info->status = STEPPER_STATUS_FINISHED;
+                    if(_cstatuses[i].stepper_info != NULL) {
+                        _cstatuses[i].stepper_info->status = STEPPER_STATUS_FINISHED;
                         
                         // обозначим ошибку
-                        cstatuses[i].stepper_info->error_hard_end_max = true;
+                        _cstatuses[i].stepper_info->error_hard_end_max = true;
                     }
                     
                     // как себя вести - остановить только этот мотор (в любом случае) или
                     // сразу завершить весь цикл
-                    if(hard_end_handle == CANCEL_CYCLE) {
+                    if(_hard_end_handle == CANCEL_CYCLE) {
                         // завершаем весь цикл
                         canceled = true;
                     } // иначе STOP_MOTOR - останавливается только этот мотор
                     
-                } else if( cstatuses[i].calibrate_mode == NONE && 
-                        (cstatuses[i].dir > 0 ? 
-                            smotors[i]->max_end_strategy != INF && 
-                                smotors[i]->current_pos + smotors[i]->distance_per_step > smotors[i]->max_pos :
-                            smotors[i]->min_end_strategy != INF && 
-                                smotors[i]->current_pos - smotors[i]->distance_per_step < smotors[i]->min_pos) ) {
+                } else if( _cstatuses[i].calibrate_mode == NONE && 
+                        (_cstatuses[i].dir > 0 ? 
+                            _smotors[i]->max_end_strategy != INF && 
+                                _smotors[i]->current_pos + _smotors[i]->distance_per_step > _smotors[i]->max_pos :
+                            _smotors[i]->min_end_strategy != INF && 
+                                _smotors[i]->current_pos - _smotors[i]->distance_per_step < _smotors[i]->min_pos) ) {
                     // выход за пределы виртуальной границы:
                     // не в режиме калибровки, включены виртуальные границы координаты и 
                     // собираемся выйти за виртуальные границы во время предстоящего шага - 
                     // завершаем вращение для этого мотора
-                    cstatuses[i].stopped = true;
+                    _cstatuses[i].stopped = true;
                     
                     // обновим статус мотора
-                    if(cstatuses[i].stepper_info != NULL) {
-                        cstatuses[i].stepper_info->status = STEPPER_STATUS_FINISHED;
+                    if(_cstatuses[i].stepper_info != NULL) {
+                        _cstatuses[i].stepper_info->status = STEPPER_STATUS_FINISHED;
                         
                         // обозначим ошибку
-                        if(cstatuses[i].dir < 0) {
-                            cstatuses[i].stepper_info->error_soft_end_min = true;
+                        if(_cstatuses[i].dir < 0) {
+                            _cstatuses[i].stepper_info->error_soft_end_min = true;
                         } else {
-                            cstatuses[i].stepper_info->error_soft_end_max = true;
+                            _cstatuses[i].stepper_info->error_soft_end_max = true;
                         }
                     }
                     
                     // как себя вести - остановить только этот мотор (в любом случае) или
                     // сразу завершить весь цикл
-                    if(soft_end_handle == CANCEL_CYCLE) {
+                    if(_soft_end_handle == CANCEL_CYCLE) {
                         // завершаем весь цикл
                         canceled = true;
                     } // иначе STOP_MOTOR - останавливается только этот мотор
                     
-                } else if( cstatuses[i].calibrate_mode == CALIBRATE_BOUNDS_MAX_POS &&
-                        cstatuses[i].dir < 0 && smotors[i]->current_pos - smotors[i]->distance_per_step < smotors[i]->min_pos ) {
+                } else if( _cstatuses[i].calibrate_mode == CALIBRATE_BOUNDS_MAX_POS &&
+                        _cstatuses[i].dir < 0 && _smotors[i]->current_pos - _smotors[i]->distance_per_step < _smotors[i]->min_pos ) {
                     // в режиме калибровки размера рабочей области при движении влево
                     // собираемся сместиться ниже нижней виртуальной границы
                     // во время предстоящего шага - завершаем вращение для этого мотора
-                    cstatuses[i].stopped = true;
+                    _cstatuses[i].stopped = true;
                     
                     // обновим статус мотора
-                    if(cstatuses[i].stepper_info != NULL) {
-                        cstatuses[i].stepper_info->status = STEPPER_STATUS_FINISHED;
+                    if(_cstatuses[i].stepper_info != NULL) {
+                        _cstatuses[i].stepper_info->status = STEPPER_STATUS_FINISHED;
                         
                         // обозначим ошибку мотора
-                        cstatuses[i].stepper_info->error_soft_end_min = true;
+                        _cstatuses[i].stepper_info->error_soft_end_min = true;
                     }
                     
                     // как себя вести - остановить только этот мотор (в любом случае) или
                     // сразу завершить весь цикл
-                    if(soft_end_handle == CANCEL_CYCLE) {
+                    if(_soft_end_handle == CANCEL_CYCLE) {
                         // завершаем весь цикл
                         canceled = true;
                     } // иначе STOP_MOTOR - останавливается только этот мотор
                     
                 }
-            } else if(cstatuses[i].step_timer < timer_period_us*2 && cstatuses[i].step_timer >= timer_period_us) {
+            } else if(_cstatuses[i].step_timer < _timer_period_us*2 && _cstatuses[i].step_timer >= _timer_period_us) {
                 // >>>За 1 импульс до обнуления таймера
                 // Шаг происходит по фронту сигнала HIGH>LOW, ширина ступени HIGH при этом не важна.
                 // Поэтому сформируем ступень HIGH за один цикл таймера до сброса в LOW
             
-                // cstatuses[i].step_timer ~ timer_period_us с учетом погрешности таймера (timer_period_us) =>
+                // _cstatuses[i].step_timer ~ _timer_period_us с учетом погрешности таймера (_timer_period_us) =>
                 // импульс1 - готовим шаг
-                digitalWrite(smotors[i]->pin_step, HIGH);
-            } else if(cstatuses[i].step_timer < timer_period_us) {
+                digitalWrite(_smotors[i]->pin_step, HIGH);
+            } else if(_cstatuses[i].step_timer < _timer_period_us) {
                 // >>>Таймер обнулился
                 // Шагаем
-                // cstatuses[i].step_timer ~ 0 с учетом погрешности таймера (timer_period_us) =>
-                // импульс2 (спустя timer_period_us микросекунд после импульса1) - совершаем шаг
-                digitalWrite(smotors[i]->pin_step, LOW);
+                // _cstatuses[i].step_timer ~ 0 с учетом погрешности таймера (_timer_period_us) =>
+                // импульс2 (спустя _timer_period_us микросекунд после импульса1) - совершаем шаг
+                digitalWrite(_smotors[i]->pin_step, LOW);
                 
                 // шагнули, отметимся в разных местах и приготовимся к следующему шагу (если он будет)
                 
                 // посчитаем шаг
-                if(!cstatuses[i].non_stop) {
-                    cstatuses[i].step_counter--;
+                if(!_cstatuses[i].non_stop) {
+                    _cstatuses[i].step_counter--;
                 }
                 
                 // Текущее положение координаты
-                if(cstatuses[i].calibrate_mode == NONE || cstatuses[i].calibrate_mode == CALIBRATE_BOUNDS_MAX_POS) {
+                if(_cstatuses[i].calibrate_mode == NONE || _cstatuses[i].calibrate_mode == CALIBRATE_BOUNDS_MAX_POS) {
                     // не калибруем или калибруем ширину рабочего поля
                   
                     // обновим текущее положение координаты
-                    if(cstatuses[i].dir > 0) {
-                        smotors[i]->current_pos += smotors[i]->distance_per_step;
+                    if(_cstatuses[i].dir > 0) {
+                        _smotors[i]->current_pos += _smotors[i]->distance_per_step;
                     } else {
-                        smotors[i]->current_pos -= smotors[i]->distance_per_step;
+                        _smotors[i]->current_pos -= _smotors[i]->distance_per_step;
                     }
                     
                     // калибруем ширину рабочего поля - сдвинем правую границу в текущее положение
-                    if(cstatuses[i].calibrate_mode == CALIBRATE_BOUNDS_MAX_POS) {
-                        smotors[i]->max_pos = smotors[i]->current_pos;
+                    if(_cstatuses[i].calibrate_mode == CALIBRATE_BOUNDS_MAX_POS) {
+                        _smotors[i]->max_pos = _smotors[i]->current_pos;
                     }
-                } else if(cstatuses[i].calibrate_mode == CALIBRATE_START_MIN_POS) {
+                } else if(_cstatuses[i].calibrate_mode == CALIBRATE_START_MIN_POS) {
                     // режим калибровки начального положения - сбрасываем current_pos в min_pos на каждом шаге
-                    smotors[i]->current_pos = smotors[i]->min_pos;
+                    _smotors[i]->current_pos = _smotors[i]->min_pos;
                 }
                 
                 // сделали последний шаг в цикле
-                if(!cstatuses[i].non_stop && cstatuses[i].step_counter == 0) {
+                if(!_cstatuses[i].non_stop && _cstatuses[i].step_counter == 0) {
                     // увеличиваем счетчик циклов
-                    cstatuses[i].cycle_counter++;
+                    _cstatuses[i].cycle_counter++;
                 
                     // загружаем настройки для нового цикла
-                    if (cstatuses[i].cycle_counter < cstatuses[i].cycle_count) {
+                    if (_cstatuses[i].cycle_counter < _cstatuses[i].cycle_count) {
                         // заходим на новый цикл внутри текущей серии
-                        int step_count = cstatuses[i].step_buffer[cstatuses[i].cycle_counter];
+                        int step_count = _cstatuses[i].step_buffer[_cstatuses[i].cycle_counter];
                         // сделать step_count положительным
-                        cstatuses[i].step_count = step_count > 0 ? step_count : -step_count;
+                        _cstatuses[i].step_count = step_count > 0 ? step_count : -step_count;
     
                         // задать направление
-                        cstatuses[i].dir = step_count > 0 ? 1 : -1;
-                        if(cstatuses[i].dir * smotors[i]->dir_inv > 0) {
-                            digitalWrite(smotors[i]->pin_dir, HIGH); // туда
+                        _cstatuses[i].dir = step_count > 0 ? 1 : -1;
+                        if(_cstatuses[i].dir * _smotors[i]->dir_inv > 0) {
+                            digitalWrite(_smotors[i]->pin_dir, HIGH); // туда
                         } else {
-                            digitalWrite(smotors[i]->pin_dir, LOW); // обратно
+                            digitalWrite(_smotors[i]->pin_dir, LOW); // обратно
                         }
                         
                         // скорость вращения
-                        int step_delay = cstatuses[i].delay_buffer[cstatuses[i].cycle_counter];
+                        int step_delay = _cstatuses[i].delay_buffer[_cstatuses[i].cycle_counter];
                         
                         // Взводим счетчики
-                        cstatuses[i].step_counter = cstatuses[i].step_count;
+                        _cstatuses[i].step_counter = _cstatuses[i].step_count;
                         // задержка перед первым шагом
-                        cstatuses[i].step_timer = cstatuses[i].step_delay;
+                        _cstatuses[i].step_timer = _cstatuses[i].step_delay;
     
                     } else {
                         // сделали последний шаг в последнем цикле
-                        if(cstatuses[i].stepper_info != NULL) {
-                            cstatuses[i].stepper_info->status = STEPPER_STATUS_FINISHED;
+                        if(_cstatuses[i].stepper_info != NULL) {
+                            _cstatuses[i].stepper_info->status = STEPPER_STATUS_FINISHED;
                         }
                     }
                 }
                 
                 // вычисляем задержку перед следующим шагом
                 int step_delay;
-                if(cstatuses[i].delay_source == CONSTANT) {
+                if(_cstatuses[i].delay_source == CONSTANT) {
                     // координата движется с постоянной скоростью
-                    step_delay = cstatuses[i].step_delay;
-                } if(cstatuses[i].delay_source == BUFFER) {
+                    step_delay = _cstatuses[i].step_delay;
+                } if(_cstatuses[i].delay_source == BUFFER) {
                     // координата движется с переменной скоростью,
                     // значения задержек получаем из буфера
                     
                     // вычислим время до следующего шага (step_counter уже уменьшили)
-                    step_delay = cstatuses[i].delay_buffer[
-                          (cstatuses[i].step_count - cstatuses[i].step_counter)/cstatuses[i].scale
+                    step_delay = _cstatuses[i].delay_buffer[
+                          (_cstatuses[i].step_count - _cstatuses[i].step_counter)/_cstatuses[i].scale
                         ];
-                } else if(cstatuses[i].delay_source == DYNAMIC) {
+                } else if(_cstatuses[i].delay_source == DYNAMIC) {
                     // координата движется с переменной скоростью (например, рисуем дугу),
                     // значения задержек вычисляем динамически
                     
                     // вычислим время до следующего шага (step_counter уже уменьшили)
-                    step_delay = cstatuses[i].next_step_delay(
-                            cstatuses[i].step_count - cstatuses[i].step_counter, 
-                            cstatuses[i].curve_context);
+                    step_delay = _cstatuses[i].next_step_delay(
+                            _cstatuses[i].step_count - _cstatuses[i].step_counter, 
+                            _cstatuses[i].curve_context);
                 }
                 
                 // проверим, корректна ли задержка
-                if(step_delay < smotors[i]->pulse_delay) {
+                if(step_delay < _smotors[i]->pulse_delay) {
                     // посмотрим, что делать с ошибкой
-                    if(small_pulse_delay_handle == FIX) {
+                    if(_small_pulse_delay_handle == FIX) {
                         #ifdef DEBUG_SERIAL
                             Serial.print("***WARNING: fixing step_delay to match minimal pulse_delay ");
                             Serial.print("step_delay=");
                             Serial.print(step_delay);
                             Serial.print("us, pulse_delay=");
-                            Serial.print(smotors[i]->pulse_delay);
+                            Serial.print(_smotors[i]->pulse_delay);
                             Serial.println("us");
                         #endif // DEBUG_SERIAL
                         
                         // попробуем исправить:
                         // не будем делать шаги чаще, чем может мотор
                         // (следует понимать, что корректность вращения уже нарушена)
-                        step_delay = smotors[i]->pulse_delay;
-                    } else if(small_pulse_delay_handle == STOP_MOTOR) {
+                        step_delay = _smotors[i]->pulse_delay;
+                    } else if(_small_pulse_delay_handle == STOP_MOTOR) {
                         // останавливаем мотор
-                        cstatuses[i].stopped = true;
+                        _cstatuses[i].stopped = true;
                         
-                        if(cstatuses[i].stepper_info != NULL) {
-                            cstatuses[i].stepper_info->status = STEPPER_STATUS_FINISHED;
+                        if(_cstatuses[i].stepper_info != NULL) {
+                            _cstatuses[i].stepper_info->status = STEPPER_STATUS_FINISHED;
                         }
-                    } else if(small_pulse_delay_handle == CANCEL_CYCLE) {
+                    } else if(_small_pulse_delay_handle == CANCEL_CYCLE) {
                         // завершаем весь цикл
                         canceled = true;
                     }
                     // иначе, игнорируем
                    
                     // в любом случае, обозначим ошибку
-                    if(cstatuses[i].stepper_info != NULL) {
-                        cstatuses[i].stepper_info->error_pulse_delay_small = true;
+                    if(_cstatuses[i].stepper_info != NULL) {
+                        _cstatuses[i].stepper_info->error_pulse_delay_small = true;
                     }
                 }
                 
                 // взводим таймер на новый шаг
-                cstatuses[i].step_timer = step_delay;
+                _cstatuses[i].step_timer = step_delay;
             }
         }
     }
@@ -1164,7 +1164,7 @@ void handle_interrupts(int timer) {
     // проверим, уложились ли в желаемое время
     unsigned long cycle_finish = micros();
     unsigned long cycle_time = cycle_finish - cycle_start;
-    if(cycle_time >= timer_period_us) {
+    if(cycle_time >= _timer_period_us) {
         // обработчик работает дольше, чем таймер генерирует импульсы,
         // тайминг может быть нарушен
         // обновим информацию о цикле для внешнего мира
@@ -1173,7 +1173,7 @@ void handle_interrupts(int timer) {
         }
         
         // что с этим делать
-        if(cycle_timing_exceed_handle == CANCEL_CYCLE) {
+        if(_cycle_timing_exceed_handle == CANCEL_CYCLE) {
             // ничего хорошего - все завершаем
             finish_stepper_cycle();
         } // иначе игнорируем
@@ -1185,7 +1185,7 @@ void handle_interrupts(int timer) {
             Serial.print("cycle time=");
             Serial.print(cycle_time);
             Serial.print("us, timer period=");
-            Serial.print(timer_period_us);
+            Serial.print(_timer_period_us);
             Serial.println("us");
         #endif // DEBUG_SERIAL
     }
