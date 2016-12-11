@@ -49,7 +49,7 @@ void setup() {
     stepper_start_cycle();
 }
 
-void loop() { 
+void loop() {
     static int prevTime = 0;
     // Debug messages - print current positions of motors once per second
     // while they are rotating, once per 10 seconds when they are stopped
