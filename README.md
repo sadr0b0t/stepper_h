@@ -126,3 +126,18 @@ some older videos with older version of this stepper_h lib + ChipKIT + CNC
 https://vimeo.com/133592759
 https://vimeo.com/93176233
 https://vimeo.com/93395529
+
+
+---
+# Внутреннее устройство
+
+Код обработчика таймера handle_interrupts
+https://github.com/1i7/stepper_h/blob/master/stepper_h/stepper_timer.cpp#L824
+
+на одном шаге работает в 3 приема:
+- первый проход (за 2 импульса до шага) - проверяет границы
+- второй проход (за 1 импульс до шага) - взводит ножку step на HIGH
+- третий проход (ипульс шага) - делает шаг (сбрасывает step в LOW)
+
+на третьем же проходе сразу происходят проверки, нужно ли делать следующий шаг.
+
