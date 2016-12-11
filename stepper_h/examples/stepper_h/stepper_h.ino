@@ -25,7 +25,7 @@ void setup() {
     Serial.println("Starting stepper_h test...");
     
     // connected stepper motors
-    // init_stepper(stepper* smotor,  char* name, 
+    // init_stepper(stepper* smotor,  char name, 
     //     int pin_step, int pin_dir, int pin_en,
     //     bool invert_dir, int pulse_delay,
     //     float distance_per_step)
