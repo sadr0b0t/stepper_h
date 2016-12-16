@@ -54,6 +54,21 @@ void init_stepper(stepper* smotor,  char name,
     
     smotor->distance_per_step = distance_per_step;
     
+    // Значения по умолчанию
+    // обнулить текущую позицию
+    smotor->current_pos = 0;
+    
+    // по умолчанию рабочая область не ограничена, концевиков нет
+    smotor->pin_min = NO_PIN;
+    smotor->pin_max = NO_PIN;
+          
+    smotor->min_end_strategy = INF;
+    smotor->max_end_strategy = INF;
+    
+    smotor->min_pos = 0;
+    smotor->max_pos = 0;
+    
+    
     // задать настройки пинов
     pinMode(pin_step, OUTPUT);
     pinMode(pin_dir, OUTPUT);
@@ -103,10 +118,10 @@ void init_stepper_ends(stepper* smotor,
     smotor->max_pos = max_pos;
     
     // задать настройки пинов
-    if(pin_min != -1) {
+    if(pin_min != NO_PIN) {
         pinMode(pin_min, INPUT);
     }
-    if(pin_max != -1) {
+    if(pin_max != NO_PIN) {
         pinMode(pin_max, INPUT);
     }
 }
