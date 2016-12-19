@@ -8,6 +8,8 @@ extern "C"{
 #include "stdio.h"
 #include <iostream>
 
+
+// http://www.use-strict.de/sput-unit-testing/tutorial.html
 #include <sput.h>
 
 using namespace std;
@@ -23,8 +25,6 @@ void timer_tick(int count) {
         handle_interrupts(3);
     }
 }
-
-// http://www.use-strict.de/sput-unit-testing/tutorial.html
 
 
 static void test_lifecycle() {
@@ -172,9 +172,9 @@ static void test_max_speed_tick_by_tick() {
     
     // все шаги сделали, но для завершения цикла нужен еще 1 финальный тик
     sput_fail_unless(stepper_is_cycle_running(), "step3.tick3: stepper_is_cycle_running() == true");
+    
     // завершающий тик - для завершения цикла серии шагов
     timer_tick(1);
-    
     // еще раз проверим финальное положение
     sput_fail_unless(sm_x.current_pos == 22.5, "step3.tick3+1: current_pos == 22.5");
     
@@ -245,9 +245,9 @@ static void test_max_speed_30000steps() {
     
     // все шаги сделали, но для завершения цикла нужен еще 1 финальный тик
     sput_fail_unless(stepper_is_cycle_running(), "step30K.tick150K: stepper_is_cycle_running() == true");
+    
     // завершающий тик - для завершения цикла серии шагов
     timer_tick(1);
-    
     // еще раз проверим финальное положение
     sput_fail_unless(sm_x.current_pos == 225000, "step30K.tick150K+1: current_pos == 225000");
     
@@ -367,9 +367,9 @@ static void test_aliquant_speed_tick_by_tick() {
     
     // все шаги сделали, но для завершения цикла нужен еще 1 финальный тик
     sput_fail_unless(stepper_is_cycle_running(), "step5.tick3: stepper_is_cycle_running() == true");
+    
     // завершающий тик - для завершения цикла серии шагов
     timer_tick(1);
-    
     // еще раз проверим финальное положение
     sput_fail_unless(sm_x.current_pos == 37.5, "step5.tick3+1: current_pos == 37.5");
     
@@ -380,10 +380,9 @@ static void test_aliquant_speed_tick_by_tick() {
 }
 
 
-static void test_exit_bounds() {
-    // Работаем с одним мотором
-    // X:
-    // минимальная задежка между шагами: 1000 микросекунд
+static void test_exit_bounds_issue3_whirl() {
+
+    // мотор - минимальная задежка между шагами: 1000 микросекунд
     // расстояние за шаг: 7.5 микрометров
     // рабочая область: 300000мкм=300мм=30см
     // нижняя граница координаты: ограничена=0
@@ -392,40 +391,175 @@ static void test_exit_bounds() {
     init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7.5); 
     init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000);
     
-    // настройки частоты - сколько тиков таймера уместится в один шаг
+    // настройки частоты таймера
     int timer_period_us = 200;
     stepper_configure_timer(timer_period_us, TIMER3, TIMER_PRESCALER_1_8, 2000);
     
+    //////////////
+    
+    // на всякий случай: цикл не должен быть запущен 
+    // (если запущен, то косяк в предыдущем тесте)
+    sput_fail_unless(!stepper_is_cycle_running(), "stepper_is_cycle_running() == false");
+    
     // 
-
-    // 
-    // #Тест
-    // Мотор всегда делает первый шаг в цикле, даже если есть причины его не делать
+    // Мотор всегда делает первый шаг в цикле, даже если выходит за виртуальные границы
+    // в случае, если задать задержку между шагами 0 (должна исправиться на минимальную
+    // задержку motor->pulse_delay, т.е. максимальную скорость).
+    // Если указывать задержку значением (motor->pulse_delay или 1000), то всё ок.
     // https://github.com/1i7/stepper_h/issues/1
+    
     // попробуем выйти в минус за 0
     
     // получать информацию о статусе мотора и цикла
     stepper_info_t stepper_info;
     stepper_cycle_info_t cycle_info;
     
+    // готовим мотор на непрерывное вращение в сторону нуля,
+    // задержку между шагами задаём как 0 (должна исправиться автоматом на
+    // sm_x->pulse_delay, т.е. на 1000)
+    // void prepare_whirl(stepper *smotor, 
+    //     int dir, int step_delay, 
+    //     calibrate_mode_t calibrate_mode=NONE, stepper_info_t *stepper_info=NULL);
     prepare_whirl(&sm_x, -1, 0, NONE, &stepper_info);
+    
+    // "идеальные" шаги - каждые 1000 микросекунд:
+    // 1000, 2000, 3000
+    // 
+    // значение координаты (без учета границ)
+    // -7.5, -15, -25
+    //
+    // тики таймера (200 микросекунд)
+    //                                                       шаг1                            шаг2
+    // [<tick1:проверка границ>  <tick2:взвод step>  <tick3: шаг>]
+    //   200, 400,         [600,                800,         1000], 1200, 1400, [1600, 1800, 2000], 2200 ...
+    //   1    2             3                   4            5      6     7      8     9     10     11
+    //
+    
+    // поехали
     stepper_start_cycle(&cycle_info);
+    sput_fail_unless(stepper_is_cycle_running(), "stepper_is_cycle_running() == true");
+    sput_fail_unless(sm_x.current_pos == 0, "current_pos == 0");
     
-    // первый тик
+    // холостой ход
+    timer_tick(2);
+    
+    // начинаем из нуля
+    sput_fail_unless(sm_x.current_pos == 0, "step1.begin: current_pos == 0");
+    // внезапно, здесь фейл.
+    // а вот и объяснение: если указываем step_delay=0 в prepare_whirl, то первый шаг будет
+    // сделан без всех проверок сразу на 1й тик таймера (этапы tick1 и tick2 будут пропущены),
+    // т.к. первый тик сразу получается наиближайшим к фронту шага (т.е. нулю).
+    // Решение: во всех местах, где устанавливаем значение step_delay для очередного шага,
+    // нужно делать проверку, что в нее уместится как минимум 3 тика таймера 
+    // (сравнения с аппаратными ограничениями задержки для шагов мотора достаточно, 
+    // т.к. она должна заведомо включать как минимум 3 тика).
+    // В нашем случае - это метод prepare_whirl, но другие места (особенно там, где есть динамическая
+    // задержка) нужно тоже все проверить.
+    
+    // проверка границ
     timer_tick(1);
-    //stepper_info.status == STEPPER_STATUS_FINISHED
-    //_cstatuses[i].stepper_info->error_pulse_delay_small
-    // CYCLE_ERROR_HANDLER_TIMING_EXCEEDED
-    //stepper_info->error_soft_end_min = true;
-    sput_fail_unless(stepper_info.status == STEPPER_STATUS_FINISHED, "on tick1: finished");
-    sput_fail_unless(stepper_info.error_soft_end_min, "on tick1: error_soft_end_min");
+    // здесь мы должны увидеть, что этот шаг приведет в выходу за виртуальную границу,
+    // должны быть выставлены коды ошибок, статус мотора обозначен как "остановлен"
+    sput_fail_unless(stepper_info.status == STEPPER_STATUS_FINISHED, "step1.tick1: status == STEPPER_STATUS_FINISHED");
+    sput_fail_unless(stepper_info.error_soft_end_min, "step1.tick3: error_soft_end_min == true");
+    sput_fail_unless(!stepper_info.error_soft_end_max, "step1.tick3: error_soft_end_max == false");
     
-    // второй тик
+    // на всякий случай проверим финальное положение
+    sput_fail_unless(sm_x.current_pos == 0, "step1.tick1: current_pos == 0");
     
-    // третий тик
+    // цикл должен остановиться на этом же тике
+    sput_fail_unless(!stepper_is_cycle_running(), "stepper_is_cycle_running() == false");
+}
+
+static void test_exit_bounds_issue3_steps() {
+
+    // мотор - минимальная задежка между шагами: 1000 микросекунд
+    // расстояние за шаг: 7.5 микрометров
+    // рабочая область: 300000мкм=300мм=30см
+    // нижняя граница координаты: ограничена=0
+    // верхняя граница координаты: ограничена=300000
+    stepper sm_x;
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7.5); 
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000);
     
-    timer_tick(40);
-    sput_fail_unless(sm_x.current_pos == 0, "sm_x.current_pos == 0");
+    // настройки частоты таймера
+    int timer_period_us = 200;
+    stepper_configure_timer(timer_period_us, TIMER3, TIMER_PRESCALER_1_8, 2000);
+    
+    //////////////
+    
+    // на всякий случай: цикл не должен быть запущен 
+    // (если запущен, то косяк в предыдущем тесте)
+    sput_fail_unless(!stepper_is_cycle_running(), "stepper_is_cycle_running() == false");
+    
+    // Мотор всегда делает первый шаг в цикле, даже если выходит за виртуальные границы
+    // в случае, если задать задержку между шагами 0 (должна исправиться на минимальную
+    // задержку motor->pulse_delay, т.е. максимальную скорость).
+    // Если указывать задержку значением (motor->pulse_delay или 1000), то всё ок.
+    // https://github.com/1i7/stepper_h/issues/1
+    
+    // попробуем выйти в минус за 0
+    
+    // получать информацию о статусе мотора и цикла
+    stepper_info_t stepper_info;
+    stepper_cycle_info_t cycle_info;
+    
+    // 
+    // готовим мотор на несколько шагов в сторону нуля,
+    // задержку между шагами задаём как 0 (должна исправиться автоматом на
+    // sm_x->pulse_delay, т.е. на 1000)
+    // void prepare_steps(stepper *smotor, 
+    //     int step_count, int step_delay, 
+    //     stepper_info_t *stepper_info) {
+    prepare_steps(&sm_x, -300, 0, &stepper_info);
+    
+    // "идеальные" шаги - каждые 1000 микросекунд:
+    // 1000, 2000, 3000
+    // 
+    // значение координаты (без учета границ)
+    // -7.5, -15, -25
+    //
+    // тики таймера (200 микросекунд)
+    //                                                       шаг1                            шаг2
+    // [<tick1:проверка границ>  <tick2:взвод step>  <tick3: шаг>]
+    //   200, 400,         [600,                800,         1000], 1200, 1400, [1600, 1800, 2000], 2200 ...
+    //   1    2             3                   4            5      6     7      8     9     10     11
+    //
+    
+    // поехали
+    stepper_start_cycle(&cycle_info);
+    sput_fail_unless(stepper_is_cycle_running(), "stepper_is_cycle_running() == true");
+    sput_fail_unless(sm_x.current_pos == 0, "current_pos == 0");
+    
+    // холостой ход
+    timer_tick(2);
+    
+    // начинаем из нуля
+    sput_fail_unless(sm_x.current_pos == 0, "step1.begin: current_pos == 0");
+    // внезапно, здесь фейл.
+    // а вот и объяснение: если указываем step_delay=0 в prepare_whirl, то первый шаг будет
+    // сделан без всех проверок сразу на 1й тик таймера (этапы tick1 и tick2 будут пропущены),
+    // т.к. первый тик сразу получается наиближайшим к фронту шага (т.е. нулю).
+    // Решение: во всех местах, где устанавливаем значение step_delay для очередного шага,
+    // нужно делать проверку, что в нее уместится как минимум 3 тика таймера 
+    // (сравнения с аппаратными ограничениями задержки для шагов мотора достаточно, 
+    // т.к. она должна заведомо включать как минимум 3 тика).
+    // В нашем случае - это метод prepare_steps, но другие места (особенно там, где есть динамическая
+    // задержка) нужно тоже все проверить.
+    
+    // проверка границ
+    timer_tick(1);
+    // здесь мы должны увидеть, что этот шаг приведет в выходу за виртуальную границу,
+    // должны быть выставлены коды ошибок, статус мотора обозначен как "остановлен"
+    sput_fail_unless(stepper_info.status == STEPPER_STATUS_FINISHED, "step1.tick1: status == STEPPER_STATUS_FINISHED");
+    sput_fail_unless(stepper_info.error_soft_end_min, "step1.tick3: error_soft_end_min == true");
+    sput_fail_unless(!stepper_info.error_soft_end_max, "step1.tick3: error_soft_end_max == false");
+    
+    // на всякий случай проверим финальное положение
+    sput_fail_unless(sm_x.current_pos == 0, "step1.tick1: current_pos == 0");
+    
+    // цикл должен остановиться на этом же тике
+    sput_fail_unless(!stepper_is_cycle_running(), "stepper_is_cycle_running() == false");
 }
 
 int main() {
@@ -444,9 +578,11 @@ int main() {
     sput_run_test(test_aliquant_speed_tick_by_tick);
     
     
-    sput_enter_suite("Single motor: exit bounds");
-    sput_run_test(test_exit_bounds);
+    sput_enter_suite("Single motor: exit bounds (issue #3) - whirl");
+    sput_run_test(test_exit_bounds_issue3_whirl);
     
+    sput_enter_suite("Single motor: exit bounds (issue #3) - steps");
+    sput_run_test(test_exit_bounds_issue3_steps);
     
     sput_finish_testing();
     return sput_get_return_value();

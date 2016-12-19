@@ -241,8 +241,12 @@ void prepare_steps(stepper *smotor, int step_count, int step_delay, stepper_info
     
     // скорость вращения - постоянная
     _cstatuses[sm_i].delay_source = CONSTANT;
-    _cstatuses[sm_i].step_delay = step_delay;
-    
+    if(step_delay == 0 ) {
+        // 0 - движение с максимальной скоростью
+        _cstatuses[sm_i].step_delay = smotor->pulse_delay;
+    } else {
+        _cstatuses[sm_i].step_delay = step_delay;
+    }
     // выключить режим калибровки
     _cstatuses[sm_i].calibrate_mode = NONE;
   
@@ -307,7 +311,12 @@ void prepare_whirl(stepper *smotor, int dir, int step_delay, calibrate_mode_t ca
     
     // скорость вращения - постоянная
     _cstatuses[sm_i].delay_source = CONSTANT;
-    _cstatuses[sm_i].step_delay = step_delay;
+    if(step_delay == 0 ) {
+        // 0 - движение с максимальной скоростью
+        _cstatuses[sm_i].step_delay = smotor->pulse_delay;
+    } else {
+        _cstatuses[sm_i].step_delay = step_delay;
+    }
     
     // режим калибровки
     _cstatuses[sm_i].calibrate_mode = calibrate_mode;
