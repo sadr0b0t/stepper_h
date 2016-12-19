@@ -938,7 +938,8 @@ void handle_interrupts(int timer) {
                         canceled = true;
                     } // иначе STOP_MOTOR - останавливается только этот мотор 
                     
-                } else if(_smotors[i]->pin_max != NO_PIN && digitalRead(_smotors[i]->pin_max) && _cstatuses[i].dir > 0) {
+                } else if(_smotors[i]->pin_max != NO_PIN && 
+                        digitalRead(_smotors[i]->pin_max) && _cstatuses[i].dir > 0) {
                     // сработал правый аппаратный концевой датчик и мы движемся вправо - 
                     // завершаем вращение для этого мотора
                     _cstatuses[i].stopped = true;
@@ -991,7 +992,8 @@ void handle_interrupts(int timer) {
                     } // иначе STOP_MOTOR - останавливается только этот мотор
                     
                 } else if( _cstatuses[i].calibrate_mode == CALIBRATE_BOUNDS_MAX_POS &&
-                        _cstatuses[i].dir < 0 && _smotors[i]->current_pos - _smotors[i]->distance_per_step < _smotors[i]->min_pos ) {
+                        _cstatuses[i].dir < 0 && 
+                        _smotors[i]->current_pos - _smotors[i]->distance_per_step < _smotors[i]->min_pos ) {
                     // в режиме калибровки размера рабочей области при движении влево
                     // собираемся сместиться ниже нижней виртуальной границы
                     // во время предстоящего шага - завершаем вращение для этого мотора
@@ -1150,8 +1152,9 @@ void handle_interrupts(int timer) {
                     }
                 }
                 
-                // взводим таймер на новый шаг
-                _cstatuses[i].step_timer = step_delay;
+                // взводим таймер на новый шаг с учетом погрешности 
+                // (неиспользованных микросекунд) предыдущего шага
+                _cstatuses[i].step_timer = step_delay + _cstatuses[i].step_timer;
             }
         }
     }
