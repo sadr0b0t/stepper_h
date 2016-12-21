@@ -9,7 +9,7 @@
  * @author Антон Моисеев 1i7.livejournal.com
  */
  
-#include "WProgram.h"
+#include "Arduino.h"
 #include "stepper.h"
 
 /**
