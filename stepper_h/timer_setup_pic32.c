@@ -34,6 +34,8 @@
 //* Feb  7, 2013	<GeneApperson> Removed dependency on Microchip plib library
 //************************************************************************
 
+# ifdef __PIC32__
+
 #define OPT_SYSTEM_INTERNAL
 #define OPT_BOARD_INTERNAL
 #include <p32xxxx.h>
@@ -142,4 +144,6 @@ void stopTimerISR(int timer) {
         IEC0CLR = 0x100000;		// disable T5 interrupt 
     }
 }
+
+#endif // __PIC32__
 
