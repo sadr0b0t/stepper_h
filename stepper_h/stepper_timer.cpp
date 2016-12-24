@@ -817,7 +817,7 @@ void stepper_pause_cycle() {
 /**
  * Продолжить вращение, если оно было поставлено на паузу
  */
-void stepper_continue_cycle() {
+void stepper_resume_cycle() {
     _cycle_paused = false;
     
     // обновим информацию о цикле для внешнего мира

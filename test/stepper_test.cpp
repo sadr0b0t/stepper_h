@@ -78,7 +78,7 @@ static void test_lifecycle() {
     sput_fail_unless(stepper_is_cycle_paused(), "paused: stepper_is_cycle_paused() == true");
     
     // продолжим двигаться
-    stepper_continue_cycle();
+    stepper_resume_cycle();
     timer_tick(50000);
     sput_fail_unless(stepper_is_cycle_running(), "continued: stepper_is_cycle_running() == true");
     sput_fail_unless(!stepper_is_cycle_paused(), "continued: stepper_is_cycle_paused() == false");
