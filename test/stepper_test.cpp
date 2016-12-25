@@ -380,7 +380,7 @@ static void test_aliquant_speed_tick_by_tick() {
 }
 
 
-static void test_exit_bounds_issue3_whirl() {
+static void test_exit_bounds_issue1_whirl() {
 
     // мотор - минимальная задежка между шагами: 1000 микросекунд
     // расстояние за шаг: 7.5 микрометров
@@ -471,7 +471,7 @@ static void test_exit_bounds_issue3_whirl() {
     sput_fail_unless(!stepper_is_cycle_running(), "stepper_is_cycle_running() == false");
 }
 
-static void test_exit_bounds_issue3_steps() {
+static void test_exit_bounds_issue1_steps() {
 
     // мотор - минимальная задежка между шагами: 1000 микросекунд
     // расстояние за шаг: 7.5 микрометров
@@ -626,11 +626,11 @@ int main() {
     sput_run_test(test_aliquant_speed_tick_by_tick);
     
     
-    sput_enter_suite("Single motor: exit bounds (issue #3) - whirl");
-    sput_run_test(test_exit_bounds_issue3_whirl);
+    sput_enter_suite("Single motor: exit bounds (issue #1) - whirl");
+    sput_run_test(test_exit_bounds_issue1_whirl);
     
-    sput_enter_suite("Single motor: exit bounds (issue #3) - steps");
-    sput_run_test(test_exit_bounds_issue3_steps);
+    sput_enter_suite("Single motor: exit bounds (issue #1) - steps");
+    sput_run_test(test_exit_bounds_issue1_steps);
     
     sput_enter_suite("Single motor: exit bounds (issue #9) - steps");
     sput_run_test(test_exit_bounds_issue9_steps);
