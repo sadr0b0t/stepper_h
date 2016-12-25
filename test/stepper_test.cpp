@@ -561,6 +561,54 @@ static void test_exit_bounds_issue3_steps() {
     // цикл должен остановиться на этом же тике
     sput_fail_unless(!stepper_is_cycle_running(), "stepper_is_cycle_running() == false");
 }
+static void test_exit_bounds_issue9_steps() {
+    // https://github.com/1i7/stepper_h/issues/9
+
+    // мотор - минимальная задежка между шагами: 1000 микросекунд
+    // расстояние за шаг: 7.5 микрометров
+    // рабочая область: 300000мкм=300мм=30см
+    // нижняя граница координаты: ограничена=0
+    // верхняя граница координаты: ограничена=300000
+    stepper sm_x;
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7.5); 
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000);
+    
+    // настройки частоты таймера
+    int timer_period_us = 200;
+    stepper_configure_timer(timer_period_us, TIMER3, TIMER_PRESCALER_1_8, 2000);
+    
+    //////////////
+    
+    // на всякий случай: цикл не должен быть запущен 
+    // (если запущен, то косяк в предыдущем тесте)
+    sput_fail_unless(!stepper_is_cycle_running(), "stepper_is_cycle_running() == false");
+    
+    // выходим за границу, в задержку между шагами не умещается 
+    // 3 тика таймера
+    // попробуем выйти в минус за 0
+    
+    // 
+    // готовим мотор на несколько шагов в сторону нуля,
+    // ставим задержку между шагами менье, чем 3 периода таймера:
+    // 200*3=600 > 400
+    // void prepare_steps(stepper *smotor, 
+    //     int step_count, int step_delay, 
+    //     stepper_info_t *stepper_info)
+    prepare_steps(&sm_x, -300, 400);
+    
+    // поехали
+    stepper_start_cycle();
+    sput_fail_unless(stepper_is_cycle_running(), "stepper_is_cycle_running() == true");
+    sput_fail_unless(sm_x.current_pos == 0, "current_pos == 0");
+    
+    // шагаем
+    timer_tick(20000);
+    
+    sput_fail_unless(sm_x.current_pos == 0, "current_pos == 0");
+    
+    // цикл должен остановиться на этом же тике
+    sput_fail_unless(!stepper_is_cycle_running(), "stepper_is_cycle_running() == false");
+}
 
 int main() {
     sput_start_testing();
@@ -583,6 +631,9 @@ int main() {
     
     sput_enter_suite("Single motor: exit bounds (issue #3) - steps");
     sput_run_test(test_exit_bounds_issue3_steps);
+    
+    sput_enter_suite("Single motor: exit bounds (issue #9) - steps");
+    sput_run_test(test_exit_bounds_issue9_steps);
     
     sput_finish_testing();
     return sput_get_return_value();
