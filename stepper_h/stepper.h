@@ -317,7 +317,8 @@ void prepare_steps(stepper *smotor, int step_count, int step_delay, stepper_info
  * @param stepper_info информация о цикле вращения шагового двигателя, обновляется динамически
  *        в процессе вращения двигателя
  */
-void prepare_whirl(stepper *smotor, int dir, int step_delay, calibrate_mode_t calibrate_mode=NONE, stepper_info_t *stepper_info=NULL);
+void prepare_whirl(stepper *smotor, int dir, int step_delay, calibrate_mode_t calibrate_mode=NONE, 
+        stepper_info_t *stepper_info=NULL);
 
 /**
  * Подготовить мотор к запуску ограниченной серии шагов с переменной скоростью - задержки на каждом 
@@ -366,7 +367,8 @@ void prepare_whirl(stepper *smotor, int dir, int step_delay, calibrate_mode_t ca
  * @param stepper_info информация о цикле вращения шагового двигателя, обновляется динамически
  *        в процессе вращения двигателя
  */
-void prepare_simple_buffered_steps(stepper *smotor, int buf_size, int* delay_buffer, int step_count=1, stepper_info_t *stepper_info=NULL);
+void prepare_simple_buffered_steps(stepper *smotor, int buf_size, int* delay_buffer, int step_count=1, 
+        stepper_info_t *stepper_info=NULL);
 
 /**
  * @param buf_size количество элементов в буфере delay_buffer
@@ -378,7 +380,8 @@ void prepare_simple_buffered_steps(stepper *smotor, int buf_size, int* delay_buf
  * @param stepper_info информация о цикле вращения шагового двигателя, обновляется динамически
  *        в процессе вращения двигателя
  */
-void prepare_buffered_steps(stepper *smotor, int buf_size, int* delay_buffer, int* step_buffer, stepper_info_t *stepper_info=NULL);
+void prepare_buffered_steps(stepper *smotor, int buf_size, int* delay_buffer, int* step_buffer, 
+        stepper_info_t *stepper_info=NULL);
 
 /**
  * Подготовить мотор к запуску ограниченной серии шагов с переменной скоростью - задать нужное количество 
