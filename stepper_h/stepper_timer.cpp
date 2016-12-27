@@ -4,7 +4,7 @@
  * Библиотека управления шаговыми моторами, подключенными через интерфейс 
  * драйвера "step-dir".
  *
- * LGPLv3, 2014-2016
+ * LGPLv3, 2014-2017
  *
  * @author Антон Моисеев 1i7.livejournal.com
  */
@@ -20,23 +20,6 @@ extern "C"{
 #include "stepper.h"
 
 #include "stepper_lib_config.h"
-
-typedef enum {
-    /** Игнорировать проблему, продолжать выполнение */
-    IGNORE, 
-    
-    /** 
-     * Попытаться исправить проблему (например, установить ближайшее корректное значение)
-     * и продолжить выполнение 
-     */
-    FIX, 
-    
-    /** Остановить мотор, продолжить вращение остальных моторов */
-    STOP_MOTOR,
-    
-    /** Завершить выполнение всего цикла - остановить все моторы */
-    CANCEL_CYCLE
-} error_handle_strategy_t;
 
 /**
  * Способы вычисления задержки перед следующим шагом
@@ -474,7 +457,7 @@ void prepare_buffered_steps(stepper *smotor, int buf_size, int* delay_buffer, in
     _cstatuses[sm_i].cycle_counter = 0;
     _cstatuses[sm_i].step_buffer = step_buffer;
 
-    int step_count = _cstatuses[sm_i].step_buffer[_cstatuses[sm_i].cycle_counter];
+    int step_count = _cstatuses[sm_i].step_buffer[0];
     // сделать step_count положительным
     _cstatuses[sm_i].step_count = step_count > 0 ? step_count : -step_count;
     
@@ -489,9 +472,9 @@ void prepare_buffered_steps(stepper *smotor, int buf_size, int* delay_buffer, in
     // скорость вращения - постоянная на каждом цикле
     _cstatuses[sm_i].delay_source = CONSTANT;
     _cstatuses[sm_i].delay_buffer = delay_buffer;
-    int step_delay = _cstatuses[sm_i].delay_buffer[_cstatuses[sm_i].cycle_counter];
-    if(step_delay <= _smotors[sm_i]->pulse_delay) {
-        // не будем делать шаги чаще, чем может мотор
+    int step_delay = _cstatuses[sm_i].delay_buffer[0];
+    if(step_delay == 0) {
+        // движение с максимальной скоростью
         _cstatuses[sm_i].step_delay = _smotors[sm_i]->pulse_delay;
     } else {
         _cstatuses[sm_i].step_delay = step_delay;
@@ -725,6 +708,54 @@ void stepper_configure_timer(int target_period_us, int timer, int prescaler, int
     _timer_id = timer;
     _timer_prescaler = prescaler;
     _timer_period = period;
+}
+
+/**
+ * Стратегия реакции на некоторые исключительные ситуации, которые
+ * могут произойти во время вращения моторов.
+ *
+ * @param hard_end_handle - выход за границы по аппаратному концевику.
+ *     допустимые значения: STOP_MOTOR/CANCEL_CYCLE
+ *     по умолчанию: CANCEL_CYCLE
+ * @param soft_end_handle - выход за виртуальные границы.
+ *     допустимые значения: STOP_MOTOR/CANCEL_CYCLE
+ *     по умолчанию: CANCEL_CYCLE
+ * @param small_pulse_delay_handle - задержка между шагами меньше 
+ *       минимально допустимой для мотора.
+ *     допустимые значения: FIX/STOP_MOTOR/CANCEL_CYCLE/IGNORE
+ *     по умолчанию: FIX
+ * @param cycle_timing_exceed_handle - обработчик прерывания выполняется дольше,
+ *       чем период таймера.
+ *     допустимые значения: IGNORE/CANCEL_CYCLE
+ *     по умолчанию: CANCEL_CYCLE
+ */
+void stepper_set_error_handle_strategy(
+        error_handle_strategy_t hard_end_handle,
+        error_handle_strategy_t soft_end_handle,
+        error_handle_strategy_t small_pulse_delay_handle,
+        error_handle_strategy_t cycle_timing_exceed_handle) {
+    // допустимые значения: STOP_MOTOR/CANCEL_CYCLE
+    if(hard_end_handle == STOP_MOTOR || hard_end_handle == CANCEL_CYCLE) {
+        _hard_end_handle = hard_end_handle;
+    }
+    
+    // допустимые значения: STOP_MOTOR/CANCEL_CYCLE
+    if(soft_end_handle == STOP_MOTOR || soft_end_handle == CANCEL_CYCLE) {
+        _soft_end_handle = soft_end_handle;
+    }
+    
+    // допустимые значения: STOP_MOTOR/CANCEL_CYCLE/FIX/IGNORE
+    if(small_pulse_delay_handle == STOP_MOTOR || 
+            small_pulse_delay_handle == CANCEL_CYCLE || 
+            small_pulse_delay_handle == FIX ||
+            small_pulse_delay_handle == IGNORE) {
+        _small_pulse_delay_handle = small_pulse_delay_handle;
+    }
+    
+    // допустимые значения: IGNORE/CANCEL_CYCLE
+    if(cycle_timing_exceed_handle == STOP_MOTOR || cycle_timing_exceed_handle == CANCEL_CYCLE) {
+        _cycle_timing_exceed_handle = cycle_timing_exceed_handle;
+    }
 }
 
 /**

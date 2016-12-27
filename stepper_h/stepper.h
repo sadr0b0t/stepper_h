@@ -204,6 +204,23 @@ typedef enum {
     CYCLE_ERROR_HANDLER_TIMING_EXCEEDED
 } stepper_cycle_error_t;
 
+typedef enum {
+    /** Игнорировать проблему, продолжать выполнение */
+    IGNORE, 
+    
+    /** 
+     * Попытаться исправить проблему (например, установить ближайшее корректное значение)
+     * и продолжить выполнение 
+     */
+    FIX, 
+    
+    /** Остановить мотор, продолжить вращение остальных моторов */
+    STOP_MOTOR,
+    
+    /** Завершить выполнение всего цикла - остановить все моторы */
+    CANCEL_CYCLE
+} error_handle_strategy_t;
+
 /**
  * Текущая информация о цикле вращения моторов
  */
@@ -413,6 +430,56 @@ void prepare_dynamic_whirl(stepper *smotor, int dir,
         void* curve_context, int (*next_step_delay)(int curr_step, void* curve_context), 
         stepper_info_t *stepper_info=NULL);
 
+
+//////////////////////////////////////////
+// Управление циклом
+
+/**
+ * Запустить цикл шагов на выполнение - запускаем таймер, обработчик прерываний
+ * отрабатывать подготовленную программу.
+ *
+ * @param cycle_info информация о цикле, обновляется динамически в процессе работы цикла
+ */
+void stepper_start_cycle(stepper_cycle_info_t *cycle_info=NULL);
+
+/**
+ * Завершить цикл шагов - остановить таймер, обнулить список моторов.
+ */
+void stepper_finish_cycle();
+
+/**
+ * Поставить вращение на паузу, не прирывая всего цикла
+ */
+void stepper_pause_cycle();
+
+/**
+ * Продолжить вращение, если оно было поставлено на паузу
+ */
+void stepper_resume_cycle();
+
+/**
+ * Текущий статус цикла:
+ * true - в процессе выполнения,
+ * false - ожидает запуска.
+ */
+bool stepper_is_cycle_running();
+
+/**
+ * Проверить, на паузе ли цикл:
+ * true - цикл на паузе (выполняется)
+ * false - цикл не на паузе (выполняется или остановлен).
+ */
+bool stepper_is_cycle_paused();
+
+/**
+ * Отладочная информация о текущем цикле.
+ */
+void stepper_cycle_debug_status(char* status_str);
+
+
+/////////////////////////////////////////
+// Системные настройки
+
 /**
  * Настроить таймер для шагов.
  * Частота ядра PIC32MX - 80МГц=80млн операций в секунду.
@@ -478,46 +545,29 @@ void prepare_dynamic_whirl(stepper *smotor, int dir,
 void stepper_configure_timer(int target_period_us, int timer, int prescaler, int period);
 
 /**
- * Запустить цикл шагов на выполнение - запускаем таймер, обработчик прерываний
- * отрабатывать подготовленную программу.
+ * Стратегия реакции на некоторые исключительные ситуации, которые
+ * могут произойти во время вращения моторов.
  *
- * @param cycle_info информация о цикле, обновляется динамически в процессе работы цикла
+ * @param hard_end_handle - выход за границы по аппаратному концевику.
+ *     допустимые значения: STOP_MOTOR/CANCEL_CYCLE
+ *     по умолчанию: CANCEL_CYCLE
+ * @param soft_end_handle - выход за виртуальные границы.
+ *     допустимые значения: STOP_MOTOR/CANCEL_CYCLE
+ *     по умолчанию: CANCEL_CYCLE
+ * @param small_pulse_delay_handle - задержка между шагами меньше 
+ *       минимально допустимой для мотора.
+ *     допустимые значения: FIX/STOP_MOTOR/CANCEL_CYCLE/IGNORE
+ *     по умолчанию: FIX
+ * @param cycle_timing_exceed_handle - обработчик прерывания выполняется дольше,
+ *       чем период таймера.
+ *     допустимые значения: IGNORE/CANCEL_CYCLE
+ *     по умолчанию: CANCEL_CYCLE
  */
-void stepper_start_cycle(stepper_cycle_info_t *cycle_info=NULL);
-
-/**
- * Завершить цикл шагов - остановить таймер, обнулить список моторов.
- */
-void stepper_finish_cycle();
-
-/**
- * Поставить вращение на паузу, не прирывая всего цикла
- */
-void stepper_pause_cycle();
-
-/**
- * Продолжить вращение, если оно было поставлено на паузу
- */
-void stepper_resume_cycle();
-
-/**
- * Текущий статус цикла:
- * true - в процессе выполнения,
- * false - ожидает запуска.
- */
-bool stepper_is_cycle_running();
-
-/**
- * Проверить, на паузе ли цикл:
- * true - цикл на паузе (выполняется)
- * false - цикл не на паузе (выполняется или остановлен).
- */
-bool stepper_is_cycle_paused();
-
-/**
- * Отладочная информация о текущем цикле.
- */
-void stepper_cycle_debug_status(char* status_str);
+void stepper_set_error_handle_strategy(
+        error_handle_strategy_t hard_end_handle,
+        error_handle_strategy_t soft_end_handle,
+        error_handle_strategy_t small_pulse_delay_handle,
+        error_handle_strategy_t cycle_timing_exceed_handle);
 
 #endif // STEPPER_H
 
