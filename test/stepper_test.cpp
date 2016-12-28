@@ -475,6 +475,133 @@ static void test_aliquant_speed_tick_by_tick() {
     sput_fail_unless(!stepper_is_cycle_running(), "stepper_is_cycle_running() == false");
 }
 
+static void test_draw_triangle() {
+    // нарисуем треугольник в 3д, 
+    // убедимся, что вернулись в исходную точку
+    
+    stepper sm_x, sm_y, sm_z;
+    // X
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7.5); 
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000);
+    // Y
+    init_stepper(&sm_y, 'y', 5, 6, 7, true, 1000, 7.5);
+    init_stepper_ends(&sm_y, NO_PIN, NO_PIN, INF, INF, 0, 216000);
+    // Z
+    init_stepper(&sm_z, 'z', 2, 3, 4, true, 1000, 7.5);
+    init_stepper_ends(&sm_z, NO_PIN, NO_PIN, INF, INF, 0, 100000);
+    
+    
+    // настройки частоты таймера
+    int timer_period_us = 200;
+    stepper_configure_timer(timer_period_us, TIMER3, TIMER_PRESCALER_1_8, 2000);
+    
+    ////////////
+    // на всякий случай: цикл не должен быть запущен 
+    // (если запущен, то косяк в предыдущем тесте)
+    sput_fail_unless(!stepper_is_cycle_running(), "stepper_is_cycle_running() == false");
+    
+    ///////////
+    
+    // p0 -> p1 -> p2 -> p0
+    //   line1 line2 line3
+    // cm: (0,0,0) -> (15,5,2) -> (5,15,2) -> (0,0,0)
+    // uM: (0,0,0) -> (150000,50000,20000) -> (50000,150000,20000) -> (0,0,0)
+    
+    // #1 линия1
+    // line1: (0,0,0) -> (150000,50000,20000)
+    
+    // X - длинная координата - ее проходим с максимальной скоростью
+    //int steps_x = 150000.0 / 7.5;
+    int steps_x = (150000.0 - sm_x.current_pos) / 7.5;
+    int delay_x = 1000;
+    int time_x = delay_x * abs(steps_x);
+    
+    //int steps_y = 50000.0 / 7.5;
+    int steps_y = (50000.0 - sm_y.current_pos) / 7.5;
+    int delay_y = time_x / abs(steps_y);
+    
+    //int steps_z = 20000.0 / 7.5;
+    int steps_z = (20000.0 - sm_z.current_pos) / 7.5;
+    int delay_z = time_x / abs(steps_z);
+
+    //prepare_steps(stepper *smotor, int step_count, int step_delay, stepper_info_t *stepper_info=NULL);
+    prepare_steps(&sm_x, steps_x, delay_x);
+    prepare_steps(&sm_y, steps_y, delay_y);
+    prepare_steps(&sm_z, steps_z, delay_z);
+    
+    // пошагали
+    stepper_start_cycle();
+    timer_tick(abs(steps_x)*5+1);
+    sput_fail_unless(!stepper_is_cycle_running(), "line1: stepper_is_cycle_running() == false");
+    
+    // #2 линия2
+    // line2: (150000,50000,20000) -> (50000,150000,20000)
+    
+    // здесь путь по x и y одинаковый, но точные количества шагов
+    // с учетом погрешностей округления могут отличаться на +/- один шаг:
+    // реально получится:
+    // steps_x=-13333, steps_y=13334
+    
+    //int steps_y = (150000.0 - 50000.0) / 7.5;
+    steps_y = (150000.0 - sm_y.current_pos) / 7.5;
+    delay_y = 1000;
+    int time_y = delay_y * abs(steps_y);
+    
+    //int steps_x = (50000.0 - 150000.0) / 7.5;
+    steps_x = (50000.0 - sm_x.current_pos) / 7.5;
+    delay_x = time_y / abs(steps_y);
+    
+    // путь по z=0
+    //int steps_z = (20000.0 - 20000.0) / 7.5;
+    //int steps_z = (20000.0 - sm_z.current_pos) / 7.5;
+    //int delay_z = time_y / abs(steps_z);
+
+    //prepare_steps(stepper *smotor, int step_count, int step_delay, stepper_info_t *stepper_info=NULL);
+    prepare_steps(&sm_x, steps_x, delay_x);
+    prepare_steps(&sm_y, steps_y, delay_y);
+    //prepare_steps(&sm_z, steps_z, delay_z);
+    
+    // пошагали
+    cout<<"steps_x="<<steps_x<<", steps_y="<<steps_y<<endl;
+    stepper_start_cycle();
+    timer_tick(abs(steps_y)*5+1);
+    sput_fail_unless(!stepper_is_cycle_running(), "line2: stepper_is_cycle_running() == false");
+    
+    // #3 линия3
+    // line3: (50000,150000,20000) -> (0,0,0)
+    
+    // Y - длинная координата - ее проходим с максимальной скоростью
+    //int steps_y = -150000.0 / 7.5;
+    steps_y = (0.0 - sm_y.current_pos) / 7.5;
+    delay_y = 1000;
+    time_y = delay_y * abs(steps_y);
+    
+    //int steps_x = -50000.0 / 7.5;
+    steps_x = (0.0 - sm_x.current_pos) / 7.5;
+    delay_x = time_y / abs(steps_x);
+    
+    //int steps_z = -20000.0 / 7.5;
+    steps_z = (0.0 - sm_z.current_pos) / 7.5;
+    delay_z = time_y / abs(steps_z);
+
+    //prepare_steps(stepper *smotor, int step_count, int step_delay, stepper_info_t *stepper_info=NULL);
+    prepare_steps(&sm_x, steps_x, delay_x);
+    prepare_steps(&sm_y, steps_y, delay_y);
+    prepare_steps(&sm_z, steps_z, delay_z);
+    
+    // пошагали
+    stepper_start_cycle();
+    timer_tick(abs(steps_y)*5+1);
+    sput_fail_unless(!stepper_is_cycle_running(), "line3: stepper_is_cycle_running() == false");
+    
+    // #4
+    // Проехали весь треугольник, убедимся, что мы в исходной точке (0,0,0)
+    sput_fail_unless(!stepper_is_cycle_running(), "done: stepper_is_cycle_running() == false");
+    sput_fail_unless(sm_x.current_pos == 0, "done: sm_x.current_pos == 0");
+    sput_fail_unless(sm_y.current_pos == 0, "done: sm_y.current_pos == 0");
+    sput_fail_unless(sm_z.current_pos == 0, "done: sm_z.current_pos == 0");
+    
+}
 
 static void test_exit_bounds_issue1_whirl() {
 
@@ -724,6 +851,8 @@ int main() {
     sput_enter_suite("Single motor: 5 steps tick by tick on aliquant speed");
     sput_run_test(test_aliquant_speed_tick_by_tick);
     
+    sput_enter_suite("3 motors: draw triangle");
+    sput_run_test(test_draw_triangle);
     
     sput_enter_suite("Single motor: exit bounds (issue #1) - whirl");
     sput_run_test(test_exit_bounds_issue1_whirl);
