@@ -195,13 +195,23 @@ typedef struct {
  */
 typedef enum {
     /** Ошибок нет */
-    CYCLE_ERROR_NONE, 
+    CYCLE_ERROR_NONE = 0,
+    
+    /** Цикл уже запущен */
+    CYCLE_ERROR_ALREADY_RUNNING = 1,
+    
+    /** 
+     * Хотябы у одного из моторов, добавленных в список вращения, 
+     * минимальная задержка 
+     * между шагами не вмещает 3 периода таймера 
+     */
+    CYCLE_ERROR_TIMER_PERIOD_TOO_LONG = 2,
     
     /** 
      * Превышено максимальное время выполнения обработчика 
      * события от таймера 
      */
-    CYCLE_ERROR_HANDLER_TIMING_EXCEEDED
+    CYCLE_ERROR_HANDLER_TIMING_EXCEEDED = 3
 } stepper_cycle_error_t;
 
 typedef enum {
@@ -438,9 +448,16 @@ void prepare_dynamic_whirl(stepper *smotor, int dir,
  * Запустить цикл шагов на выполнение - запускаем таймер, обработчик прерываний
  * отрабатывать подготовленную программу.
  *
- * @param cycle_info информация о цикле, обновляется динамически в процессе работы цикла
+ * @param cycle_info - информация о цикле, обновляется динамически в процессе работы цикла
+ * @return 0, если цикл запущен, код ошибки, если цикл запустить не получилось.
+ *     коды ошибок:
+ *     CYCLE_ERROR_ALREADY_RUNNING=1 - цикл уже запущен
+ *     CYCLE_ERROR_TIMER_PERIOD_TOO_LONG=2 - хотябы у одного из моторов, добавленных 
+ *       в список вращения, минимальная задержка между шагами не вмещает 3 периода таймера 
+ *       (следует проверить настройки мотора - значение pulse_delay или 
+ *       настройки частоты таймера цикла stepper_configure_timer)
  */
-void stepper_start_cycle(stepper_cycle_info_t *cycle_info=NULL);
+int stepper_start_cycle(stepper_cycle_info_t *cycle_info=NULL);
 
 /**
  * Завершить цикл шагов - остановить таймер, обнулить список моторов.

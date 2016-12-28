@@ -71,6 +71,12 @@ static void test_lifecycle() {
     // все еще должны двигаться
     sput_fail_unless(stepper_is_cycle_running(), "ticks: stepper_is_cycle_running() == true");
     
+    // попробуем запустить повторно - должны получить код ошибки
+    sput_fail_unless(stepper_start_cycle() == CYCLE_ERROR_ALREADY_RUNNING, 
+        "start while running: stepper_start_cycle() == CYCLE_ERROR_ALREADY_RUNNING");
+    // но старый цикл все еще должен работать
+    sput_fail_unless(stepper_is_cycle_running(), "start while running: stepper_is_cycle_running() == true");
+    
     // встанем на паузу
     stepper_pause_cycle();
     timer_tick(50000);
@@ -88,6 +94,96 @@ static void test_lifecycle() {
     sput_fail_unless(!stepper_is_cycle_running(), "finished: stepper_is_cycle_running() == false");
     timer_tick(50000);
     sput_fail_unless(!stepper_is_cycle_running(), "finished: stepper_is_cycle_running() == false");
+}
+
+static void test_timer_period() {
+    // проверим настройки периода таймера: цикл не должен запускаться,
+    // если хотябы у одного из моторов минимальная задержка между шагами 
+    // не вмещает минимум 3 периода таймера
+    
+    stepper sm_x, sm_y, sm_z;
+    // X
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7.5); 
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000);
+    // Y
+    init_stepper(&sm_y, 'y', 5, 6, 7, true, 1000, 7.5);
+    init_stepper_ends(&sm_y, NO_PIN, NO_PIN, INF, INF, 0, 216000);
+    // Z - пусть у этого мотора аппаратная задержка между шагами
+    // будет сильно меньше, чем у X и Y
+    init_stepper(&sm_z, 'z', 2, 3, 4, true, 500, 7.5);
+    init_stepper_ends(&sm_z, NO_PIN, NO_PIN, INF, INF, 0, 100000);
+    
+    int timer_period_us;
+    
+    // #1
+    // период таймера 200 микросекунд
+    // минимальная задержка между шагами моторов X и Y 1000 микросекунд
+    // 200*3=600 < 1000 => цикл должен запуститься
+    timer_period_us = 200;
+    stepper_configure_timer(timer_period_us, TIMER3, TIMER_PRESCALER_1_8, 2000);
+    
+    prepare_whirl(&sm_x, 1, 1000);
+    prepare_whirl(&sm_y, 1, 2000);
+    //prepare_whirl(&sm_z, 1, 3000);
+    
+    sput_fail_unless(stepper_start_cycle() == CYCLE_ERROR_NONE, 
+        "period=200uS (ok): stepper_start_cycle() == CYCLE_ERROR_NONE");
+    sput_fail_unless(stepper_is_cycle_running(), "period=200uS (ok): stepper_is_cycle_running() == true");
+    // останавливаемся
+    stepper_finish_cycle();
+    
+    // #2
+    // период таймера 200 микросекунд
+    // минимальная задержка между шагами моторов X и Y 1000 микросекунд,
+    // для мотора Z - 500 микросекунд
+    // 200*3=600 < 1000, но 600 > 500 => цикл НЕ должен запуститься
+    timer_period_us = 200;
+    stepper_configure_timer(timer_period_us, TIMER3, TIMER_PRESCALER_1_8, 2000);
+    
+    prepare_whirl(&sm_x, 1, 1000);
+    prepare_whirl(&sm_y, 1, 2000);
+    prepare_whirl(&sm_z, 1, 3000);
+    
+    sput_fail_unless(stepper_start_cycle() == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG, 
+        "period=200uS (too long): stepper_start_cycle() == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG");
+    sput_fail_unless(!stepper_is_cycle_running(), "period=200uS (too long): stepper_is_cycle_running() == false");
+    // останавливаемся
+    stepper_finish_cycle();
+    
+    // #3
+    // период таймера 350 микросекунд
+    // минимальная задержка между шагами моторов X и Y 1000 микросекунд
+    // 350*3=1050 > 1000 => цикл НЕ должен запуститься
+    timer_period_us = 350;
+    stepper_configure_timer(timer_period_us, TIMER3, TIMER_PRESCALER_1_8, 3500);
+    
+    prepare_whirl(&sm_x, 1, 1000);
+    prepare_whirl(&sm_y, 1, 2000);
+    //prepare_whirl(&sm_z, 1, 3000);
+    
+    sput_fail_unless(stepper_start_cycle() == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG, 
+        "period=350uS (too long): stepper_start_cycle() == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG");
+    sput_fail_unless(!stepper_is_cycle_running(), "period=350uS (too long): stepper_is_cycle_running() == false");
+    // останавливаемся
+    stepper_finish_cycle();
+    
+    
+    // #4: повторим тест #1 еще раз в конце для чистоты эксперимента
+    // период таймера 200 микросекунд
+    // минимальная задержка между шагами моторов X и Y 1000 микросекунд
+    // 200*3=600 < 1000 => цикл должен запуститься
+    timer_period_us = 200;
+    stepper_configure_timer(timer_period_us, TIMER3, TIMER_PRESCALER_1_8, 2000);
+    
+    prepare_whirl(&sm_x, 1, 1000);
+    prepare_whirl(&sm_y, 1, 2000);
+    //prepare_whirl(&sm_z, 1, 3000);
+    
+    sput_fail_unless(stepper_start_cycle() == CYCLE_ERROR_NONE, 
+        "period=200uS (ok): stepper_start_cycle() == CYCLE_ERROR_NONE");
+    sput_fail_unless(stepper_is_cycle_running(), "period=200uS (ok): stepper_is_cycle_running() == true");
+    // останавливаемся
+    stepper_finish_cycle();
 }
 
 static void test_max_speed_tick_by_tick() {
@@ -615,6 +711,9 @@ int main() {
 
     sput_enter_suite("Stepper cycle lifecycle");
     sput_run_test(test_lifecycle);
+    
+    sput_enter_suite("Stepper cycle timer period settings");
+    sput_run_test(test_timer_period);
     
     sput_enter_suite("Single motor: 3 steps tick by tick on max speed");
     sput_run_test(test_max_speed_tick_by_tick);

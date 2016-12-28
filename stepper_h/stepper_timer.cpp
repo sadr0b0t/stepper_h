@@ -762,12 +762,34 @@ void stepper_set_error_handle_strategy(
  * Запустить цикл шагов на выполнение - запускаем таймер, обработчик прерываний
  * отрабатывать подготовленную программу.
  *
- * @param cycle_info информация о цикле, обновляется динамически в процессе работы цикла
+ * @param cycle_info - информация о цикле, обновляется динамически в процессе работы цикла
+ * @return 0, если цикл запущен, код ошибки, если цикл запустить не получилось.
+ *     коды ошибок:
+ *     CYCLE_ERROR_ALREADY_RUNNING=1 - цикл уже запущен
+ *     CYCLE_ERROR_TIMER_PERIOD_TOO_LONG=2 - хотябы у одного из моторов, добавленных 
+ *       в список вращения, минимальная задержка между шагами не вмещает 3 периода таймера 
+ *       (следует проверить настройки мотора - значение pulse_delay или 
+ *       настройки частоты таймера цикла stepper_configure_timer)
  */
-void stepper_start_cycle(stepper_cycle_info_t *cycle_info) {
+int stepper_start_cycle(stepper_cycle_info_t *cycle_info) {
     // не запускать новый цикл, если старый не отработал
     if(_cycle_running) {
-        return;
+        if(cycle_info != NULL) {
+            cycle_info->error_status = CYCLE_ERROR_ALREADY_RUNNING;
+        }
+        return CYCLE_ERROR_ALREADY_RUNNING;
+    }
+    
+    // не запускать цикл, если хотябы у одного из моторов
+    // минимальная задержка между шагами не вмещает минимум 3
+    // периода таймера
+    for(int i = 0; i < _stepper_count; i++) {
+        if(_smotors[i]->pulse_delay < _timer_period_us*3) {
+            if(cycle_info != NULL) {
+                cycle_info->error_status = CYCLE_ERROR_TIMER_PERIOD_TOO_LONG;
+            }
+            return CYCLE_ERROR_TIMER_PERIOD_TOO_LONG;
+        }
     }
 
     _cycle_info = cycle_info;
@@ -797,6 +819,7 @@ void stepper_start_cycle(stepper_cycle_info_t *cycle_info) {
     // Запустим таймер с периодом _timer_period_us, для этого
     // должны быть заданы правильные _timer_prescaler и _timer_period
     initTimerISR(_timer_id, _timer_prescaler, _timer_period);
+    return 0;
 }
 
 /**
