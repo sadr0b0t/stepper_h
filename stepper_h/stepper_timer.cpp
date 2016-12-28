@@ -776,6 +776,12 @@ void stepper_set_error_handle_strategy(
  *       в список вращения, минимальная задержка между шагами не вмещает 3 периода таймера 
  *       (следует проверить настройки мотора - значение pulse_delay или 
  *       настройки частоты таймера цикла stepper_configure_timer)
+ *     CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE=3 - период таймера некратен 
+ *       минимальной задержке между шагами одного из моторов.
+ *       Это может привести к тому, что при движении на максимальной 
+ *       скорости минимальная задержка меджу шагами не будет соблюдаться, 
+ *       поэтому просто запретим такие комбинации:
+ *       см: https://github.com/1i7/stepper_h/issues/6
  */
 int stepper_start_cycle(stepper_cycle_info_t *cycle_info) {
     // не запускать новый цикл, если старый не отработал
@@ -786,15 +792,31 @@ int stepper_start_cycle(stepper_cycle_info_t *cycle_info) {
         return CYCLE_ERROR_ALREADY_RUNNING;
     }
     
-    // не запускать цикл, если хотябы у одного из моторов
-    // минимальная задержка между шагами не вмещает минимум 3
-    // периода таймера
+    // мы не можем обеспечить корректность работы цикла
+    // при некоторых комбинациях значений периода таймера
+    // и минимальной задержки между шагами мотора
     for(int i = 0; i < _stepper_count; i++) {
+        // не запускать цикл, если хотябы у одного из моторов
+        // минимальная задержка между шагами не вмещает минимум 3
+        // периода таймера
         if(_smotors[i]->pulse_delay < _timer_period_us*3) {
             if(cycle_info != NULL) {
                 cycle_info->error_status = CYCLE_ERROR_TIMER_PERIOD_TOO_LONG;
             }
+            
+            // неудачная попытка - очищаем все предварительные заготовки
+            stepper_finish_cycle();
             return CYCLE_ERROR_TIMER_PERIOD_TOO_LONG;
+        }
+        // не запускать цикл, если периоду таймера не кратен
+        // минимальной задержке между шагами хотябы одного из моторов
+        if(_smotors[i]->pulse_delay % _timer_period_us != 0) {
+            if(cycle_info != NULL) {
+                cycle_info->error_status = CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE;
+            }
+            // неудачная попытка - очищаем все предварительные заготовки
+            stepper_finish_cycle();
+            return CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE;
         }
     }
 

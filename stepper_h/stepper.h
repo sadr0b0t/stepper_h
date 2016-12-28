@@ -207,11 +207,20 @@ typedef enum {
      */
     CYCLE_ERROR_TIMER_PERIOD_TOO_LONG = 2,
     
+    /**
+     * Период таймера некратен минимальной задержке между шагами
+     * одного из моторов. Это может привести к тому, что при движении
+     * на максимальной скорости минимальная задержка меджу шагами 
+     * не будет соблюдаться, поэтому просто запретим такие комбинации:
+     * см: https://github.com/1i7/stepper_h/issues/6
+     */
+    CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE = 3,
+    
     /** 
      * Превышено максимальное время выполнения обработчика 
      * события от таймера 
      */
-    CYCLE_ERROR_HANDLER_TIMING_EXCEEDED = 3
+    CYCLE_ERROR_HANDLER_TIMING_EXCEEDED = 4
 } stepper_cycle_error_t;
 
 typedef enum {
@@ -462,6 +471,12 @@ void prepare_dynamic_whirl(stepper *smotor, int dir,
  *       в список вращения, минимальная задержка между шагами не вмещает 3 периода таймера 
  *       (следует проверить настройки мотора - значение pulse_delay или 
  *       настройки частоты таймера цикла stepper_configure_timer)
+ *     CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE=3 - период таймера некратен 
+ *       минимальной задержке между шагами одного из моторов. 
+ *       Это может привести к тому, что при движении на максимальной 
+ *       скорости минимальная задержка меджу шагами не будет соблюдаться, 
+ *       поэтому просто запретим такие комбинации:
+ *       см: https://github.com/1i7/stepper_h/issues/6
  */
 int stepper_start_cycle(stepper_cycle_info_t *cycle_info=NULL);
 

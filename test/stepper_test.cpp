@@ -147,8 +147,7 @@ static void test_timer_period() {
     sput_fail_unless(stepper_start_cycle() == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG, 
         "period=200uS (too long): stepper_start_cycle() == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG");
     sput_fail_unless(!stepper_is_cycle_running(), "period=200uS (too long): stepper_is_cycle_running() == false");
-    // останавливаемся
-    stepper_finish_cycle();
+    // цикл не должен быть запущен
     
     // #3
     // период таймера 350 микросекунд
@@ -164,9 +163,7 @@ static void test_timer_period() {
     sput_fail_unless(stepper_start_cycle() == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG, 
         "period=350uS (too long): stepper_start_cycle() == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG");
     sput_fail_unless(!stepper_is_cycle_running(), "period=350uS (too long): stepper_is_cycle_running() == false");
-    // останавливаемся
-    stepper_finish_cycle();
-    
+    // цикл не должен быть запущен
     
     // #4: повторим тест #1 еще раз в конце для чистоты эксперимента
     // период таймера 200 микросекунд
@@ -184,6 +181,44 @@ static void test_timer_period() {
     sput_fail_unless(stepper_is_cycle_running(), "period=200uS (ok): stepper_is_cycle_running() == true");
     // останавливаемся
     stepper_finish_cycle();
+}
+
+static void test_timer_period_aliquant_motor_pulse() {
+    // период таймера некратен минимальной задержке между шагами 
+    // одного из моторов. Это может привести к тому, что при движении 
+    // на максимальной скорости минимальная задержка меджу шагами 
+    // не будет соблюдаться, поэтому просто запретим такие комбинации:
+    // см: https://github.com/1i7/stepper_h/issues/6
+    
+    
+    // мотор - минимальная задержка между шагами 1000 мкс,
+    // расстояние за шаг - 7.5 мкм
+    stepper sm_x;
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7.5); 
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000);
+    
+    // настройки частоты таймера
+    int timer_period_us = 300;
+    stepper_configure_timer(timer_period_us, TIMER3, TIMER_PRESCALER_1_8, 3000);
+    
+    //////////////
+    
+    // на всякий случай: цикл не должен быть запущен 
+    // (если запущен, то косяк в предыдущем тесте)
+    sput_fail_unless(!stepper_is_cycle_running(), "stepper_is_cycle_running() == false");
+    
+    //////////////
+    
+    // готовим какие-то шаги
+    prepare_steps(&sm_x, 500, 1000);
+    
+    // минимальная задержка между шагами мотора: 1000 мкс
+    // период таймера: 300 мкс
+    // остаток от деления: 1000 % 300 = 100 != 0 =>
+    // цикл с такой частотой с таким мотором не должен запуститься
+    sput_fail_unless(stepper_start_cycle() == CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE, 
+        "period=300uS (aliquant): stepper_start_cycle() == CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE");
+    sput_fail_unless(!stepper_is_cycle_running(), "period=300uS (aliquant): stepper_is_cycle_running() == false");
 }
 
 static void test_max_speed_tick_by_tick() {
@@ -354,6 +389,7 @@ static void test_max_speed_30000steps() {
 }
 
 static void test_aliquant_speed_tick_by_tick() {
+    // движение мотора со скоростью, некратной периоду таймера
 
     // мотор - минимальная задержка между шагами 1000 мкс,
     // расстояние за шаг - 7.5 мкм
@@ -852,6 +888,9 @@ int main() {
     
     sput_enter_suite("Stepper cycle timer period settings");
     sput_run_test(test_timer_period);
+    
+    sput_enter_suite("Stepper cycle timer period aliquant motor pulse delay");
+    sput_run_test(test_timer_period_aliquant_motor_pulse);
     
     sput_enter_suite("Single motor: 3 steps tick by tick on max speed");
     sput_run_test(test_max_speed_tick_by_tick);
