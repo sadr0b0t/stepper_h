@@ -323,10 +323,16 @@ void init_stepper_ends(stepper* smotor,
  * 
  * @param step_count количество шагов, знак задает направление вращения
  * @param step_delay задержка между двумя шагами, микросекунды (0 для максимальной скорости)
+ * @param calibrate_mode - режим калибровки
+ *     NONE: режим калибровки выключен - останавливать вращение при выходе за виртуальные границы 
+ *           рабочей области [min_pos, max_pos] (аппаратные проверяются ВСЕГДА);
+ *     CALIBRATE_START_MIN_POS: установка начальной позиции (сбрасывать current_pos в min_pos при каждом шаге);
+ *     CALIBRATE_BOUNDS_MAX_POS: установка размеров рабочей области (сбрасывать max_pos в current_pos при каждом шаге)
  * @param stepper_info информация о цикле вращения шагового двигателя, обновляется динамически
  *        в процессе вращения двигателя
  */
-void prepare_steps(stepper *smotor, int step_count, int step_delay, stepper_info_t *stepper_info=NULL);
+void prepare_steps(stepper *smotor, int step_count, int step_delay, calibrate_mode_t calibrate_mode=NONE, 
+        stepper_info_t *stepper_info=NULL);
 
 /**
  * Подготовить мотор к запуску на беспрерывное вращение - задать направление и задержку между

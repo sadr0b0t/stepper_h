@@ -524,7 +524,10 @@ static void test_draw_triangle() {
     int steps_z = (20000.0 - sm_z.current_pos) / 7.5;
     int delay_z = time_x / abs(steps_z);
 
-    //prepare_steps(stepper *smotor, int step_count, int step_delay, stepper_info_t *stepper_info=NULL);
+    // prepare_steps(stepper *smotor, 
+    //     int step_count, int step_delay, 
+    //     calibrate_mode_t calibrate_mode, 
+    //     stepper_info_t *stepper_info=NULL);
     prepare_steps(&sm_x, steps_x, delay_x);
     prepare_steps(&sm_y, steps_y, delay_y);
     prepare_steps(&sm_z, steps_z, delay_z);
@@ -556,7 +559,10 @@ static void test_draw_triangle() {
     //int steps_z = (20000.0 - sm_z.current_pos) / 7.5;
     //int delay_z = time_y / abs(steps_z);
 
-    //prepare_steps(stepper *smotor, int step_count, int step_delay, stepper_info_t *stepper_info=NULL);
+    // prepare_steps(stepper *smotor, 
+    //     int step_count, int step_delay, 
+    //     calibrate_mode_t calibrate_mode, 
+    //     stepper_info_t *stepper_info=NULL);
     prepare_steps(&sm_x, steps_x, delay_x);
     prepare_steps(&sm_y, steps_y, delay_y);
     //prepare_steps(&sm_z, steps_z, delay_z);
@@ -584,7 +590,10 @@ static void test_draw_triangle() {
     steps_z = (0.0 - sm_z.current_pos) / 7.5;
     delay_z = time_y / abs(steps_z);
 
-    //prepare_steps(stepper *smotor, int step_count, int step_delay, stepper_info_t *stepper_info=NULL);
+    // prepare_steps(stepper *smotor, 
+    //     int step_count, int step_delay, 
+    //     calibrate_mode_t calibrate_mode, 
+    //     stepper_info_t *stepper_info=NULL);
     prepare_steps(&sm_x, steps_x, delay_x);
     prepare_steps(&sm_y, steps_y, delay_y);
     prepare_steps(&sm_z, steps_z, delay_z);
@@ -733,8 +742,9 @@ static void test_exit_bounds_issue1_steps() {
     // sm_x->pulse_delay, т.е. на 1000)
     // void prepare_steps(stepper *smotor, 
     //     int step_count, int step_delay, 
+    //     calibrate_mode_t calibrate_mode, 
     //     stepper_info_t *stepper_info) {
-    prepare_steps(&sm_x, -300, 0, &stepper_info);
+    prepare_steps(&sm_x, -300, 0, NONE, &stepper_info);
     
     // "идеальные" шаги - каждые 1000 микросекунд:
     // 1000, 2000, 3000
@@ -814,8 +824,9 @@ static void test_exit_bounds_issue9_steps() {
     // готовим мотор на несколько шагов в сторону нуля,
     // ставим задержку между шагами менье, чем 3 периода таймера:
     // 200*3=600 > 400
-    // void prepare_steps(stepper *smotor, 
-    //     int step_count, int step_delay, 
+    // void prepare_steps(stepper *smotor,
+    //     int step_count, int step_delay,
+    //     calibrate_mode_t calibrate_mode,
     //     stepper_info_t *stepper_info)
     prepare_steps(&sm_x, -300, 400);
     

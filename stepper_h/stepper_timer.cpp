@@ -192,10 +192,16 @@ static error_handle_strategy_t _cycle_timing_exceed_handle = CANCEL_CYCLE;
  * 
  * @param step_count количество шагов, знак задает направление вращения
  * @param step_delay задержка между двумя шагами, микросекунды (0 для максимальной скорости)
+ * @param calibrate_mode - режим калибровки
+ *     NONE: режим калибровки выключен - останавливать вращение при выходе за виртуальные границы 
+ *           рабочей области [min_pos, max_pos] (аппаратные проверяются ВСЕГДА);
+ *     CALIBRATE_START_MIN_POS: установка начальной позиции (сбрасывать current_pos в min_pos при каждом шаге);
+ *     CALIBRATE_BOUNDS_MAX_POS: установка размеров рабочей области (сбрасывать max_pos в current_pos при каждом шаге)
  * @param stepper_info информация о цикле вращения шагового двигателя, обновляется динамически
  *        в процессе вращения двигателя
  */
-void prepare_steps(stepper *smotor, int step_count, int step_delay, stepper_info_t *stepper_info) {
+void prepare_steps(stepper *smotor, int step_count, int step_delay, calibrate_mode_t calibrate_mode, 
+        stepper_info_t *stepper_info) {
     
     // резерв нового места на мотор в списке
     int sm_i = _stepper_count;
@@ -230,8 +236,8 @@ void prepare_steps(stepper *smotor, int step_count, int step_delay, stepper_info
     } else {
         _cstatuses[sm_i].step_delay = step_delay;
     }
-    // выключить режим калибровки
-    _cstatuses[sm_i].calibrate_mode = NONE;
+    // режим калибровки
+    _cstatuses[sm_i].calibrate_mode = calibrate_mode;
   
     // Взводим счетчики
     _cstatuses[sm_i].step_counter = _cstatuses[sm_i].step_count;

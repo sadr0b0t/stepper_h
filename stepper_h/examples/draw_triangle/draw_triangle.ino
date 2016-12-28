@@ -25,7 +25,10 @@ static void prepare_line1() {
     int steps_z = (20000.0 - sm_z.current_pos) / 7.5;
     int delay_z = time_x / abs(steps_z);
 
-    //prepare_steps(stepper *smotor, int step_count, int step_delay, stepper_info_t *stepper_info=NULL);
+    // prepare_steps(stepper *smotor, 
+    //     int step_count, int step_delay, 
+    //     calibrate_mode_t calibrate_mode, 
+    //     stepper_info_t *stepper_info=NULL);
     prepare_steps(&sm_x, steps_x, delay_x);
     prepare_steps(&sm_y, steps_y, delay_y);
     prepare_steps(&sm_z, steps_z, delay_z);
@@ -58,7 +61,10 @@ static void prepare_line2() {
     //int steps_z = (20000.0 - sm_z.current_pos) / 7.5;
     //int delay_z = time_x / abs(steps_z);
 
-    //prepare_steps(stepper *smotor, int step_count, int step_delay, stepper_info_t *stepper_info=NULL);
+    // prepare_steps(stepper *smotor, 
+    //     int step_count, int step_delay, 
+    //     calibrate_mode_t calibrate_mode, 
+    //     stepper_info_t *stepper_info=NULL);
     prepare_steps(&sm_x, steps_x, delay_x);
     prepare_steps(&sm_y, steps_y, delay_y);
     //prepare_steps(&sm_z, steps_z, delay_z);
@@ -86,7 +92,10 @@ static void prepare_line3() {
     int steps_z = (0.0 - sm_z.current_pos) / 7.5;
     int delay_z = time_y / abs(steps_z);
 
-    //prepare_steps(stepper *smotor, int step_count, int step_delay, stepper_info_t *stepper_info=NULL);
+    // prepare_steps(stepper *smotor, 
+    // int step_count, int step_delay, 
+    //     calibrate_mode_t calibrate_mode, 
+    //     stepper_info_t *stepper_info=NULL);
     prepare_steps(&sm_x, steps_x, delay_x);
     prepare_steps(&sm_y, steps_y, delay_y);
     prepare_steps(&sm_z, steps_z, delay_z);
@@ -121,7 +130,7 @@ void setup() {
 void loop() {
     static int next_line = 1;
     if(!stepper_is_cycle_running()) {
-        // цикл завершился, запускаем слудующую линию
+        // цикл завершился, запускаем следующую линию
         if(next_line == 1) {
             Serial.println("Prepare line1: (0,0,0) -> (150000,50000,20000)");
             prepare_line1();

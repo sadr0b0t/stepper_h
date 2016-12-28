@@ -4,7 +4,10 @@
 static stepper sm_x, sm_y, sm_z;
 
 static void prepare_line1() {
-    //prepare_steps(stepper *smotor, int step_count, int step_delay, stepper_info_t *stepper_info=NULL);
+    // prepare_steps(stepper *smotor, 
+    //     int step_count, int step_delay, 
+    //     calibrate_mode_t calibrate_mode, 
+    //     stepper_info_t *stepper_info=NULL);
 
     // make 20000 steps with 1000 microseconds delay
     // X.pos would go from 0 to 7.5*20000=150000micrometers (150millimeters)
