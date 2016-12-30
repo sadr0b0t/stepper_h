@@ -202,8 +202,7 @@ typedef enum {
     
     /** 
      * Хотябы у одного из моторов, добавленных в список вращения, 
-     * минимальная задержка 
-     * между шагами не вмещает 3 периода таймера 
+     * минимальная задержка между шагами не вмещает 3 периода таймера 
      */
     CYCLE_ERROR_TIMER_PERIOD_TOO_LONG = 2,
     
@@ -216,14 +215,23 @@ typedef enum {
      */
     CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE = 3,
     
+    /**
+     * Проблема с мотором: выход за границы, некорректная задержка между 
+     * шагами или что-то еще. Подробности см в статусе мотора.
+     */
+    CYCLE_ERROR_MOTOR_ERROR = 4,
+    
     /** 
      * Превышено максимальное время выполнения обработчика 
      * события от таймера 
      */
-    CYCLE_ERROR_HANDLER_TIMING_EXCEEDED = 4
+    CYCLE_ERROR_HANDLER_TIMING_EXCEEDED = 5
 } stepper_cycle_error_t;
 
 typedef enum {
+    /** Не менять текущее значение (при передаче параметра в настройки) */
+    DONT_CHANGE,
+    
     /** Игнорировать проблему, продолжать выполнение */
     IGNORE, 
     
@@ -477,6 +485,9 @@ void prepare_dynamic_whirl(stepper *smotor, int dir,
  *       скорости минимальная задержка меджу шагами не будет соблюдаться, 
  *       поэтому просто запретим такие комбинации:
  *       см: https://github.com/1i7/stepper_h/issues/6
+ *     CYCLE_ERROR_MOTOR_ERROR - проблема с мотором: выход за границы, 
+ *       некорректная задержка между шагами или что-то еще. 
+ *       Подробности см в статусе мотора.
  */
 int stepper_start_cycle(stepper_cycle_info_t *cycle_info=NULL);
 

@@ -230,7 +230,7 @@ void prepare_steps(stepper *smotor, int step_count, int step_delay, calibrate_mo
     
     // скорость вращения - постоянная
     _cstatuses[sm_i].delay_source = CONSTANT;
-    if(step_delay == 0 ) {
+    if(step_delay == 0) {
         // 0 - движение с максимальной скоростью
         _cstatuses[sm_i].step_delay = smotor->pulse_delay;
     } else {
@@ -782,6 +782,9 @@ void stepper_set_error_handle_strategy(
  *       скорости минимальная задержка меджу шагами не будет соблюдаться, 
  *       поэтому просто запретим такие комбинации:
  *       см: https://github.com/1i7/stepper_h/issues/6
+ *     CYCLE_ERROR_MOTOR_ERROR - проблема с мотором: выход за границы, 
+ *       некорректная задержка между шагами или что-то еще. 
+ *       Подробности см в статусе мотора.
  */
 int stepper_start_cycle(stepper_cycle_info_t *cycle_info) {
     // не запускать новый цикл, если старый не отработал
@@ -808,7 +811,7 @@ int stepper_start_cycle(stepper_cycle_info_t *cycle_info) {
             stepper_finish_cycle();
             return CYCLE_ERROR_TIMER_PERIOD_TOO_LONG;
         }
-        // не запускать цикл, если периоду таймера не кратен
+        // не запускать цикл, если период таймера не кратен
         // минимальной задержке между шагами хотябы одного из моторов
         if(_smotors[i]->pulse_delay % _timer_period_us != 0) {
             if(cycle_info != NULL) {
@@ -818,6 +821,46 @@ int stepper_start_cycle(stepper_cycle_info_t *cycle_info) {
             stepper_finish_cycle();
             return CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE;
         }
+        
+        // проверим, корректна ли задержка перед первым шагом,
+        // заданная во время prepare_steps/whirl/xxx
+        if(_cstatuses[i].step_delay < _smotors[i]->pulse_delay) {
+            // указанная задержка меньше, чем минимальная задержка 
+            // между двумя шагами мотора - это не хорошо
+            
+            // обозначим ошибку в статусе мотора
+            if(_cstatuses[i].stepper_info != NULL) {
+                _cstatuses[i].stepper_info->error_pulse_delay_small = true;
+            }
+            
+            // посмотрим, что делать с ошибкой
+            if(_small_pulse_delay_handle == FIX) {
+                // попробуем исправить:
+                // не будем делать шаги чаще, чем может мотор
+                // (следует понимать, что корректность вращения уже нарушена)
+                _cstatuses[i].step_delay = _smotors[i]->pulse_delay;
+                
+                // задержка перед первым шагом
+                _cstatuses[i].step_timer = _cstatuses[i].step_delay;
+            } else if(_small_pulse_delay_handle == STOP_MOTOR) {
+                // останавливаем мотор
+                _cstatuses[i].stopped = true;
+                
+                if(_cstatuses[i].stepper_info != NULL) {
+                    _cstatuses[i].stepper_info->status = STEPPER_STATUS_FINISHED;
+                }
+            } else if(_small_pulse_delay_handle == CANCEL_CYCLE) {
+                // завершаем весь цикл
+                
+                if(cycle_info != NULL) {
+                    cycle_info->error_status = CYCLE_ERROR_MOTOR_ERROR;
+                }
+                
+                // неудачная попытка - очищаем все предварительные заготовки
+                stepper_finish_cycle();
+                return CYCLE_ERROR_MOTOR_ERROR;
+            } // иначе, игнорируем
+        } 
     }
 
     _cycle_info = cycle_info;

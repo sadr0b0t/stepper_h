@@ -856,10 +856,22 @@ static void test_exit_bounds_issue9_steps() {
     // 3 тика таймера
     // попробуем выйти в минус за 0
     
+    
+    // #1: попробуем вариант с завершением цикла
+    
+    // stepper_set_error_handle_strategy(
+    //     error_handle_strategy_t hard_end_handle,
+    //     error_handle_strategy_t soft_end_handle,
+    //     error_handle_strategy_t small_pulse_delay_handle,
+    //     error_handle_strategy_t cycle_timing_exceed_handle)
+    
+    // обрываем весь цикл, если встречаем такую ошибку
+    stepper_set_error_handle_strategy(DONT_CHANGE, DONT_CHANGE, CANCEL_CYCLE, DONT_CHANGE);
+    
     // 
     // готовим мотор на несколько шагов в сторону нуля,
-    // ставим задержку между шагами менье, чем 3 периода таймера:
-    // 200*3=600 > 400
+    // ставим задержку между шагами меньше, чем 3 периода таймера:
+    // 400 < 200*3=600
     // void prepare_steps(stepper *smotor,
     //     int step_count, int step_delay,
     //     calibrate_mode_t calibrate_mode,
@@ -867,17 +879,44 @@ static void test_exit_bounds_issue9_steps() {
     prepare_steps(&sm_x, -300, 400);
     
     // поехали
+    // цикл сразу не должен запуститься
+    sput_fail_unless(stepper_start_cycle() == CYCLE_ERROR_MOTOR_ERROR, 
+        "cancel cycle: stepper_start_cycle() == CYCLE_ERROR_MOTOR_ERROR");
+    sput_fail_unless(!stepper_is_cycle_running(), "cancel cycle: stepper_is_cycle_running() == false");
+    sput_fail_unless(sm_x.current_pos == 0, "cancel cycle: current_pos == 0");
+    
+    // #2: попробуем вариант с автоматическим исправлением задержки
+    
+    // stepper_set_error_handle_strategy(
+    //     error_handle_strategy_t hard_end_handle,
+    //     error_handle_strategy_t soft_end_handle,
+    //     error_handle_strategy_t small_pulse_delay_handle,
+    //     error_handle_strategy_t cycle_timing_exceed_handle)
+    
+    // автоматически исправляем задержку, если встречаем такую ошибку
+    stepper_set_error_handle_strategy(DONT_CHANGE, DONT_CHANGE, FIX, DONT_CHANGE);
+    
+    // 
+    // готовим мотор на несколько шагов в сторону нуля,
+    // ставим задержку между шагами меньше, чем 3 периода таймера:
+    // 400 < 200*3=600
+    // void prepare_steps(stepper *smotor,
+    //     int step_count, int step_delay,
+    //     calibrate_mode_t calibrate_mode,
+    //     stepper_info_t *stepper_info)
+    prepare_steps(&sm_x, -300, 400);
+    
+    // поехали
+    // цикл должен запуститься
     stepper_start_cycle();
-    sput_fail_unless(stepper_is_cycle_running(), "stepper_is_cycle_running() == true");
-    sput_fail_unless(sm_x.current_pos == 0, "current_pos == 0");
-    
-    // шагаем
-    timer_tick(20000);
-    
-    sput_fail_unless(sm_x.current_pos == 0, "current_pos == 0");
-    
-    // цикл должен остановиться на этом же тике
-    sput_fail_unless(!stepper_is_cycle_running(), "stepper_is_cycle_running() == false");
+    sput_fail_unless(stepper_is_cycle_running(), "autofix: stepper_is_cycle_running() == true");
+    // холостой ход
+    timer_tick(2);
+    sput_fail_unless(stepper_is_cycle_running(), "autofix tick2: stepper_is_cycle_running() == true");
+    // тик на проверку границ - дожны вылететь с ошибкой выхода за гринцы
+    timer_tick(1);
+    sput_fail_unless(!stepper_is_cycle_running(), "autofix tick2+1: stepper_is_cycle_running() == false");
+    sput_fail_unless(sm_x.current_pos == 0, "autofix: current_pos == 0");
 }
 
 int main() {
