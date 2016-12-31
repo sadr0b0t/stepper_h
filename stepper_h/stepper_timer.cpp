@@ -765,34 +765,29 @@ void stepper_set_error_handle_strategy(
 }
 
 /**
- * Запустить цикл шагов на выполнение - запускаем таймер, обработчик прерываний
- * отрабатывать подготовленную программу.
+ * Запустить цикл шагов на выполнение - запускаем таймер, 
+ * обработчик прерываний отрабатывать подготовленную программу.
  *
- * @param cycle_info - информация о цикле, обновляется динамически в процессе работы цикла
- * @return 0, если цикл запущен, код ошибки, если цикл запустить не получилось.
- *     коды ошибок:
- *     CYCLE_ERROR_ALREADY_RUNNING=1 - цикл уже запущен
- *     CYCLE_ERROR_TIMER_PERIOD_TOO_LONG=2 - хотябы у одного из моторов, добавленных 
- *       в список вращения, минимальная задержка между шагами не вмещает 3 периода таймера 
- *       (следует проверить настройки мотора - значение pulse_delay или 
- *       настройки частоты таймера цикла stepper_configure_timer)
- *     CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE=3 - период таймера некратен 
- *       минимальной задержке между шагами одного из моторов.
- *       Это может привести к тому, что при движении на максимальной 
- *       скорости минимальная задержка меджу шагами не будет соблюдаться, 
- *       поэтому просто запретим такие комбинации:
- *       см: https://github.com/1i7/stepper_h/issues/6
- *     CYCLE_ERROR_MOTOR_ERROR - проблема с мотором: выход за границы, 
- *       некорректная задержка между шагами или что-то еще. 
- *       Подробности см в статусе мотора.
+ * @param cycle_info - информация о цикле, 
+ *     обновляется динамически в процессе работы цикла.
  */
-int stepper_start_cycle(stepper_cycle_info_t *cycle_info) {
+void stepper_start_cycle(stepper_cycle_info_t *cycle_info) {
+    // сбросим информацию о статусе цикла в значения по умолчанию
+    if(cycle_info != NULL) {
+        cycle_info->error_status = CYCLE_ERROR_NONE;
+        cycle_info->is_running = false;
+        cycle_info->is_paused = false;
+    }
+    
+    ///
+    // Преварительные проверки перед запуском цикла
+
     // не запускать новый цикл, если старый не отработал
     if(_cycle_running) {
         if(cycle_info != NULL) {
             cycle_info->error_status = CYCLE_ERROR_ALREADY_RUNNING;
         }
-        return CYCLE_ERROR_ALREADY_RUNNING;
+        return;
     }
     
     // мы не можем обеспечить корректность работы цикла
@@ -809,7 +804,7 @@ int stepper_start_cycle(stepper_cycle_info_t *cycle_info) {
             
             // неудачная попытка - очищаем все предварительные заготовки
             stepper_finish_cycle();
-            return CYCLE_ERROR_TIMER_PERIOD_TOO_LONG;
+            return;
         }
         // не запускать цикл, если период таймера не кратен
         // минимальной задержке между шагами хотябы одного из моторов
@@ -819,7 +814,7 @@ int stepper_start_cycle(stepper_cycle_info_t *cycle_info) {
             }
             // неудачная попытка - очищаем все предварительные заготовки
             stepper_finish_cycle();
-            return CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE;
+            return;
         }
         
         // проверим, корректна ли задержка перед первым шагом,
@@ -858,11 +853,13 @@ int stepper_start_cycle(stepper_cycle_info_t *cycle_info) {
                 
                 // неудачная попытка - очищаем все предварительные заготовки
                 stepper_finish_cycle();
-                return CYCLE_ERROR_MOTOR_ERROR;
+                return;
             } // иначе, игнорируем
         } 
     }
 
+    ///
+    // предварительные проверки прошли, запускаем цикл
     _cycle_info = cycle_info;
 
     _cycle_running = true;
@@ -890,7 +887,6 @@ int stepper_start_cycle(stepper_cycle_info_t *cycle_info) {
     // Запустим таймер с периодом _timer_period_us, для этого
     // должны быть заданы правильные _timer_prescaler и _timer_period
     initTimerISR(_timer_id, _timer_prescaler, _timer_period);
-    return 0;
 }
 
 /**
@@ -925,6 +921,7 @@ void stepper_finish_cycle() {
         _cycle_info->is_running = false;
         _cycle_info->is_paused = false;
     }
+    _cycle_info = NULL;
 }
 
 /**

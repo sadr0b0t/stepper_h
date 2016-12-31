@@ -72,7 +72,9 @@ static void test_lifecycle() {
     sput_fail_unless(stepper_is_cycle_running(), "ticks: stepper_is_cycle_running() == true");
     
     // попробуем запустить повторно - должны получить код ошибки
-    sput_fail_unless(stepper_start_cycle() == CYCLE_ERROR_ALREADY_RUNNING, 
+    stepper_cycle_info_t cycle_info;
+    stepper_start_cycle(&cycle_info);
+    sput_fail_unless(cycle_info.error_status == CYCLE_ERROR_ALREADY_RUNNING, 
         "start while running: stepper_start_cycle() == CYCLE_ERROR_ALREADY_RUNNING");
     // но старый цикл все еще должен работать
     sput_fail_unless(stepper_is_cycle_running(), "start while running: stepper_is_cycle_running() == true");
@@ -126,7 +128,10 @@ static void test_timer_period() {
     prepare_whirl(&sm_y, 1, 2000);
     //prepare_whirl(&sm_z, 1, 3000);
     
-    sput_fail_unless(stepper_start_cycle() == CYCLE_ERROR_NONE, 
+    stepper_cycle_info_t cycle_info;
+    stepper_start_cycle(&cycle_info);
+    // цикл должен запуститься
+    sput_fail_unless(cycle_info.error_status == CYCLE_ERROR_NONE, 
         "period=200uS (ok): stepper_start_cycle() == CYCLE_ERROR_NONE");
     sput_fail_unless(stepper_is_cycle_running(), "period=200uS (ok): stepper_is_cycle_running() == true");
     // останавливаемся
@@ -144,10 +149,11 @@ static void test_timer_period() {
     prepare_whirl(&sm_y, 1, 2000);
     prepare_whirl(&sm_z, 1, 3000);
     
-    sput_fail_unless(stepper_start_cycle() == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG, 
-        "period=200uS (too long): stepper_start_cycle() == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG");
+    stepper_start_cycle(&cycle_info);
+    // цикл не должен запуститься
     sput_fail_unless(!stepper_is_cycle_running(), "period=200uS (too long): stepper_is_cycle_running() == false");
-    // цикл не должен быть запущен
+    sput_fail_unless(cycle_info.error_status == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG, 
+        "period=200uS (too long): stepper_start_cycle() == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG");
     
     // #3
     // период таймера 350 микросекунд
@@ -160,10 +166,11 @@ static void test_timer_period() {
     prepare_whirl(&sm_y, 1, 2000);
     //prepare_whirl(&sm_z, 1, 3000);
     
-    sput_fail_unless(stepper_start_cycle() == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG, 
-        "period=350uS (too long): stepper_start_cycle() == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG");
+    stepper_start_cycle(&cycle_info);
+    // цикл не должен запуститься
     sput_fail_unless(!stepper_is_cycle_running(), "period=350uS (too long): stepper_is_cycle_running() == false");
-    // цикл не должен быть запущен
+    sput_fail_unless(cycle_info.error_status == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG, 
+        "period=350uS (too long): stepper_start_cycle() == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG");
     
     // #4: повторим тест #1 еще раз в конце для чистоты эксперимента
     // период таймера 200 микросекунд
@@ -176,9 +183,11 @@ static void test_timer_period() {
     prepare_whirl(&sm_y, 1, 2000);
     //prepare_whirl(&sm_z, 1, 3000);
     
-    sput_fail_unless(stepper_start_cycle() == CYCLE_ERROR_NONE, 
-        "period=200uS (ok): stepper_start_cycle() == CYCLE_ERROR_NONE");
+    stepper_start_cycle(&cycle_info);
+    // цикл должен запуститься
     sput_fail_unless(stepper_is_cycle_running(), "period=200uS (ok): stepper_is_cycle_running() == true");
+    sput_fail_unless(cycle_info.error_status == CYCLE_ERROR_NONE, 
+        "period=200uS (ok): stepper_start_cycle() == CYCLE_ERROR_NONE");
     // останавливаемся
     stepper_finish_cycle();
 }
@@ -216,9 +225,11 @@ static void test_timer_period_aliquant_motor_pulse() {
     // период таймера: 300 мкс
     // остаток от деления: 1000 % 300 = 100 != 0 =>
     // цикл с такой частотой с таким мотором не должен запуститься
-    sput_fail_unless(stepper_start_cycle() == CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE, 
-        "period=300uS (aliquant): stepper_start_cycle() == CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE");
+    stepper_cycle_info_t cycle_info;
+    stepper_start_cycle(&cycle_info);
     sput_fail_unless(!stepper_is_cycle_running(), "period=300uS (aliquant): stepper_is_cycle_running() == false");
+    sput_fail_unless(cycle_info.error_status == CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE, 
+        "period=300uS (aliquant): stepper_start_cycle() == CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE");
 }
 
 static void test_max_speed_tick_by_tick() {
@@ -879,10 +890,12 @@ static void test_exit_bounds_issue9_steps() {
     prepare_steps(&sm_x, -300, 400);
     
     // поехали
+    stepper_cycle_info_t cycle_info;
+    stepper_start_cycle(&cycle_info);
     // цикл сразу не должен запуститься
-    sput_fail_unless(stepper_start_cycle() == CYCLE_ERROR_MOTOR_ERROR, 
-        "cancel cycle: stepper_start_cycle() == CYCLE_ERROR_MOTOR_ERROR");
     sput_fail_unless(!stepper_is_cycle_running(), "cancel cycle: stepper_is_cycle_running() == false");
+    sput_fail_unless(cycle_info.error_status == CYCLE_ERROR_MOTOR_ERROR, 
+        "cancel cycle: stepper_start_cycle() == CYCLE_ERROR_MOTOR_ERROR");
     sput_fail_unless(sm_x.current_pos == 0, "cancel cycle: current_pos == 0");
     
     // #2: попробуем вариант с автоматическим исправлением задержки
