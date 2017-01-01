@@ -72,18 +72,33 @@ typedef struct {
      * 
      * Используется при delay_source=CONSTANT
      * 
-     * Задержка в микросекундах, значения int на 32разрядном процессоре более, чем достаточно:
-     * для int:
-     * макс задержка=2^31=2147483648микросекунд=2147483миллисекунд=2147секунд=35минут
-     * для unsigned int:
-     * макс задержка=2^32=4294967296микросекунд=4294967миллисекунд=4294секунд=71минута=~1час
+     * Задержка в микросекундах.
+     * 
+     * для 32битного знакового целого:
+     * макс задержка=2^31-1=2147483648-1 микросекунд=2147483 миллисекунд=2147 секунд=35 минут
+     * для беззнакового целого:
+     * макс задержка=2^32-1=4294967296-1 микросекунд=4294967 миллисекунд=4294 секунд=71 минута=~1 час
+     * 
+     * итого 32 бит: для 32 бит оба варианта - более, чем достаточно
+     *
+     * для 16битного знакового целого:
+     * макс задержка=2^15-1=32768-1 микросекунд=33 миллисекунды - так себе задержечка
+     * для 16битного беззнакового целого:
+     * макс задержка=2^16-1=65536-1 микросекунд=65 миллисекунд - тоже не особо
+     * 
+     * итого 16 бит: для 16 бит - задержки не подходят.
+     *
+     * В PIC32 int и long - 32 бит.
+     * В Arduino long - 32 бит, int - 16 бит.
+     *
+     * итого: нам нужны 32 бит, для PIC32+Arduino без лишних макросов - это long.
      */
-    int step_delay;
+    unsigned long step_delay;
     
     /**
      * Массив задержек перед каждым следующим шагом, микросекунды.
      */
-    int* delay_buffer;
+    unsigned long* delay_buffer;
     
     /**
      * Массив с количеством шагов для каждого цикла серии. Знак задает направление вращения.
@@ -119,7 +134,7 @@ typedef struct {
      *     времени до следующего шага
      * @return время до следующего шага, микросекунды
      */
-    int (*next_step_delay)(int curr_step, void* curve_context);
+    unsigned long (*next_step_delay)(int curr_step, void* curve_context);
     
     /** Режим калибровки */
     calibrate_mode_t calibrate_mode;
@@ -190,17 +205,17 @@ static error_handle_strategy_t _cycle_timing_exceed_handle = CANCEL_CYCLE;
  * Подготовить мотор к запуску ограниченной серии шагов - задать нужное количество 
  * шагов и задержку между шагами для регулирования скорости (0 для максимальной скорости).
  * 
- * @param step_count количество шагов, знак задает направление вращения
- * @param step_delay задержка между двумя шагами, микросекунды (0 для максимальной скорости)
+ * @param step_count - количество шагов, знак задает направление вращения
+ * @param step_delay - задержка между двумя шагами, микросекунды (0 для максимальной скорости)
  * @param calibrate_mode - режим калибровки
  *     NONE: режим калибровки выключен - останавливать вращение при выходе за виртуальные границы 
  *           рабочей области [min_pos, max_pos] (аппаратные проверяются ВСЕГДА);
  *     CALIBRATE_START_MIN_POS: установка начальной позиции (сбрасывать current_pos в min_pos при каждом шаге);
  *     CALIBRATE_BOUNDS_MAX_POS: установка размеров рабочей области (сбрасывать max_pos в current_pos при каждом шаге)
- * @param stepper_info информация о цикле вращения шагового двигателя, обновляется динамически
+ * @param stepper_info - информация о цикле вращения шагового двигателя, обновляется динамически
  *        в процессе вращения двигателя
  */
-void prepare_steps(stepper *smotor, int step_count, int step_delay, calibrate_mode_t calibrate_mode, 
+void prepare_steps(stepper *smotor, int step_count, unsigned long step_delay, calibrate_mode_t calibrate_mode, 
         stepper_info_t *stepper_info) {
     
     // резерв нового места на мотор в списке
@@ -260,11 +275,13 @@ void prepare_steps(stepper *smotor, int step_count, int step_delay, calibrate_mo
 }
 
 /**
- * Подготовить мотор к запуску на вращение - задать направление и задержку между
+ * Подготовить мотор к запуску на беспрерывное вращение - задать направление и задержку между
  * шагами для регулирования скорости (0 для максимальной скорости).
  *
- * @param dir направление вращения: 1 - вращать вперед (увеличиваем curr_pos), -1 - назад (уменьшаем curr_pos).
- * @param step_delay задержка между двумя шагами, микросекунды (0 для максимальной скорости).
+ * Мотор будет вращаться до тех пор, пока не будет вручную остановлен вызовом finish_stepper_cycle()
+ *
+ * @param dir - направление вращения: 1 - вращать вперед, -1 - назад.
+ * @param step_delay - задержка между двумя шагами, микросекунды (0 для максимальной скорости).
  * @param calibrate_mode - режим калибровки
  *     NONE: режим калибровки выключен - останавливать вращение при выходе за виртуальные границы 
  *           рабочей области [min_pos, max_pos] (аппаратные проверяются ВСЕГДА);
@@ -273,7 +290,7 @@ void prepare_steps(stepper *smotor, int step_count, int step_delay, calibrate_mo
  * @param stepper_info информация о цикле вращения шагового двигателя, обновляется динамически
  *        в процессе вращения двигателя
  */
-void prepare_whirl(stepper *smotor, int dir, int step_delay, calibrate_mode_t calibrate_mode, 
+void prepare_whirl(stepper *smotor, int dir, unsigned long step_delay, calibrate_mode_t calibrate_mode, 
         stepper_info_t *stepper_info) {
     // резерв нового места на мотор в списке
     int sm_i = _stepper_count;
@@ -372,15 +389,15 @@ void prepare_whirl(stepper *smotor, int dir, int step_delay, calibrate_mode_t ca
  *
  * Количество аппаратных шагов можно вычислять как buf_size*step_count.
  * 
- * @param buf_size количество элементов в буфере delay_buffer (количество виртуальных шагов)
+ * @param buf_size - количество элементов в буфере delay_buffer (количество виртуальных шагов)
  * @param delay_buffer - массив задержек перед каждым следующим шагом, микросекунды
- * @param step_count масштабирование шага - количество аппаратных шагов мотора в одном 
+ * @param step_count - масштабирование шага - количество аппаратных шагов мотора в одном 
  *     виртуальном шаге, знак задает направление вращения мотора.
  * Значение по умолчанию step_count=1: виртуальные шаги соответствуют аппаратным
- * @param stepper_info информация о цикле вращения шагового двигателя, обновляется динамически
+ * @param stepper_info - информация о цикле вращения шагового двигателя, обновляется динамически
  *        в процессе вращения двигателя
  */
-void prepare_simple_buffered_steps(stepper *smotor, int buf_size, int* delay_buffer, 
+void prepare_simple_buffered_steps(stepper *smotor, int buf_size, unsigned long* delay_buffer, 
         int step_count, stepper_info_t *stepper_info) {
     // резерв нового места на мотор в списке
     int sm_i = _stepper_count;
@@ -437,16 +454,16 @@ void prepare_simple_buffered_steps(stepper *smotor, int buf_size, int* delay_buf
 }
 
 /**
- * @param buf_size количество элементов в буфере delay_buffer
- * @param delay_buffer (step delay buffer) - массив задержек перед каждым следующим шагом, микросекунды
- * @param step_buffer (step count buffer) - массив с количеством шагов для каждого 
+ * @param buf_size - количество элементов в буфере delay_buffer
+ * @param delay_buffer - (step delay buffer) - массив задержек перед каждым следующим шагом, микросекунды
+ * @param step_buffer - (step count buffer) - массив с количеством шагов для каждого 
  *     значения задержки из delay_buffer. Может содержать положительные и отрицательные значения,
  *     знак задает направление вращения мотора. 
  *     Должен содержать ровно столько же элементов, сколько delay_buffer
- * @param stepper_info информация о цикле вращения шагового двигателя, обновляется динамически
+ * @param stepper_info - информация о цикле вращения шагового двигателя, обновляется динамически
  *        в процессе вращения двигателя
  */
-void prepare_buffered_steps(stepper *smotor, int buf_size, int* delay_buffer, int* step_buffer, 
+void prepare_buffered_steps(stepper *smotor, int buf_size, unsigned long* delay_buffer, int* step_buffer, 
         stepper_info_t *stepper_info) {
     // резерв нового места на мотор в списке
     int sm_i = _stepper_count;
@@ -510,15 +527,15 @@ void prepare_buffered_steps(stepper *smotor, int buf_size, int* delay_buffer, in
  * Подготовить мотор к запуску ограниченной серии шагов с переменной скоростью - задать нужное количество 
  * шагов и указатель на функцию, вычисляющую задержку перед каждым шагом для регулирования скорости.
  * 
- * @param step_count количество шагов, знак задает направление вращения
+ * @param step_count - количество шагов, знак задает направление вращения
  * @param curve_context - указатель на объект, содержащий всю необходимую информацию для вычисления
  *     времени до следующего шага
- * @param next_step_delay указатель на функцию, вычисляющую задержку перед следующим шагом, микросекунды
- * @param stepper_info информация о цикле вращения шагового двигателя, обновляется динамически
+ * @param next_step_delay - указатель на функцию, вычисляющую задержку перед следующим шагом, микросекунды
+ * @param stepper_info - информация о цикле вращения шагового двигателя, обновляется динамически
  *        в процессе вращения двигателя
  */
 void prepare_dynamic_steps(stepper *smotor, int step_count, 
-        void* curve_context, int (*next_step_delay)(int curr_step, void* curve_context), 
+        void* curve_context, unsigned long (*next_step_delay)(int curr_step, void* curve_context), 
         stepper_info_t *stepper_info) {
     // резерв нового места на мотор в списке
     int sm_i = _stepper_count;
@@ -577,15 +594,15 @@ void prepare_dynamic_steps(stepper *smotor, int step_count,
  * Подготовить мотор к запуску на беспрерывное вращение с переменной скоростью - задать нужное количество 
  * шагов и указатель на функцию, вычисляющую задержку перед каждым шагом для регулирования скорости.
  * 
- * @param dir направление вращения: 1 - вращать вперед, -1 - назад.
+ * @param dir - направление вращения: 1 - вращать вперед, -1 - назад.
  * @param curve_context - указатель на объект, содержащий всю необходимую информацию для вычисления
  *     времени до следующего шага
- * @param next_step_delay указатель на функцию, вычисляющую задержку перед следующим шагом, микросекунды
- * @param stepper_info информация о цикле вращения шагового двигателя, обновляется динамически
+ * @param next_step_delay - указатель на функцию, вычисляющую задержку перед следующим шагом, микросекунды
+ * @param stepper_info - информация о цикле вращения шагового двигателя, обновляется динамически
  *        в процессе вращения двигателя
  */
 void prepare_dynamic_whirl(stepper *smotor, int dir, 
-        void* curve_context, int (*next_step_delay)(int curr_step, void* curve_context), 
+        void* curve_context, unsigned long (*next_step_delay)(int curr_step, void* curve_context), 
         stepper_info_t *stepper_info) {
     // резерв нового места на мотор в списке
     int sm_i = _stepper_count;
