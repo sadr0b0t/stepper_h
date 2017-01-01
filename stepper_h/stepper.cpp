@@ -16,10 +16,10 @@
  * Инициализировать шаговый мотор необходимыми значениями.
  * 
  * @param smotor
- * @param name Имя шагового мотора (один символ: X, Y, Z и т.п.) 
+ * @param name - Имя шагового мотора (один символ: X, Y, Z и т.п.) 
  * @param pin_step Подача периодического импульса HIGH/LOW будет вращать мотор 
  *     (шаг происходит по фронту HIGH > LOW)
- * @param pin_dir Направление вращения
+ * @param pin_dir - Направление вращения
  *     1 (HIGH): в одну сторону
  *     0 (LOW): в другую
  *
@@ -27,21 +27,34 @@
  *     при invert_dir==false: запись 1 (HIGH) в pin_dir
  *     при invert_dir==true: запись 0 (LOW) в pin_dir
  *
- * @param pin_en вкл (0)/выкл (1) мотор 
+ * @param pin_en - вкл (0)/выкл (1) мотор 
  *     -1 (NO_PIN): выход не подключен
- * @param invert_dir Инверсия направления вращения
+ * @param invert_di -r Инверсия направления вращения
  *     true: инвертировать направление вращение
  *     false: не инвертировать
- * @param pulse_delay Минимальная задержка между импульсами, микросекунды 
+ * @param pulse_delay - Минимальная задержка между импульсами, микросекунды
  *     (для движения с максимальной скоростью) 
- * @param distance_per_step Расстояние, проходимое координатой за шаг, микрометры
- *     (на основе значения distance_per_step счетчик шагов вычисляет
- *     текущее положение рабочей координаты)
+ * @param distance_per_step - Расстояние, проходимое координатой за шаг,
+ *     базовая единица измерения мотора.
+ *     
+ *     На основе значения distance_per_step счетчик шагов вычисляет
+ *     текущее положение рабочей координаты.
+ * 
+ *     Единица измерения выбирается в зависимости от задачи и свойств
+ *     передаточного механизма.
+ * 
+ *     Если брать базовую единицу изменения за нанометры (1/1000 микрометра), 
+ *     то диапазон значений для рабочей области будет от нуля в одну сторону:
+ *     2^31=2147483648-1 нанометров * 7.5/1000/1000/1000=16 метров
+ *     в обе строны: [16м, 16м], т.е. всего 32 метра.
+ *
+ *     Для базовой единицы микрометр (микрон) рабочая область
+ *     от -16км до 16км, всего 32км.
  */
 void init_stepper(stepper* smotor,  char name, 
         int pin_step, int pin_dir, int pin_en,
         bool invert_dir, int pulse_delay,
-        double distance_per_step) {
+        int distance_per_step) {
   
     smotor->name = name;
     
@@ -106,7 +119,7 @@ void init_stepper(stepper* smotor,  char name,
 void init_stepper_ends(stepper* smotor,
         int pin_min, int pin_max,
         end_strategy_t min_end_strategy, end_strategy_t max_end_strategy,
-        double min_pos, double max_pos) {
+        long min_pos, long max_pos) {
           
     smotor->pin_min = pin_min;
     smotor->pin_max = pin_max;

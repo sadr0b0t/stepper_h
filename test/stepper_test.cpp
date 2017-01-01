@@ -33,14 +33,14 @@ static void test_lifecycle() {
     
     stepper sm_x, sm_y, sm_z;
     // X
-    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7.5); 
-    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000);
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7500); 
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000000);
     // Y
-    init_stepper(&sm_y, 'y', 5, 6, 7, true, 1000, 7.5);
-    init_stepper_ends(&sm_y, NO_PIN, NO_PIN, INF, INF, 0, 216000);
+    init_stepper(&sm_y, 'y', 5, 6, 7, true, 1000, 7500);
+    init_stepper_ends(&sm_y, NO_PIN, NO_PIN, INF, INF, 0, 216000000);
     // Z
-    init_stepper(&sm_z, 'z', 2, 3, 4, true, 1000, 7.5);
-    init_stepper_ends(&sm_z, NO_PIN, NO_PIN, INF, INF, 0, 100000);
+    init_stepper(&sm_z, 'z', 2, 3, 4, true, 1000, 7500);
+    init_stepper_ends(&sm_z, NO_PIN, NO_PIN, INF, INF, 0, 100000000);
     
     
     // настройки частоты таймера
@@ -102,15 +102,15 @@ static void test_timer_period() {
     
     stepper sm_x, sm_y, sm_z;
     // X
-    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7.5); 
-    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000);
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7500); 
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000000);
     // Y
-    init_stepper(&sm_y, 'y', 5, 6, 7, true, 1000, 7.5);
-    init_stepper_ends(&sm_y, NO_PIN, NO_PIN, INF, INF, 0, 216000);
+    init_stepper(&sm_y, 'y', 5, 6, 7, true, 1000, 7500);
+    init_stepper_ends(&sm_y, NO_PIN, NO_PIN, INF, INF, 0, 216000000);
     // Z - пусть у этого мотора аппаратная задержка между шагами
     // будет сильно меньше, чем у X и Y
-    init_stepper(&sm_z, 'z', 2, 3, 4, true, 500, 7.5);
-    init_stepper_ends(&sm_z, NO_PIN, NO_PIN, INF, INF, 0, 100000);
+    init_stepper(&sm_z, 'z', 2, 3, 4, true, 500, 7500);
+    init_stepper_ends(&sm_z, NO_PIN, NO_PIN, INF, INF, 0, 100000000);
     
     int timer_period_us;
     
@@ -198,10 +198,10 @@ static void test_timer_period_aliquant_motor_pulse() {
     
     
     // мотор - минимальная задержка между шагами 1000 мкс,
-    // расстояние за шаг - 7.5 мкм
+    // расстояние за шаг - 7500нм=7.5мкм
     stepper sm_x;
-    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7.5); 
-    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000);
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7500); 
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000000);
     
     // настройки частоты таймера
     int timer_period_us = 300;
@@ -232,10 +232,10 @@ static void test_timer_period_aliquant_motor_pulse() {
 static void test_max_speed_tick_by_tick() {
 
     // мотор - минимальная задержка между шагами 1000 мкс,
-    // расстояние за шаг - 7.5 мкм
+    // расстояние за шаг - 7500нм=7.5мкм
     stepper sm_x;
-    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7.5); 
-    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000);
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7500); 
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000000);
     
     // настройки частоты таймера
     int timer_period_us = 200;
@@ -282,7 +282,7 @@ static void test_max_speed_tick_by_tick() {
     //cout<<sm_x.current_pos<<endl;
     // сделать шаг, взвести счетчики на следующий шаг
     timer_tick(1);
-    sput_fail_unless(sm_x.current_pos == 7.5, "step1.tick3: current_pos == 7.5");
+    sput_fail_unless(sm_x.current_pos == 7500, "step1.tick3: current_pos == 7500");
     //cout<<sm_x.current_pos<<endl;
     
     // шаг 2
@@ -292,10 +292,10 @@ static void test_max_speed_tick_by_tick() {
     timer_tick(1);
     // взвести step
     timer_tick(1);
-    sput_fail_unless(sm_x.current_pos == 7.5, "step2.tick2: current_pos == 7.5");
+    sput_fail_unless(sm_x.current_pos == 7500, "step2.tick2: current_pos == 7500");
     // сделать шаг, взвести счетчики на следующий шаг
     timer_tick(1);
-    sput_fail_unless(sm_x.current_pos == 15, "step2.tick3: current_pos == 15");
+    sput_fail_unless(sm_x.current_pos == 15000, "step2.tick3: current_pos == 15000");
     
     // шаг 3
     // холостой ход
@@ -304,10 +304,10 @@ static void test_max_speed_tick_by_tick() {
     timer_tick(1);
     // взвести step
     timer_tick(1);
-    sput_fail_unless(sm_x.current_pos == 15, "step3.tick2: current_pos == 15");
+    sput_fail_unless(sm_x.current_pos == 15000, "step3.tick2: current_pos == 15000");
     // сделать шаг, взвести счетчики на следующий шаг
     timer_tick(1);
-    sput_fail_unless(sm_x.current_pos == 22.5, "step3.tick3: current_pos == 22.5");
+    sput_fail_unless(sm_x.current_pos == 22500, "step3.tick3: current_pos == 22500");
     
     // все шаги сделали, но для завершения цикла нужен еще 1 финальный тик
     sput_fail_unless(stepper_is_cycle_running(), "step3.tick3: stepper_is_cycle_running() == true");
@@ -315,7 +315,7 @@ static void test_max_speed_tick_by_tick() {
     // завершающий тик - для завершения цикла серии шагов
     timer_tick(1);
     // еще раз проверим финальное положение
-    sput_fail_unless(sm_x.current_pos == 22.5, "step3.tick3+1: current_pos == 22.5");
+    sput_fail_unless(sm_x.current_pos == 22500, "step3.tick3+1: current_pos == 22500");
     
     ////////
     // проверим, что серия шагов завершилась, можно запускать новые шаги
@@ -326,10 +326,10 @@ static void test_max_speed_tick_by_tick() {
 static void test_max_speed_30000steps() {
 
     // мотор - минимальная задержка между шагами 1000 мкс,
-    // расстояние за шаг - 7.5 мкм
+    // расстояние за шаг - 7.5мкм (7500нм)
     stepper sm_x;
-    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7.5); 
-    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000);
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7500); 
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000000);
     
     // настройки частоты таймера
     int timer_period_us = 200;
@@ -343,7 +343,7 @@ static void test_max_speed_30000steps() {
     
     // пройдем 30000 шагов с максимальной скоростью
     // это займет 30000*1000=30000000 микросекунд = 30 секунд
-    // расстояние будет=7.5*30000=225000 микрометров
+    // расстояние будет=7500*30000=225000000нм = 225000мкм = 225мм
     prepare_steps(&sm_x, 30000, 1000);
     
     // разберем шаги по косточкам
@@ -376,11 +376,11 @@ static void test_max_speed_30000steps() {
     // проверим положение на половине пути
     // 60000/5=12000 шагов, путь=7.5*12000=90000 мкм
     timer_tick(60000);
-    sput_fail_unless(sm_x.current_pos == 90000, "step30K.tick60K: current_pos == 90000");
+    sput_fail_unless(sm_x.current_pos == 90000000, "step30K.tick60K: current_pos == 90000000");
     
     // шагаем оставшиеся шаги
     timer_tick(90000);
-    sput_fail_unless(sm_x.current_pos == 225000, "step30K.tick150K: current_pos == 225000");
+    sput_fail_unless(sm_x.current_pos == 225000000, "step30K.tick150K: current_pos == 225000000");
     
     // все шаги сделали, но для завершения цикла нужен еще 1 финальный тик
     sput_fail_unless(stepper_is_cycle_running(), "step30K.tick150K: stepper_is_cycle_running() == true");
@@ -388,7 +388,7 @@ static void test_max_speed_30000steps() {
     // завершающий тик - для завершения цикла серии шагов
     timer_tick(1);
     // еще раз проверим финальное положение
-    sput_fail_unless(sm_x.current_pos == 225000, "step30K.tick150K+1: current_pos == 225000");
+    sput_fail_unless(sm_x.current_pos == 225000000, "step30K.tick150K+1: current_pos == 225000000");
     
     ////////
     // проверим, что серия шагов завершилась, можно запускать новые шаги
@@ -400,10 +400,10 @@ static void test_aliquant_speed_tick_by_tick() {
     // движение мотора со скоростью, некратной периоду таймера
 
     // мотор - минимальная задержка между шагами 1000 мкс,
-    // расстояние за шаг - 7.5 мкм
+    // расстояние за шаг - 7.5мкм=7500нм
     stepper sm_x;
-    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7.5); 
-    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000);
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7500); 
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000000);
     
     // настройки частоты таймера
     int timer_period_us = 200;
@@ -454,7 +454,7 @@ static void test_aliquant_speed_tick_by_tick() {
     //cout<<sm_x.current_pos<<endl;
     // сделать шаг, взвести счетчики на следующий шаг
     timer_tick(1);
-    sput_fail_unless(sm_x.current_pos == 7.5, "step1.tick3: current_pos == 7.5");
+    sput_fail_unless(sm_x.current_pos == 7500, "step1.tick3: current_pos == 7500");
     //cout<<sm_x.current_pos<<endl;
     
     // шаг 2
@@ -464,10 +464,10 @@ static void test_aliquant_speed_tick_by_tick() {
     timer_tick(1);
     // взвести step
     timer_tick(1);
-    sput_fail_unless(sm_x.current_pos == 7.5, "step2.tick2: current_pos == 7.5");
+    sput_fail_unless(sm_x.current_pos == 7500, "step2.tick2: current_pos == 7500");
     // сделать шаг, взвести счетчики на следующий шаг
     timer_tick(1);
-    sput_fail_unless(sm_x.current_pos == 15, "step2.tick3: current_pos == 15");
+    sput_fail_unless(sm_x.current_pos == 15000, "step2.tick3: current_pos == 15000");
     
     // шаг 3
     // холостой ход
@@ -476,10 +476,10 @@ static void test_aliquant_speed_tick_by_tick() {
     timer_tick(1);
     // взвести step
     timer_tick(1);
-    sput_fail_unless(sm_x.current_pos == 15, "step3.tick2: current_pos == 15");
+    sput_fail_unless(sm_x.current_pos == 15000, "step3.tick2: current_pos == 15000");
     // сделать шаг, взвести счетчики на следующий шаг
     timer_tick(1);
-    sput_fail_unless(sm_x.current_pos == 22.5, "step3.tick3: current_pos == 22.5");
+    sput_fail_unless(sm_x.current_pos == 22500, "step3.tick3: current_pos == 22500");
     
     // шаг 4
     // холостой ход
@@ -488,10 +488,10 @@ static void test_aliquant_speed_tick_by_tick() {
     timer_tick(1);
     // взвести step
     timer_tick(1);
-    sput_fail_unless(sm_x.current_pos == 22.5, "step4.tick2: current_pos == 22.5");
+    sput_fail_unless(sm_x.current_pos == 22500, "step4.tick2: current_pos == 22500");
     // сделать шаг, взвести счетчики на следующий шаг
     timer_tick(1);
-    sput_fail_unless(sm_x.current_pos == 30, "step4.tick3: current_pos == 30");
+    sput_fail_unless(sm_x.current_pos == 30000, "step4.tick3: current_pos == 30000");
     
     // шаг 5
     // холостой ход
@@ -500,10 +500,10 @@ static void test_aliquant_speed_tick_by_tick() {
     timer_tick(1);
     // взвести step
     timer_tick(1);
-    sput_fail_unless(sm_x.current_pos == 30, "step5.tick2: current_pos == 30");
+    sput_fail_unless(sm_x.current_pos == 30000, "step5.tick2: current_pos == 30000");
     // сделать шаг, взвести счетчики на следующий шаг
     timer_tick(1);
-    sput_fail_unless(sm_x.current_pos == 37.5, "step5.tick3: current_pos == 37.5");
+    sput_fail_unless(sm_x.current_pos == 37500, "step5.tick3: current_pos == 37500");
     
     // все шаги сделали, но для завершения цикла нужен еще 1 финальный тик
     sput_fail_unless(stepper_is_cycle_running(), "step5.tick3: stepper_is_cycle_running() == true");
@@ -511,7 +511,7 @@ static void test_aliquant_speed_tick_by_tick() {
     // завершающий тик - для завершения цикла серии шагов
     timer_tick(1);
     // еще раз проверим финальное положение
-    sput_fail_unless(sm_x.current_pos == 37.5, "step5.tick3+1: current_pos == 37.5");
+    sput_fail_unless(sm_x.current_pos == 37500, "step5.tick3+1: current_pos == 37500");
     
     ////////
     // проверим, что серия шагов завершилась, можно запускать новые шаги
@@ -525,14 +525,14 @@ static void test_draw_triangle() {
     
     stepper sm_x, sm_y, sm_z;
     // X
-    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7.5); 
-    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000);
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7500); 
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000000);
     // Y
-    init_stepper(&sm_y, 'y', 5, 6, 7, true, 1000, 7.5);
-    init_stepper_ends(&sm_y, NO_PIN, NO_PIN, INF, INF, 0, 216000);
+    init_stepper(&sm_y, 'y', 5, 6, 7, true, 1000, 7500);
+    init_stepper_ends(&sm_y, NO_PIN, NO_PIN, INF, INF, 0, 216000000);
     // Z
-    init_stepper(&sm_z, 'z', 2, 3, 4, true, 1000, 7.5);
-    init_stepper_ends(&sm_z, NO_PIN, NO_PIN, INF, INF, 0, 100000);
+    init_stepper(&sm_z, 'z', 2, 3, 4, true, 1000, 7500);
+    init_stepper_ends(&sm_z, NO_PIN, NO_PIN, INF, INF, 0, 100000000);
     
     
     // настройки частоты таймера
@@ -550,26 +550,27 @@ static void test_draw_triangle() {
     //   line1 line2 line3
     // cm: (0,0,0) -> (15,5,2) -> (5,15,2) -> (0,0,0)
     // uM: (0,0,0) -> (150000,50000,20000) -> (50000,150000,20000) -> (0,0,0)
+    // nm: (0,0,0) -> (150000000,50000000,20000000) -> (50000000,150000000,20000000) -> (0,0,0)
     
     // #1 линия1
-    // line1: (0,0,0) -> (150000,50000,20000)
+    // line1: (0,0,0) -> (150000000,50000000,20000000)
     
     // X - длинная координата - ее проходим с максимальной скоростью
-    //int steps_x = 150000.0 / 7.5;
-    int steps_x = (150000.0 - sm_x.current_pos) / 7.5;
+    //int steps_x = 150000000 / 7500;
+    int steps_x = (150000000 - sm_x.current_pos) / 7500;
     int delay_x = 1000;
     int time_x = delay_x * abs(steps_x);
     
-    //int steps_y = 50000.0 / 7.5;
-    int steps_y = (50000.0 - sm_y.current_pos) / 7.5;
+    //int steps_y = 50000000 / 7500;
+    int steps_y = (50000000 - sm_y.current_pos) / 7500;
     int delay_y = time_x / abs(steps_y);
     
-    //int steps_z = 20000.0 / 7.5;
-    int steps_z = (20000.0 - sm_z.current_pos) / 7.5;
+    //int steps_z = 20000000 / 7500;
+    int steps_z = (20000000 - sm_z.current_pos) / 7500;
     int delay_z = time_x / abs(steps_z);
 
     // prepare_steps(stepper *smotor, 
-    //     int step_count, int step_delay, 
+    //     int step_count, unsigned long step_delay, 
     //     calibrate_mode_t calibrate_mode, 
     //     stepper_info_t *stepper_info=NULL);
     prepare_steps(&sm_x, steps_x, delay_x);
@@ -582,29 +583,29 @@ static void test_draw_triangle() {
     sput_fail_unless(!stepper_is_cycle_running(), "line1: stepper_is_cycle_running() == false");
     
     // #2 линия2
-    // line2: (150000,50000,20000) -> (50000,150000,20000)
+    // line2: (150000000,50000000,20000000) -> (50000000,150000000,20000000)
     
     // здесь путь по x и y одинаковый, но точные количества шагов
     // с учетом погрешностей округления могут отличаться на +/- один шаг:
     // реально получится:
     // steps_x=-13333, steps_y=13334
     
-    //int steps_y = (150000.0 - 50000.0) / 7.5;
-    steps_y = (150000.0 - sm_y.current_pos) / 7.5;
+    //int steps_y = (150000000 - 50000000) / 7500;
+    steps_y = (150000000 - sm_y.current_pos) / 7500;
     delay_y = 1000;
     int time_y = delay_y * abs(steps_y);
     
-    //int steps_x = (50000.0 - 150000.0) / 7.5;
-    steps_x = (50000.0 - sm_x.current_pos) / 7.5;
+    //int steps_x = (50000000 - 150000000) / 7500;
+    steps_x = (50000000 - sm_x.current_pos) / 7500;
     delay_x = time_y / abs(steps_y);
     
     // путь по z=0
-    //int steps_z = (20000.0 - 20000.0) / 7.5;
-    //int steps_z = (20000.0 - sm_z.current_pos) / 7.5;
+    //int steps_z = (20000000 - 20000000) / 7500;
+    //int steps_z = (20000000 - sm_z.current_pos) / 7500;
     //int delay_z = time_y / abs(steps_z);
 
     // prepare_steps(stepper *smotor, 
-    //     int step_count, int step_delay, 
+    //     int step_count, unsigned long step_delay, 
     //     calibrate_mode_t calibrate_mode, 
     //     stepper_info_t *stepper_info=NULL);
     prepare_steps(&sm_x, steps_x, delay_x);
@@ -618,24 +619,24 @@ static void test_draw_triangle() {
     sput_fail_unless(!stepper_is_cycle_running(), "line2: stepper_is_cycle_running() == false");
     
     // #3 линия3
-    // line3: (50000,150000,20000) -> (0,0,0)
+    // line3: (50000000,150000000,20000000) -> (0,0,0)
     
     // Y - длинная координата - ее проходим с максимальной скоростью
-    //int steps_y = -150000.0 / 7.5;
-    steps_y = (0.0 - sm_y.current_pos) / 7.5;
+    //int steps_y = -150000000 / 7500;
+    steps_y = (0 - sm_y.current_pos) / 7500;
     delay_y = 1000;
     time_y = delay_y * abs(steps_y);
     
-    //int steps_x = -50000.0 / 7.5;
-    steps_x = (0.0 - sm_x.current_pos) / 7.5;
+    //int steps_x = -50000000 / 7500;
+    steps_x = (0 - sm_x.current_pos) / 7500;
     delay_x = time_y / abs(steps_x);
     
-    //int steps_z = -20000.0 / 7.5;
-    steps_z = (0.0 - sm_z.current_pos) / 7.5;
+    //int steps_z = -20000000 / 7500;
+    steps_z = (0 - sm_z.current_pos) / 7500;
     delay_z = time_y / abs(steps_z);
 
     // prepare_steps(stepper *smotor, 
-    //     int step_count, int step_delay, 
+    //     int step_count, unsigned long step_delay, 
     //     calibrate_mode_t calibrate_mode, 
     //     stepper_info_t *stepper_info=NULL);
     prepare_steps(&sm_x, steps_x, delay_x);
@@ -659,13 +660,13 @@ static void test_draw_triangle() {
 static void test_exit_bounds_issue1_whirl() {
 
     // мотор - минимальная задежка между шагами: 1000 микросекунд
-    // расстояние за шаг: 7.5 микрометров
-    // рабочая область: 300000мкм=300мм=30см
+    // расстояние за шаг: 7500нм=7.5мкм
+    // рабочая область: 300000000нм=300000мкм=300мм=30см
     // нижняя граница координаты: ограничена=0
-    // верхняя граница координаты: ограничена=300000
+    // верхняя граница координаты: ограничена=300000000
     stepper sm_x;
-    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7.5); 
-    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000);
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7500); 
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000000);
     
     // настройки частоты таймера
     int timer_period_us = 200;
@@ -694,7 +695,7 @@ static void test_exit_bounds_issue1_whirl() {
     // задержку между шагами задаём как 0 (должна исправиться автоматом на
     // sm_x->pulse_delay, т.е. на 1000)
     // void prepare_whirl(stepper *smotor, 
-    //     int dir, int step_delay, 
+    //     int dir, unsigned long step_delay, 
     //     calibrate_mode_t calibrate_mode=NONE, stepper_info_t *stepper_info=NULL);
     prepare_whirl(&sm_x, -1, 0, NONE, &stepper_info);
     
@@ -702,7 +703,7 @@ static void test_exit_bounds_issue1_whirl() {
     // 1000, 2000, 3000
     // 
     // значение координаты (без учета границ)
-    // -7.5, -15, -25
+    // -7500, -15000, -25000
     //
     // тики таймера (200 микросекунд)
     //                                                       шаг1                            шаг2
@@ -750,13 +751,13 @@ static void test_exit_bounds_issue1_whirl() {
 static void test_exit_bounds_issue1_steps() {
 
     // мотор - минимальная задежка между шагами: 1000 микросекунд
-    // расстояние за шаг: 7.5 микрометров
-    // рабочая область: 300000мкм=300мм=30см
+    // расстояние за шаг: 7500нм=7.5мкм
+    // рабочая область: 300000000нм=300000мкм=300мм=30см
     // нижняя граница координаты: ограничена=0
-    // верхняя граница координаты: ограничена=300000
+    // верхняя граница координаты: ограничена=300000000
     stepper sm_x;
-    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7.5); 
-    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000);
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7500); 
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000000);
     
     // настройки частоты таймера
     int timer_period_us = 200;
@@ -785,7 +786,7 @@ static void test_exit_bounds_issue1_steps() {
     // задержку между шагами задаём как 0 (должна исправиться автоматом на
     // sm_x->pulse_delay, т.е. на 1000)
     // void prepare_steps(stepper *smotor, 
-    //     int step_count, int step_delay, 
+    //     int step_count, unsigned long step_delay, 
     //     calibrate_mode_t calibrate_mode, 
     //     stepper_info_t *stepper_info) {
     prepare_steps(&sm_x, -300, 0, NONE, &stepper_info);
@@ -794,7 +795,7 @@ static void test_exit_bounds_issue1_steps() {
     // 1000, 2000, 3000
     // 
     // значение координаты (без учета границ)
-    // -7.5, -15, -25
+    // -7500, -15000, -25000
     //
     // тики таймера (200 микросекунд)
     //                                                       шаг1                            шаг2
@@ -838,17 +839,18 @@ static void test_exit_bounds_issue1_steps() {
     // цикл должен остановиться на этом же тике
     sput_fail_unless(!stepper_is_cycle_running(), "stepper_is_cycle_running() == false");
 }
+
 static void test_exit_bounds_issue9_steps() {
     // https://github.com/1i7/stepper_h/issues/9
 
     // мотор - минимальная задежка между шагами: 1000 микросекунд
-    // расстояние за шаг: 7.5 микрометров
-    // рабочая область: 300000мкм=300мм=30см
+    // расстояние за шаг: 7500нм=7.5мкм
+    // рабочая область: 300000000нм=300000мкм=300мм=30см
     // нижняя граница координаты: ограничена=0
-    // верхняя граница координаты: ограничена=300000
+    // верхняя граница координаты: ограничена=300000000
     stepper sm_x;
-    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7.5); 
-    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000);
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7500); 
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000000);
     
     // настройки частоты таймера
     int timer_period_us = 200;
@@ -881,7 +883,7 @@ static void test_exit_bounds_issue9_steps() {
     // ставим задержку между шагами меньше, чем 3 периода таймера:
     // 400 < 200*3=600
     // void prepare_steps(stepper *smotor,
-    //     int step_count, int step_delay,
+    //     int step_count, unsigned long step_delay,
     //     calibrate_mode_t calibrate_mode,
     //     stepper_info_t *stepper_info)
     prepare_steps(&sm_x, -300, 400);
@@ -911,7 +913,7 @@ static void test_exit_bounds_issue9_steps() {
     // ставим задержку между шагами меньше, чем 3 периода таймера:
     // 400 < 200*3=600
     // void prepare_steps(stepper *smotor,
-    //     int step_count, int step_delay,
+    //     int step_count, unsigned long step_delay,
     //     calibrate_mode_t calibrate_mode,
     //     stepper_info_t *stepper_info)
     prepare_steps(&sm_x, -300, 400);
