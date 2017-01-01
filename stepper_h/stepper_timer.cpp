@@ -770,8 +770,21 @@ void stepper_set_error_handle_strategy(
  *
  * @param cycle_info - информация о цикле, 
  *     обновляется динамически в процессе работы цикла.
+ * @return
+ *     true - цикл запущен
+ *     false - цикл не запущен, т.к. предыдущий цикл еще не завершен
  */
-void stepper_start_cycle(stepper_cycle_info_t *cycle_info) {
+bool stepper_start_cycle(stepper_cycle_info_t *cycle_info) {
+    // Преварительные проверки перед запуском цикла
+
+    // не запускать новый цикл, если старый не отработал,
+    // статус цикла не обновляем
+    if(_cycle_running) {
+        return false;
+    }
+    
+    // можем считать, что цикл запущен
+    
     // сбросим информацию о статусе цикла в значения по умолчанию
     if(cycle_info != NULL) {
         cycle_info->error_status = CYCLE_ERROR_NONE;
@@ -779,47 +792,32 @@ void stepper_start_cycle(stepper_cycle_info_t *cycle_info) {
         cycle_info->is_paused = false;
     }
     
-    ///
-    // Преварительные проверки перед запуском цикла
-
-    // не запускать новый цикл, если старый не отработал
-    if(_cycle_running) {
-        if(cycle_info != NULL) {
-            cycle_info->error_status = CYCLE_ERROR_ALREADY_RUNNING;
-        }
-        return;
-    }
+    // завершить ли цикл с ошибкой, не дожидаясь первого шага
+    bool canceled = false;
     
     // мы не можем обеспечить корректность работы цикла
     // при некоторых комбинациях значений периода таймера
     // и минимальной задержки между шагами мотора
-    for(int i = 0; i < _stepper_count; i++) {
-        // не запускать цикл, если хотябы у одного из моторов
-        // минимальная задержка между шагами не вмещает минимум 3
-        // периода таймера
+    for(int i = 0; i < _stepper_count && !canceled; i++) {
         if(_smotors[i]->pulse_delay < _timer_period_us*3) {
+            // не запускать цикл, если хотябы у одного из моторов
+            // минимальная задержка между шагами не вмещает минимум 3
+            // периода таймера
             if(cycle_info != NULL) {
                 cycle_info->error_status = CYCLE_ERROR_TIMER_PERIOD_TOO_LONG;
             }
-            
-            // неудачная попытка - очищаем все предварительные заготовки
-            stepper_finish_cycle();
-            return;
-        }
-        // не запускать цикл, если период таймера не кратен
-        // минимальной задержке между шагами хотябы одного из моторов
-        if(_smotors[i]->pulse_delay % _timer_period_us != 0) {
+            canceled = true;
+        } else if(_smotors[i]->pulse_delay % _timer_period_us != 0) {
+            // не запускать цикл, если период таймера не кратен
+            // минимальной задержке между шагами хотябы одного из моторов
             if(cycle_info != NULL) {
                 cycle_info->error_status = CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE;
             }
-            // неудачная попытка - очищаем все предварительные заготовки
-            stepper_finish_cycle();
-            return;
-        }
+            canceled = true;
+        } else if(_cstatuses[i].step_delay < _smotors[i]->pulse_delay) {
+            // проверим, корректна ли задержка перед первым шагом,
+            // заданная во время prepare_steps/whirl/xxx:
         
-        // проверим, корректна ли задержка перед первым шагом,
-        // заданная во время prepare_steps/whirl/xxx
-        if(_cstatuses[i].step_delay < _smotors[i]->pulse_delay) {
             // указанная задержка меньше, чем минимальная задержка 
             // между двумя шагами мотора - это не хорошо
             
@@ -850,43 +848,45 @@ void stepper_start_cycle(stepper_cycle_info_t *cycle_info) {
                 if(cycle_info != NULL) {
                     cycle_info->error_status = CYCLE_ERROR_MOTOR_ERROR;
                 }
-                
-                // неудачная попытка - очищаем все предварительные заготовки
-                stepper_finish_cycle();
-                return;
+                canceled = true;
             } // иначе, игнорируем
         } 
     }
+    
+    if(canceled) {
+        // неудачная попытка - очищаем все предварительные заготовки
+        stepper_finish_cycle();
+    } else {
+        // предварительные проверки прошли, запускаем цикл
+        _cycle_info = cycle_info;
 
-    ///
-    // предварительные проверки прошли, запускаем цикл
-    _cycle_info = cycle_info;
-
-    _cycle_running = true;
-    _cycle_paused = false;
-    
-    // обновим информацию о цикле для внешнего мира
-    if(_cycle_info != NULL) {
-        _cycle_info->error_status = CYCLE_ERROR_NONE;
-        _cycle_info->is_running = true;
-        _cycle_info->is_paused = false;
-    }
-    
-    // включить моторы
-    for(int i = 0; i < _stepper_count; i++) {
-        // обновим статусы
-        if(_cstatuses[i].stepper_info != NULL) {
-            _cstatuses[i].stepper_info->status = STEPPER_STATUS_RUNNING;
+        _cycle_running = true;
+        _cycle_paused = false;
+        
+        // обновим информацию о цикле для внешнего мира
+        if(_cycle_info != NULL) {
+            _cycle_info->error_status = CYCLE_ERROR_NONE;
+            _cycle_info->is_running = true;
+            _cycle_info->is_paused = false;
         }
-        // аппаратная ножка Enable->LOW (вкл), если задана
-        if(_smotors[i]->pin_en != NO_PIN) {
-            digitalWrite(_smotors[i]->pin_en, LOW);
+        
+        // включить моторы
+        for(int i = 0; i < _stepper_count; i++) {
+            // обновим статусы
+            if(_cstatuses[i].stepper_info != NULL) {
+                _cstatuses[i].stepper_info->status = STEPPER_STATUS_RUNNING;
+            }
+            // аппаратная ножка Enable->LOW (вкл), если задана
+            if(_smotors[i]->pin_en != NO_PIN) {
+                digitalWrite(_smotors[i]->pin_en, LOW);
+            }
         }
+        
+        // Запустим таймер с периодом _timer_period_us, для этого
+        // должны быть заданы правильные _timer_prescaler и _timer_period
+        initTimerISR(_timer_id, _timer_prescaler, _timer_period);
     }
-    
-    // Запустим таймер с периодом _timer_period_us, для этого
-    // должны быть заданы правильные _timer_prescaler и _timer_period
-    initTimerISR(_timer_id, _timer_prescaler, _timer_period);
+    return true;
 }
 
 /**

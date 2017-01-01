@@ -197,9 +197,6 @@ typedef enum {
     /** Ошибок нет */
     CYCLE_ERROR_NONE,
     
-    /** Цикл уже запущен */
-    CYCLE_ERROR_ALREADY_RUNNING,
-    
     /** 
      * Хотябы у одного из моторов, добавленных в список вращения, 
      * минимальная задержка между шагами не вмещает 3 периода таймера
@@ -475,8 +472,11 @@ void prepare_dynamic_whirl(stepper *smotor, int dir,
  *
  * @param cycle_info - информация о цикле, 
  *     обновляется динамически в процессе работы цикла.
+ * @return
+ *     true - цикл запущен
+ *     false - цикл не запущен, т.к. предыдущий цикл еще не завершен
  */
-void stepper_start_cycle(stepper_cycle_info_t *cycle_info=NULL);
+bool stepper_start_cycle(stepper_cycle_info_t *cycle_info=NULL);
 
 /**
  * Завершить цикл шагов - остановить таймер, обнулить список моторов.
