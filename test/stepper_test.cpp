@@ -71,11 +71,8 @@ static void test_lifecycle() {
     // все еще должны двигаться
     sput_fail_unless(stepper_is_cycle_running(), "ticks: stepper_is_cycle_running() == true");
     
-    // попробуем запустить повторно - должны получить код ошибки
-    stepper_cycle_info_t cycle_info;
-    stepper_start_cycle(&cycle_info);
-    sput_fail_unless(cycle_info.error_status == CYCLE_ERROR_ALREADY_RUNNING, 
-        "start while running: stepper_start_cycle() == CYCLE_ERROR_ALREADY_RUNNING");
+    // попробуем запустить повторно - новый цикл не должен запуститься
+    sput_fail_unless(!stepper_start_cycle(), "start while running: stepper_start_cycle() == false");
     // но старый цикл все еще должен работать
     sput_fail_unless(stepper_is_cycle_running(), "start while running: stepper_is_cycle_running() == true");
     
@@ -132,7 +129,7 @@ static void test_timer_period() {
     stepper_start_cycle(&cycle_info);
     // цикл должен запуститься
     sput_fail_unless(cycle_info.error_status == CYCLE_ERROR_NONE, 
-        "period=200uS (ok): stepper_start_cycle() == CYCLE_ERROR_NONE");
+        "period=200uS (ok): cycle_info.error_status == CYCLE_ERROR_NONE");
     sput_fail_unless(stepper_is_cycle_running(), "period=200uS (ok): stepper_is_cycle_running() == true");
     // останавливаемся
     stepper_finish_cycle();
@@ -153,7 +150,7 @@ static void test_timer_period() {
     // цикл не должен запуститься
     sput_fail_unless(!stepper_is_cycle_running(), "period=200uS (too long): stepper_is_cycle_running() == false");
     sput_fail_unless(cycle_info.error_status == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG, 
-        "period=200uS (too long): stepper_start_cycle() == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG");
+        "period=200uS (too long): cycle_info.error_status == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG");
     
     // #3
     // период таймера 350 микросекунд
@@ -170,7 +167,7 @@ static void test_timer_period() {
     // цикл не должен запуститься
     sput_fail_unless(!stepper_is_cycle_running(), "period=350uS (too long): stepper_is_cycle_running() == false");
     sput_fail_unless(cycle_info.error_status == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG, 
-        "period=350uS (too long): stepper_start_cycle() == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG");
+        "period=350uS (too long): cycle_info.error_status == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG");
     
     // #4: повторим тест #1 еще раз в конце для чистоты эксперимента
     // период таймера 200 микросекунд
@@ -187,7 +184,7 @@ static void test_timer_period() {
     // цикл должен запуститься
     sput_fail_unless(stepper_is_cycle_running(), "period=200uS (ok): stepper_is_cycle_running() == true");
     sput_fail_unless(cycle_info.error_status == CYCLE_ERROR_NONE, 
-        "period=200uS (ok): stepper_start_cycle() == CYCLE_ERROR_NONE");
+        "period=200uS (ok): cycle_info.error_status == CYCLE_ERROR_NONE");
     // останавливаемся
     stepper_finish_cycle();
 }
@@ -229,7 +226,7 @@ static void test_timer_period_aliquant_motor_pulse() {
     stepper_start_cycle(&cycle_info);
     sput_fail_unless(!stepper_is_cycle_running(), "period=300uS (aliquant): stepper_is_cycle_running() == false");
     sput_fail_unless(cycle_info.error_status == CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE, 
-        "period=300uS (aliquant): stepper_start_cycle() == CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE");
+        "period=300uS (aliquant): cycle_info.error_status == CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE");
 }
 
 static void test_max_speed_tick_by_tick() {
@@ -895,7 +892,7 @@ static void test_exit_bounds_issue9_steps() {
     // цикл сразу не должен запуститься
     sput_fail_unless(!stepper_is_cycle_running(), "cancel cycle: stepper_is_cycle_running() == false");
     sput_fail_unless(cycle_info.error_status == CYCLE_ERROR_MOTOR_ERROR, 
-        "cancel cycle: stepper_start_cycle() == CYCLE_ERROR_MOTOR_ERROR");
+        "cancel cycle: cycle_info.error_status == CYCLE_ERROR_MOTOR_ERROR");
     sput_fail_unless(sm_x.current_pos == 0, "cancel cycle: current_pos == 0");
     
     // #2: попробуем вариант с автоматическим исправлением задержки
