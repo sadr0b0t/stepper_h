@@ -311,7 +311,7 @@ typedef struct {
  *     Для движения вправо (в сторону увеличения значения виртуальной координаты): 
  *     при invert_dir==false: запись 1 (HIGH) в pin_dir
  *     при invert_dir==true: запись 0 (LOW) в pin_dir
- *
+ * 
  * @param pin_en - вкл (0)/выкл (1) мотор 
  *     -1 (NO_PIN): выход не подключен
  * @param invert_di -r Инверсия направления вращения
@@ -340,7 +340,7 @@ void init_stepper(stepper* smotor,  char name,
         int pin_step, int pin_dir, int pin_en,
         bool invert_dir, int pulse_delay,
         int distance_per_step);
-        
+
 /**
  * Задать настройки границ рабочей области для шагового мотора.
  * 
@@ -381,7 +381,7 @@ void init_stepper_ends(stepper* smotor,
         int pin_min, int pin_max,
         end_strategy_t min_end_strategy, end_strategy_t max_end_strategy,
         long min_pos, long max_pos);
-        
+
 /**
  * Подготовить мотор к запуску ограниченной серии шагов - задать нужное количество 
  * шагов и задержку между шагами для регулирования скорости (0 для максимальной скорости).
@@ -396,7 +396,7 @@ void init_stepper_ends(stepper* smotor,
  * @param stepper_info - информация о цикле вращения шагового двигателя, обновляется динамически
  *        в процессе вращения двигателя
  */
-void prepare_steps(stepper *smotor, int step_count, unsigned long step_delay, calibrate_mode_t calibrate_mode=NONE, 
+void prepare_steps(stepper *smotor, long step_count, unsigned long step_delay, calibrate_mode_t calibrate_mode=NONE, 
         stepper_info_t *stepper_info=NULL);
 
 /**
@@ -424,9 +424,9 @@ void prepare_whirl(stepper *smotor, int dir, unsigned long step_delay, calibrate
  * 
  * Масштабирование шага позволяет экономить место в буфере delay_buffer, жертвуя точностью 
  * (минимальной длиной шага в цикле); если цикл содержит серии шагов с одинаковой задержкой,
- * реальноая точность не пострадает. Буфер delay_buffer содержит временные задержки перед каждым следующим шагом.
+ * реальная точность не пострадает. Буфер delay_buffer содержит временные задержки перед каждым следующим шагом.
  * Можно использовать одну и ту же задержку (один элемент буфера) для нескольких последовательных шагов
- * при помощи параметра step_count (масштаб). 
+ * при помощи параметра step_count (масштаб).
  * 
  * При step_count=1 на каждый элемент буфера delay_buffer ("виртуальный" шаг) мотор будет делать 
  *     один реальный (аппаратный) шаг из delay_buffer.
@@ -465,7 +465,7 @@ void prepare_whirl(stepper *smotor, int dir, unsigned long step_delay, calibrate
  * @param stepper_info - информация о цикле вращения шагового двигателя, обновляется динамически
  *        в процессе вращения двигателя
  */
-void prepare_simple_buffered_steps(stepper *smotor, int buf_size, unsigned long* delay_buffer, int step_count=1, 
+void prepare_simple_buffered_steps(stepper *smotor, int buf_size, unsigned long* delay_buffer, long step_count=1, 
         stepper_info_t *stepper_info=NULL);
 
 /**
@@ -478,7 +478,7 @@ void prepare_simple_buffered_steps(stepper *smotor, int buf_size, unsigned long*
  * @param stepper_info - информация о цикле вращения шагового двигателя, обновляется динамически
  *        в процессе вращения двигателя
  */
-void prepare_buffered_steps(stepper *smotor, int buf_size, unsigned long* delay_buffer, int* step_buffer, 
+void prepare_buffered_steps(stepper *smotor, int buf_size, unsigned long* delay_buffer, long* step_buffer, 
         stepper_info_t *stepper_info=NULL);
 
 /**
@@ -492,7 +492,7 @@ void prepare_buffered_steps(stepper *smotor, int buf_size, unsigned long* delay_
  * @param stepper_info - информация о цикле вращения шагового двигателя, обновляется динамически
  *        в процессе вращения двигателя
  */
-void prepare_dynamic_steps(stepper *smotor, int step_count, 
+void prepare_dynamic_steps(stepper *smotor, long step_count, 
         void* curve_context, unsigned long (*next_step_delay)(int curr_step, void* curve_context), 
         stepper_info_t *stepper_info=NULL);
         

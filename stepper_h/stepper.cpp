@@ -26,7 +26,7 @@
  *     Для движения вправо (в сторону увеличения значения виртуальной координаты): 
  *     при invert_dir==false: запись 1 (HIGH) в pin_dir
  *     при invert_dir==true: запись 0 (LOW) в pin_dir
- *
+ * 
  * @param pin_en - вкл (0)/выкл (1) мотор 
  *     -1 (NO_PIN): выход не подключен
  * @param invert_di -r Инверсия направления вращения
@@ -104,7 +104,7 @@ void init_stepper(stepper* smotor,  char name,
  * При калибровке начальной позиции мотора CALIBRATE_START_MIN_POS 
  * текущее положение мотора curr_pos сбрасывается в значение min_pos (curr_pos=min_pos)
  * на каждом шаге.
- *
+ * 
  * При калибровке ширины рабочей области CALIBRATE_BOUNDS_MAX_POS 
  * текущее положение мотора curr_pos задает значение max_pos (max_pos=curr_pos)
  * на каждом шаге.

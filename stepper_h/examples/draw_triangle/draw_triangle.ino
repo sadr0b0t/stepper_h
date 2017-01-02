@@ -27,7 +27,7 @@ static void prepare_line1() {
     int delay_z = time_x / abs(steps_z);
 
     // prepare_steps(stepper *smotor, 
-    //     int step_count, unsigned long step_delay, 
+    //     long step_count, unsigned long step_delay, 
     //     calibrate_mode_t calibrate_mode, 
     //     stepper_info_t *stepper_info=NULL);
     prepare_steps(&sm_x, steps_x, delay_x);
@@ -64,7 +64,7 @@ static void prepare_line2() {
     //int delay_z = time_x / abs(steps_z);
 
     // prepare_steps(stepper *smotor, 
-    //     int step_count, unsigned long step_delay, 
+    //     long step_count, unsigned long step_delay, 
     //     calibrate_mode_t calibrate_mode, 
     //     stepper_info_t *stepper_info=NULL);
     prepare_steps(&sm_x, steps_x, delay_x);
@@ -96,7 +96,7 @@ static void prepare_line3() {
     int delay_z = time_y / abs(steps_z);
 
     // prepare_steps(stepper *smotor, 
-    // int step_count, unsigned long step_delay, 
+    //     long step_count, unsigned long step_delay, 
     //     calibrate_mode_t calibrate_mode, 
     //     stepper_info_t *stepper_info=NULL);
     prepare_steps(&sm_x, steps_x, delay_x);

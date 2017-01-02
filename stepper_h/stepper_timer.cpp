@@ -56,8 +56,29 @@ typedef struct {
     /** true: вращение без остановки, false: использовать step_count */
     bool non_stop;
     
-    /** Количество шагов в текущей серии (если non_stop=false) */
-    int step_count;
+    /**
+     * Количество шагов в текущей серии (если non_stop=false).
+     * 
+     * Для мотора с приводом шаг 7.5мкм, 1000мкс минимальная задержка между шагами мотора.
+     * 
+     * для 32битного знакового целого:
+     * макс расстояние за серию=
+     * (2^31-1)*7.5мкм=(2147483648-1)*7.5мкм=16106127360мкм=16106127мм=16106м=16км
+     * макс время при движении с макс скоростью=
+     * (2^31-1)*1000мкс=(2147483648-1)*1000мкс=2147483сек=35791мин=596ч=24дня
+     * 
+     * для 16битного знакового целого:
+     * макс расстояние за серию=
+     * (2^15-1)*7.5мкм=(32768-1)*7.5мкм=245752мкм=245мм=24см
+     * макс время при движении с макс скоростью=
+     * (2^15-1)*1000мкс=(32768-1)*1000мкс=32сек
+     * 
+     * В PIC32 int и long - 32 бит.
+     * В Arduino long - 32 бит, int - 16 бит.
+     * 
+     * итого: нам нужны 32 бит, для PIC32+Arduino без лишних макросов - это long.
+     */
+    long step_count;
     
     /** 
      * CONSTANT: вращение с постоянной скоростью (использовать значение step_delay), 
@@ -80,17 +101,17 @@ typedef struct {
      * макс задержка=2^32-1=4294967296-1 микросекунд=4294967 миллисекунд=4294 секунд=71 минута=~1 час
      * 
      * итого 32 бит: для 32 бит оба варианта - более, чем достаточно
-     *
+     * 
      * для 16битного знакового целого:
      * макс задержка=2^15-1=32768-1 микросекунд=33 миллисекунды - так себе задержечка
      * для 16битного беззнакового целого:
      * макс задержка=2^16-1=65536-1 микросекунд=65 миллисекунд - тоже не особо
      * 
      * итого 16 бит: для 16 бит - задержки не подходят.
-     *
+     * 
      * В PIC32 int и long - 32 бит.
      * В Arduino long - 32 бит, int - 16 бит.
-     *
+     * 
      * итого: нам нужны 32 бит, для PIC32+Arduino без лишних макросов - это long.
      */
     unsigned long step_delay;
@@ -103,9 +124,9 @@ typedef struct {
     /**
      * Массив с количеством шагов для каждого цикла серии. Знак задает направление вращения.
      */
-    int* step_buffer;
+    long* step_buffer;
     
-    /** 
+    /**
      * Масштабирование шагов (повтор шагов с одинаковой задержкой при использовании буфера задержек) 
      */
     int scale;
@@ -114,9 +135,9 @@ typedef struct {
      * Указатель на объект, содержащий всю необходимую информацию для вычисления
      * времени до следующего шага (должен подходить для параметра curve_context 
      * функции next_step_delay).
-     *
+     * 
      * Для встроенного алгоритма рисования дуги окружности тип curve_context будет circle_context_t
-     *
+     * 
      * Используется при delay_source=DYNAMIC
      */
     void* curve_context;
@@ -126,9 +147,9 @@ typedef struct {
      * (определяет скорость вращения):
      * - при постоянной задержке мотор движется с постоянной скоростью (рисование прямой линии)
      * - при переменной задержке на 2х моторах движение инструмента криволинейно (рисование дуги окружности)
-     *
+     * 
      * Используется при delay_source=DYNAMIC
-     *
+     * 
      * @param curr_step - номер текущего шага
      * @param curve_context - указатель на объект, содержащий всю необходимую информацию для вычисления
      *     времени до следующего шага
@@ -147,10 +168,10 @@ typedef struct {
     bool stopped = false;
 
     /** Счетчик шагов для текущей серии (убывает) */
-    int step_counter = 0;
+    long step_counter = 0;
     
     /** Счетчик микросекунд для текущего шага (убывает) */
-    int step_timer = 0;
+    unsigned long step_timer = 0;
     
     /** Статус цикла - для внешних потребителей */
     stepper_info_t* stepper_info;
@@ -215,7 +236,7 @@ static error_handle_strategy_t _cycle_timing_exceed_handle = CANCEL_CYCLE;
  * @param stepper_info - информация о цикле вращения шагового двигателя, обновляется динамически
  *        в процессе вращения двигателя
  */
-void prepare_steps(stepper *smotor, int step_count, unsigned long step_delay, calibrate_mode_t calibrate_mode, 
+void prepare_steps(stepper *smotor, long step_count, unsigned long step_delay, calibrate_mode_t calibrate_mode, 
         stepper_info_t *stepper_info) {
     
     // резерв нового места на мотор в списке
@@ -356,9 +377,9 @@ void prepare_whirl(stepper *smotor, int dir, unsigned long step_delay, calibrate
  * 
  * Масштабирование шага позволяет экономить место в буфере delay_buffer, жертвуя точностью 
  * (минимальной длиной шага в цикле); если цикл содержит серии шагов с одинаковой задержкой,
- * реальноая точность не пострадает. Буфер delay_buffer содержит временные задержки перед каждым следующим шагом.
+ * реальная точность не пострадает. Буфер delay_buffer содержит временные задержки перед каждым следующим шагом.
  * Можно использовать одну и ту же задержку (один элемент буфера) для нескольких последовательных шагов
- * при помощи параметра step_count (масштаб). 
+ * при помощи параметра step_count (масштаб).
  * 
  * При step_count=1 на каждый элемент буфера delay_buffer ("виртуальный" шаг) мотор будет делать 
  *     один реальный (аппаратный) шаг из delay_buffer.
@@ -398,7 +419,7 @@ void prepare_whirl(stepper *smotor, int dir, unsigned long step_delay, calibrate
  *        в процессе вращения двигателя
  */
 void prepare_simple_buffered_steps(stepper *smotor, int buf_size, unsigned long* delay_buffer, 
-        int step_count, stepper_info_t *stepper_info) {
+        long step_count, stepper_info_t *stepper_info) {
     // резерв нового места на мотор в списке
     int sm_i = _stepper_count;
     _stepper_count++;
@@ -463,7 +484,7 @@ void prepare_simple_buffered_steps(stepper *smotor, int buf_size, unsigned long*
  * @param stepper_info - информация о цикле вращения шагового двигателя, обновляется динамически
  *        в процессе вращения двигателя
  */
-void prepare_buffered_steps(stepper *smotor, int buf_size, unsigned long* delay_buffer, int* step_buffer, 
+void prepare_buffered_steps(stepper *smotor, int buf_size, unsigned long* delay_buffer, long* step_buffer, 
         stepper_info_t *stepper_info) {
     // резерв нового места на мотор в списке
     int sm_i = _stepper_count;
@@ -534,7 +555,7 @@ void prepare_buffered_steps(stepper *smotor, int buf_size, unsigned long* delay_
  * @param stepper_info - информация о цикле вращения шагового двигателя, обновляется динамически
  *        в процессе вращения двигателя
  */
-void prepare_dynamic_steps(stepper *smotor, int step_count, 
+void prepare_dynamic_steps(stepper *smotor, long step_count, 
         void* curve_context, unsigned long (*next_step_delay)(int curr_step, void* curve_context), 
         stepper_info_t *stepper_info) {
     // резерв нового места на мотор в списке
@@ -990,7 +1011,7 @@ void stepper_cycle_debug_status(char* status_str) {
     sprintf(status_str, "stepper_count=%d", _stepper_count);
     for(int i = 0; i < _stepper_count; i++) {
         sprintf(status_str+strlen(status_str), 
-            "; cstatuses[%d]: step_count=%d, step_counter=%d, step_timer=%d",
+            "; cstatuses[%d]: step_count=%ld, step_counter=%ld, step_timer=%lu",
             i, _cstatuses[i].step_count, _cstatuses[i].step_counter, _cstatuses[i].step_timer);
     }
 }

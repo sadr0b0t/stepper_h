@@ -570,7 +570,7 @@ static void test_draw_triangle() {
     int delay_z = time_x / abs(steps_z);
 
     // prepare_steps(stepper *smotor, 
-    //     int step_count, unsigned long step_delay, 
+    //     long step_count, unsigned long step_delay, 
     //     calibrate_mode_t calibrate_mode, 
     //     stepper_info_t *stepper_info=NULL);
     prepare_steps(&sm_x, steps_x, delay_x);
@@ -605,7 +605,7 @@ static void test_draw_triangle() {
     //int delay_z = time_y / abs(steps_z);
 
     // prepare_steps(stepper *smotor, 
-    //     int step_count, unsigned long step_delay, 
+    //     long step_count, unsigned long step_delay, 
     //     calibrate_mode_t calibrate_mode, 
     //     stepper_info_t *stepper_info=NULL);
     prepare_steps(&sm_x, steps_x, delay_x);
@@ -636,7 +636,7 @@ static void test_draw_triangle() {
     delay_z = time_y / abs(steps_z);
 
     // prepare_steps(stepper *smotor, 
-    //     int step_count, unsigned long step_delay, 
+    //     long step_count, unsigned long step_delay, 
     //     calibrate_mode_t calibrate_mode, 
     //     stepper_info_t *stepper_info=NULL);
     prepare_steps(&sm_x, steps_x, delay_x);
@@ -786,7 +786,7 @@ static void test_exit_bounds_issue1_steps() {
     // задержку между шагами задаём как 0 (должна исправиться автоматом на
     // sm_x->pulse_delay, т.е. на 1000)
     // void prepare_steps(stepper *smotor, 
-    //     int step_count, unsigned long step_delay, 
+    //     long step_count, unsigned long step_delay, 
     //     calibrate_mode_t calibrate_mode, 
     //     stepper_info_t *stepper_info) {
     prepare_steps(&sm_x, -300, 0, NONE, &stepper_info);
@@ -883,7 +883,7 @@ static void test_exit_bounds_issue9_steps() {
     // ставим задержку между шагами меньше, чем 3 периода таймера:
     // 400 < 200*3=600
     // void prepare_steps(stepper *smotor,
-    //     int step_count, unsigned long step_delay,
+    //     long step_count, unsigned long step_delay,
     //     calibrate_mode_t calibrate_mode,
     //     stepper_info_t *stepper_info)
     prepare_steps(&sm_x, -300, 400);
@@ -913,7 +913,7 @@ static void test_exit_bounds_issue9_steps() {
     // ставим задержку между шагами меньше, чем 3 периода таймера:
     // 400 < 200*3=600
     // void prepare_steps(stepper *smotor,
-    //     int step_count, unsigned long step_delay,
+    //     long step_count, unsigned long step_delay,
     //     calibrate_mode_t calibrate_mode,
     //     stepper_info_t *stepper_info)
     prepare_steps(&sm_x, -300, 400);

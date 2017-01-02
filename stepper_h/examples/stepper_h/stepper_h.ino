@@ -5,7 +5,7 @@ static stepper sm_x, sm_y, sm_z;
 
 static void prepare_line1() {
     // prepare_steps(stepper *smotor, 
-    //     int step_count, unsigned long step_delay, 
+    //     long step_count, unsigned long step_delay, 
     //     calibrate_mode_t calibrate_mode, 
     //     stepper_info_t *stepper_info=NULL);
 
