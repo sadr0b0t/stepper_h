@@ -364,7 +364,18 @@ void init_stepper(stepper* smotor,  char name,
  *
  * Движение влево ограничего начальной позицией min_pos (curr_pos не может стать меньше, 
  * чем min_pos), движение вправо ничем не ограничено (curr_pos>=min_pos).
- *
+ * 
+ * @param smotor
+ * @param pin_min - номер пина для концевого датчика левой границы
+ * @param pin_max - номер пина для концевого датчика правой границы
+ * @param min_end_strategy - тип левой виртуальной границы:
+ *     CONST - константа, фиксированное минимальное значение координаты
+ *     INF - ограничения нет
+ * @param max_end_strategy - тип правой виртуальной границы:
+ *     CONST - константа, фиксированное максимальное значение координаты
+ *     INF - ограничения нет
+ * @param min_pos - минимальное значение координаты (для min_end_strategy=CONST)
+ * @param max_pos - максимальное значение координаты (для max_end_strategy=CONST)
  */
 void init_stepper_ends(stepper* smotor,
         int pin_min, int pin_max,
