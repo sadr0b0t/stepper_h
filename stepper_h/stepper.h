@@ -641,8 +641,8 @@ void stepper_configure_timer(int target_period_us, int timer, int prescaler, int
  *     по умолчанию: CANCEL_CYCLE
  * @param small_pulse_delay_handle - задержка между шагами меньше 
  *       минимально допустимой для мотора.
- *     допустимые значения: FIX/STOP_MOTOR/CANCEL_CYCLE/IGNORE
- *     по умолчанию: FIX
+ *     допустимые значения: FIX/STOP_MOTOR/CANCEL_CYCLE
+ *     по умолчанию: CANCEL_CYCLE
  * @param cycle_timing_exceed_handle - обработчик прерывания выполняется дольше,
  *       чем период таймера.
  *     допустимые значения: IGNORE/CANCEL_CYCLE

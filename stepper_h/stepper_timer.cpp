@@ -212,11 +212,10 @@ static error_handle_strategy_t _hard_end_handle = CANCEL_CYCLE;
 //static error_handle_strategy_t _soft_end_handle = STOP_MOTOR;
 static error_handle_strategy_t _soft_end_handle = CANCEL_CYCLE;
 
-// FIX/STOP_MOTOR/CANCEL_CYCLE/IGNORE
-static error_handle_strategy_t _small_pulse_delay_handle = FIX;
+// FIX/STOP_MOTOR/CANCEL_CYCLE
+//static error_handle_strategy_t _small_pulse_delay_handle = FIX;
 //static error_handle_strategy_t _small_pulse_delay_handle = STOP_MOTOR;
-//static error_handle_strategy_t _small_pulse_delay_handle = CANCEL_CYCLE;
-//static error_handle_strategy_t _small_pulse_delay_handle = IGNORE;
+static error_handle_strategy_t _small_pulse_delay_handle = CANCEL_CYCLE;
 
 // IGNORE/CANCEL_CYCLE
 static error_handle_strategy_t _cycle_timing_exceed_handle = CANCEL_CYCLE;
@@ -766,7 +765,7 @@ void stepper_configure_timer(int target_period_us, int timer, int prescaler, int
  *     по умолчанию: CANCEL_CYCLE
  * @param small_pulse_delay_handle - задержка между шагами меньше 
  *       минимально допустимой для мотора.
- *     допустимые значения: FIX/STOP_MOTOR/CANCEL_CYCLE/IGNORE
+ *     допустимые значения: FIX/STOP_MOTOR/CANCEL_CYCLE
  *     по умолчанию: FIX
  * @param cycle_timing_exceed_handle - обработчик прерывания выполняется дольше,
  *       чем период таймера.
@@ -788,11 +787,10 @@ void stepper_set_error_handle_strategy(
         _soft_end_handle = soft_end_handle;
     }
     
-    // допустимые значения: STOP_MOTOR/CANCEL_CYCLE/FIX/IGNORE
-    if(small_pulse_delay_handle == STOP_MOTOR || 
-            small_pulse_delay_handle == CANCEL_CYCLE || 
-            small_pulse_delay_handle == FIX ||
-            small_pulse_delay_handle == IGNORE) {
+    // допустимые значения: FIX/STOP_MOTOR/CANCEL_CYCLE
+    if(small_pulse_delay_handle == FIX || 
+            small_pulse_delay_handle == STOP_MOTOR || 
+            small_pulse_delay_handle == CANCEL_CYCLE) {
         _small_pulse_delay_handle = small_pulse_delay_handle;
     }
     
@@ -880,14 +878,14 @@ bool stepper_start_cycle(stepper_cycle_info_t *cycle_info) {
                 if(_cstatuses[i].stepper_info != NULL) {
                     _cstatuses[i].stepper_info->status = STEPPER_STATUS_FINISHED;
                 }
-            } else if(_small_pulse_delay_handle == CANCEL_CYCLE) {
-                // завершаем весь цикл
+            } else { //if(_small_pulse_delay_handle == CANCEL_CYCLE) {
+                // по умолчанию: завершаем весь цикл
                 
                 if(cycle_info != NULL) {
                     cycle_info->error_status = CYCLE_ERROR_MOTOR_ERROR;
                 }
                 canceled = true;
-            } // иначе, игнорируем
+            }
         } 
     }
     
@@ -1289,15 +1287,6 @@ void handle_interrupts(int timer) {
                 if(step_delay < _smotors[i]->pulse_delay) {
                     // посмотрим, что делать с ошибкой
                     if(_small_pulse_delay_handle == FIX) {
-                        #ifdef DEBUG_SERIAL
-                            Serial.print("***WARNING: fixing step_delay to match minimal pulse_delay ");
-                            Serial.print("step_delay=");
-                            Serial.print(step_delay);
-                            Serial.print("us, pulse_delay=");
-                            Serial.print(_smotors[i]->pulse_delay);
-                            Serial.println("us");
-                        #endif // DEBUG_SERIAL
-                        
                         // попробуем исправить:
                         // не будем делать шаги чаще, чем может мотор
                         // (следует понимать, что корректность вращения уже нарушена)
@@ -1309,11 +1298,10 @@ void handle_interrupts(int timer) {
                         if(_cstatuses[i].stepper_info != NULL) {
                             _cstatuses[i].stepper_info->status = STEPPER_STATUS_FINISHED;
                         }
-                    } else if(_small_pulse_delay_handle == CANCEL_CYCLE) {
-                        // завершаем весь цикл
+                    } else { //if(_small_pulse_delay_handle == CANCEL_CYCLE) {
+                        // по умолчанию: завершаем весь цикл
                         canceled = true;
                     }
-                    // иначе, игнорируем
                    
                     // в любом случае, обозначим ошибку
                     if(_cstatuses[i].stepper_info != NULL) {
