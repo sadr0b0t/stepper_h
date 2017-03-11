@@ -4,9 +4,9 @@
 static stepper sm_x, sm_y, sm_z;
 
 static void prepare_line1() {
-    // prepare_steps(stepper *smotor, 
-    //     long step_count, unsigned long step_delay, 
-    //     calibrate_mode_t calibrate_mode, 
+    // prepare_steps(stepper *smotor,
+    //     long step_count, unsigned long step_delay,
+    //     calibrate_mode_t calibrate_mode,
     //     stepper_info_t *stepper_info=NULL);
 
     // make 20000 steps with 1000 microseconds delay
@@ -27,7 +27,7 @@ static void prepare_line1() {
 }
 
 void setup() {
-    Serial.begin(9600);    
+    Serial.begin(9600);
     Serial.println("Starting stepper_h test...");
     
     // connected stepper motors
