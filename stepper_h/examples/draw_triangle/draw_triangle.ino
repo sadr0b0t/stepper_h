@@ -117,14 +117,16 @@ void setup() {
     //     end_strategy min_end_strategy, end_strategy max_end_strategy,
     //     long min_pos, long max_pos);
     
+    // Pinout for CNC-shield
+    
     // X
-    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7500); 
+    init_stepper(&sm_x, 'x', 2, 5, 8, false, 1000, 7500);
     init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000000);
     // Y
-    init_stepper(&sm_y, 'y', 5, 6, 7, true, 1000, 7500);
+    init_stepper(&sm_y, 'y', 3, 6, 8, false, 1000, 7500);
     init_stepper_ends(&sm_y, NO_PIN, NO_PIN, CONST, CONST, 0, 216000000);
     // Z
-    init_stepper(&sm_z, 'z', 2, 3, 4, true, 1000, 7500);
+    init_stepper(&sm_z, 'z', 4, 7, 8, false, 1000, 7500);
     init_stepper_ends(&sm_z, NO_PIN, NO_PIN, CONST, CONST, 0, 100000000);
 }
 
