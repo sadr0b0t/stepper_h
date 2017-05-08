@@ -15,6 +15,5 @@ void digitalWrite(int pin, int val);
 
 int digitalRead(int pin);
 
-
 #endif // WPROGRAM_H
 
