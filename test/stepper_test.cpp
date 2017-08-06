@@ -61,39 +61,39 @@ static void test_lifecycle() {
     prepare_whirl(&sm_z, 1, 3000);
     
     // сначала цикл не запущен
-    sput_fail_unless(!stepper_is_cycle_running(), "not started: stepper_is_cycle_running() == false");
+    sput_fail_unless(!stepper_cycle_running(), "not started: stepper_cycle_running() == false");
     
     // теперь будет запущен
     stepper_start_cycle();
-    sput_fail_unless(stepper_is_cycle_running(), "started: stepper_is_cycle_running() == true");
+    sput_fail_unless(stepper_cycle_running(), "started: stepper_cycle_running() == true");
     
     // сделаем сколько-нибудь тиков таймера
     timer_tick(50000);
     // все еще должны двигаться
-    sput_fail_unless(stepper_is_cycle_running(), "ticks: stepper_is_cycle_running() == true");
+    sput_fail_unless(stepper_cycle_running(), "ticks: stepper_cycle_running() == true");
     
     // попробуем запустить повторно - новый цикл не должен запуститься
     sput_fail_unless(!stepper_start_cycle(), "start while running: stepper_start_cycle() == false");
     // но старый цикл все еще должен работать
-    sput_fail_unless(stepper_is_cycle_running(), "start while running: stepper_is_cycle_running() == true");
+    sput_fail_unless(stepper_cycle_running(), "start while running: stepper_cycle_running() == true");
     
     // встанем на паузу
     stepper_pause_cycle();
     timer_tick(50000);
-    sput_fail_unless(stepper_is_cycle_running(), "paused: stepper_is_cycle_running() == true");
-    sput_fail_unless(stepper_is_cycle_paused(), "paused: stepper_is_cycle_paused() == true");
+    sput_fail_unless(stepper_cycle_running(), "paused: stepper_cycle_running() == true");
+    sput_fail_unless(stepper_cycle_paused(), "paused: stepper_cycle_paused() == true");
     
     // продолжим двигаться
     stepper_resume_cycle();
     timer_tick(50000);
-    sput_fail_unless(stepper_is_cycle_running(), "continued: stepper_is_cycle_running() == true");
-    sput_fail_unless(!stepper_is_cycle_paused(), "continued: stepper_is_cycle_paused() == false");
+    sput_fail_unless(stepper_cycle_running(), "continued: stepper_cycle_running() == true");
+    sput_fail_unless(!stepper_cycle_paused(), "continued: stepper_cycle_paused() == false");
     
     // останавливаемся
     stepper_finish_cycle();
-    sput_fail_unless(!stepper_is_cycle_running(), "finished: stepper_is_cycle_running() == false");
+    sput_fail_unless(!stepper_cycle_running(), "finished: stepper_cycle_running() == false");
     timer_tick(50000);
-    sput_fail_unless(!stepper_is_cycle_running(), "finished: stepper_is_cycle_running() == false");
+    sput_fail_unless(!stepper_cycle_running(), "finished: stepper_cycle_running() == false");
 }
 
 static void test_timer_period() {
@@ -126,12 +126,11 @@ static void test_timer_period() {
     prepare_whirl(&sm_y, 1, 2000);
     //prepare_whirl(&sm_z, 1, 3000);
     
-    stepper_cycle_info_t cycle_info;
-    stepper_start_cycle(&cycle_info);
+    stepper_start_cycle();
     // цикл должен запуститься
-    sput_fail_unless(cycle_info.error_status == CYCLE_ERROR_NONE, 
-        "period=200uS (ok): cycle_info.error_status == CYCLE_ERROR_NONE");
-    sput_fail_unless(stepper_is_cycle_running(), "period=200uS (ok): stepper_is_cycle_running() == true");
+    sput_fail_unless(stepper_cycle_error_status() == CYCLE_ERROR_NONE, 
+        "period=200uS (ok): stepper_cycle_error_status() == CYCLE_ERROR_NONE");
+    sput_fail_unless(stepper_cycle_running(), "period=200uS (ok): stepper_cycle_running() == true");
     // останавливаемся
     stepper_finish_cycle();
     
@@ -147,11 +146,11 @@ static void test_timer_period() {
     prepare_whirl(&sm_y, 1, 2000);
     prepare_whirl(&sm_z, 1, 3000);
     
-    stepper_start_cycle(&cycle_info);
+    stepper_start_cycle();
     // цикл не должен запуститься
-    sput_fail_unless(!stepper_is_cycle_running(), "period=200uS (too long): stepper_is_cycle_running() == false");
-    sput_fail_unless(cycle_info.error_status == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG, 
-        "period=200uS (too long): cycle_info.error_status == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG");
+    sput_fail_unless(!stepper_cycle_running(), "period=200uS (too long): stepper_cycle_running() == false");
+    sput_fail_unless(stepper_cycle_error_status() == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG, 
+        "period=200uS (too long): stepper_cycle_error_status() == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG");
     
     // #3
     // период таймера 350 микросекунд
@@ -164,11 +163,11 @@ static void test_timer_period() {
     prepare_whirl(&sm_y, 1, 2000);
     //prepare_whirl(&sm_z, 1, 3000);
     
-    stepper_start_cycle(&cycle_info);
+    stepper_start_cycle();
     // цикл не должен запуститься
-    sput_fail_unless(!stepper_is_cycle_running(), "period=350uS (too long): stepper_is_cycle_running() == false");
-    sput_fail_unless(cycle_info.error_status == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG, 
-        "period=350uS (too long): cycle_info.error_status == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG");
+    sput_fail_unless(!stepper_cycle_running(), "period=350uS (too long): stepper_cycle_running() == false");
+    sput_fail_unless(stepper_cycle_error_status() == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG, 
+        "period=350uS (too long): stepper_cycle_error_status() == CYCLE_ERROR_TIMER_PERIOD_TOO_LONG");
     
     // #4: повторим тест #1 еще раз в конце для чистоты эксперимента
     // период таймера 200 микросекунд
@@ -181,11 +180,11 @@ static void test_timer_period() {
     prepare_whirl(&sm_y, 1, 2000);
     //prepare_whirl(&sm_z, 1, 3000);
     
-    stepper_start_cycle(&cycle_info);
+    stepper_start_cycle();
     // цикл должен запуститься
-    sput_fail_unless(stepper_is_cycle_running(), "period=200uS (ok): stepper_is_cycle_running() == true");
-    sput_fail_unless(cycle_info.error_status == CYCLE_ERROR_NONE, 
-        "period=200uS (ok): cycle_info.error_status == CYCLE_ERROR_NONE");
+    sput_fail_unless(stepper_cycle_running(), "period=200uS (ok): stepper_cycle_running() == true");
+    sput_fail_unless(stepper_cycle_error_status() == CYCLE_ERROR_NONE, 
+        "period=200uS (ok): stepper_cycle_error_status() == CYCLE_ERROR_NONE");
     // останавливаемся
     stepper_finish_cycle();
 }
@@ -212,7 +211,7 @@ static void test_timer_period_aliquant_motor_pulse() {
     
     // на всякий случай: цикл не должен быть запущен
     // (если запущен, то косяк в предыдущем тесте)
-    sput_fail_unless(!stepper_is_cycle_running(), "stepper_is_cycle_running() == false");
+    sput_fail_unless(!stepper_cycle_running(), "stepper_cycle_running() == false");
     
     //////////////
     
@@ -223,11 +222,10 @@ static void test_timer_period_aliquant_motor_pulse() {
     // период таймера: 300 мкс
     // остаток от деления: 1000 % 300 = 100 != 0 =>
     // цикл с такой частотой с таким мотором не должен запуститься
-    stepper_cycle_info_t cycle_info;
-    stepper_start_cycle(&cycle_info);
-    sput_fail_unless(!stepper_is_cycle_running(), "period=300uS (aliquant): stepper_is_cycle_running() == false");
-    sput_fail_unless(cycle_info.error_status == CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE, 
-        "period=300uS (aliquant): cycle_info.error_status == CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE");
+    stepper_start_cycle();
+    sput_fail_unless(!stepper_cycle_running(), "period=300uS (aliquant): stepper_cycle_running() == false");
+    sput_fail_unless(stepper_cycle_error_status() == CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE, 
+        "period=300uS (aliquant): stepper_cycle_error_status() == CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE");
 }
 
 static void test_max_speed_tick_by_tick() {
@@ -247,7 +245,7 @@ static void test_max_speed_tick_by_tick() {
     
     // на всякий случай: цикл не должен быть запущен
     // (если запущен, то косяк в предыдущем тесте)
-    sput_fail_unless(!stepper_is_cycle_running(), "stepper_is_cycle_running() == false");
+    sput_fail_unless(!stepper_cycle_running(), "stepper_cycle_running() == false");
     
     // проедем 3 шага с максимальной скоростью
     prepare_steps(&sm_x, 3, 1000);
@@ -271,7 +269,7 @@ static void test_max_speed_tick_by_tick() {
     
     // а вот теперь поехали
     stepper_start_cycle();
-    sput_fail_unless(stepper_is_cycle_running(), "stepper_is_cycle_running() == true");
+    sput_fail_unless(stepper_cycle_running(), "stepper_cycle_running() == true");
     
     // шаг 1
     // холостой ход
@@ -321,7 +319,7 @@ static void test_max_speed_tick_by_tick() {
     sput_fail_unless(sm_x.current_pos == 22500, "step3.tick3: current_pos == 22500");
     
     // все шаги сделали, но для завершения цикла нужен еще 1 финальный тик
-    sput_fail_unless(stepper_is_cycle_running(), "step3.tick3: stepper_is_cycle_running() == true");
+    sput_fail_unless(stepper_cycle_running(), "step3.tick3: stepper_cycle_running() == true");
     
     // завершающий тик - для завершения цикла серии шагов
     timer_tick(1);
@@ -331,7 +329,7 @@ static void test_max_speed_tick_by_tick() {
     ////////
     // проверим, что серия шагов завершилась, можно запускать новые шаги
     // цикл не должен быть запущен
-    sput_fail_unless(!stepper_is_cycle_running(), "stepper_is_cycle_running() == false");
+    sput_fail_unless(!stepper_cycle_running(), "stepper_cycle_running() == false");
 }
 
 static void test_max_speed_30000steps() {
@@ -350,7 +348,7 @@ static void test_max_speed_30000steps() {
     
     // на всякий случай: цикл не должен быть запущен
     // (если запущен, то косяк в предыдущем тесте)
-    sput_fail_unless(!stepper_is_cycle_running(), "stepper_is_cycle_running() == false");
+    sput_fail_unless(!stepper_cycle_running(), "stepper_cycle_running() == false");
     
     // пройдем 30000 шагов с максимальной скоростью
     // это займет 30000*1000=30000000 микросекунд = 30 секунд
@@ -376,7 +374,7 @@ static void test_max_speed_30000steps() {
     
     // а вот теперь поехали
     stepper_start_cycle();
-    sput_fail_unless(stepper_is_cycle_running(), "stepper_is_cycle_running() == true");
+    sput_fail_unless(stepper_cycle_running(), "stepper_cycle_running() == true");
     
     // в одном шаге на максимальной скорости умещается ровно 5 тиков (импульсов) таймера,
     // чтобы пройти 30000 шагов, таймер должен тикнуть 5*30000+1=150001 раз
@@ -394,7 +392,7 @@ static void test_max_speed_30000steps() {
     sput_fail_unless(sm_x.current_pos == 225000000, "step30K.tick150K: current_pos == 225000000");
     
     // все шаги сделали, но для завершения цикла нужен еще 1 финальный тик
-    sput_fail_unless(stepper_is_cycle_running(), "step30K.tick150K: stepper_is_cycle_running() == true");
+    sput_fail_unless(stepper_cycle_running(), "step30K.tick150K: stepper_cycle_running() == true");
     
     // завершающий тик - для завершения цикла серии шагов
     timer_tick(1);
@@ -404,7 +402,7 @@ static void test_max_speed_30000steps() {
     ////////
     // проверим, что серия шагов завершилась, можно запускать новые шаги
     // цикл не должен быть запущен
-    sput_fail_unless(!stepper_is_cycle_running(), "stepper_is_cycle_running() == false");
+    sput_fail_unless(!stepper_cycle_running(), "stepper_cycle_running() == false");
 }
 
 static void test_aliquant_speed_tick_by_tick() {
@@ -424,7 +422,7 @@ static void test_aliquant_speed_tick_by_tick() {
     
     // на всякий случай: цикл не должен быть запущен
     // (если запущен, то косяк в предыдущем тесте)
-    sput_fail_unless(!stepper_is_cycle_running(), "stepper_is_cycle_running() == false");
+    sput_fail_unless(!stepper_cycle_running(), "stepper_cycle_running() == false");
     
     // проедем 5 шагов со скоростью, некратной частоте таймера:
     // пусть будет 1105 микросекунд между шагами
@@ -452,7 +450,7 @@ static void test_aliquant_speed_tick_by_tick() {
     
     // а вот теперь поехали
     stepper_start_cycle();
-    sput_fail_unless(stepper_is_cycle_running(), "stepper_is_cycle_running() == true");
+    sput_fail_unless(stepper_cycle_running(), "stepper_cycle_running() == true");
     
     // шаг 1
     // холостой ход
@@ -517,7 +515,7 @@ static void test_aliquant_speed_tick_by_tick() {
     sput_fail_unless(sm_x.current_pos == 37500, "step5.tick3: current_pos == 37500");
     
     // все шаги сделали, но для завершения цикла нужен еще 1 финальный тик
-    sput_fail_unless(stepper_is_cycle_running(), "step5.tick3: stepper_is_cycle_running() == true");
+    sput_fail_unless(stepper_cycle_running(), "step5.tick3: stepper_cycle_running() == true");
     
     // завершающий тик - для завершения цикла серии шагов
     timer_tick(1);
@@ -527,7 +525,7 @@ static void test_aliquant_speed_tick_by_tick() {
     ////////
     // проверим, что серия шагов завершилась, можно запускать новые шаги
     // цикл не должен быть запущен
-    sput_fail_unless(!stepper_is_cycle_running(), "stepper_is_cycle_running() == false");
+    sput_fail_unless(!stepper_cycle_running(), "stepper_cycle_running() == false");
 }
 
 static void test_draw_triangle() {
@@ -553,7 +551,7 @@ static void test_draw_triangle() {
     ////////////
     // на всякий случай: цикл не должен быть запущен
     // (если запущен, то косяк в предыдущем тесте)
-    sput_fail_unless(!stepper_is_cycle_running(), "stepper_is_cycle_running() == false");
+    sput_fail_unless(!stepper_cycle_running(), "stepper_cycle_running() == false");
     
     ///////////
     
@@ -591,7 +589,7 @@ static void test_draw_triangle() {
     // пошагали
     stepper_start_cycle();
     timer_tick(abs(steps_x)*5+1);
-    sput_fail_unless(!stepper_is_cycle_running(), "line1: stepper_is_cycle_running() == false");
+    sput_fail_unless(!stepper_cycle_running(), "line1: stepper_cycle_running() == false");
     
     // #2 линия2
     // line2: (150000000,50000000,20000000) -> (50000000,150000000,20000000)
@@ -627,7 +625,7 @@ static void test_draw_triangle() {
     cout<<"steps_x="<<steps_x<<", steps_y="<<steps_y<<endl;
     stepper_start_cycle();
     timer_tick(abs(steps_y)*5+1);
-    sput_fail_unless(!stepper_is_cycle_running(), "line2: stepper_is_cycle_running() == false");
+    sput_fail_unless(!stepper_cycle_running(), "line2: stepper_cycle_running() == false");
     
     // #3 линия3
     // line3: (50000000,150000000,20000000) -> (0,0,0)
@@ -657,11 +655,11 @@ static void test_draw_triangle() {
     // пошагали
     stepper_start_cycle();
     timer_tick(abs(steps_y)*5+1);
-    sput_fail_unless(!stepper_is_cycle_running(), "line3: stepper_is_cycle_running() == false");
+    sput_fail_unless(!stepper_cycle_running(), "line3: stepper_cycle_running() == false");
     
     // #4
     // Проехали весь треугольник, убедимся, что мы в исходной точке (0,0,0)
-    sput_fail_unless(!stepper_is_cycle_running(), "done: stepper_is_cycle_running() == false");
+    sput_fail_unless(!stepper_cycle_running(), "done: stepper_cycle_running() == false");
     sput_fail_unless(sm_x.current_pos == 0, "done: sm_x.current_pos == 0");
     sput_fail_unless(sm_y.current_pos == 0, "done: sm_y.current_pos == 0");
     sput_fail_unless(sm_z.current_pos == 0, "done: sm_z.current_pos == 0");
@@ -700,8 +698,6 @@ static void test_small_pulse_delay_handlers() {
     int buf_size = 2;
     unsigned long delay_buffer[] = {1000, 800};
     stepper_info_t sm_x_info, sm_y_info;
-    stepper_cycle_info_t cycle_info;
-    
     
     // stepper_set_error_handle_strategy(
     //     error_handle_strategy_t hard_end_handle,
@@ -718,9 +714,9 @@ static void test_small_pulse_delay_handlers() {
     prepare_simple_buffered_steps(&sm_x, buf_size, delay_buffer, 1, &sm_x_info);
     prepare_whirl(&sm_y, 1, 1000, NONE, &sm_y_info);
     
-    stepper_start_cycle(&cycle_info);
+    stepper_start_cycle();
     // цикл должен запуститься
-    sput_fail_unless(stepper_is_cycle_running(), "handler=FIX: stepper_is_cycle_running() == true");
+    sput_fail_unless(stepper_cycle_running(), "handler=FIX: stepper_cycle_running() == true");
     
     // шаг1 - 5 тиков таймера, всё должно быть ок
     timer_tick(4);
@@ -740,7 +736,7 @@ static void test_small_pulse_delay_handlers() {
     timer_tick(5);
     sput_fail_unless(sm_x.current_pos == 15000, "handler=FIX.tick5+5: sm_x.current_pos == 15000");
     sput_fail_unless(sm_y.current_pos == 15000, "handler=FIX.tick5+5: sm_y.current_pos == 15000");
-    sput_fail_unless(stepper_is_cycle_running(), "handler=FIX.tick5+5: stepper_is_cycle_running() == true");
+    sput_fail_unless(stepper_cycle_running(), "handler=FIX.tick5+5: stepper_cycle_running() == true");
     
     // ну и достаточно - останавливаемся
     stepper_finish_cycle();
@@ -758,9 +754,9 @@ static void test_small_pulse_delay_handlers() {
     prepare_simple_buffered_steps(&sm_x, buf_size, delay_buffer, 1, &sm_x_info);
     prepare_whirl(&sm_y, 1, 1000, NONE, &sm_y_info);
     
-    stepper_start_cycle(&cycle_info);
+    stepper_start_cycle();
     // цикл должен запуститься
-    sput_fail_unless(stepper_is_cycle_running(), "handler=STOP_MOTOR: stepper_is_cycle_running() == true");
+    sput_fail_unless(stepper_cycle_running(), "handler=STOP_MOTOR: stepper_cycle_running() == true");
     
     // шаг1 - 5 тиков таймера, всё должно быть ок
     timer_tick(4);
@@ -787,7 +783,7 @@ static void test_small_pulse_delay_handlers() {
     timer_tick(5);
     sput_fail_unless(sm_x.current_pos == 7500, "handler=STOP_MOTOR.tick5+5: sm_x.current_pos == 7500");
     sput_fail_unless(sm_y.current_pos == 15000, "handler=STOP_MOTOR.tick5+5: sm_y.current_pos == 15000");
-    sput_fail_unless(stepper_is_cycle_running(), "handler=STOP_MOTOR.tick5+5: tepper_is_cycle_running() == true");
+    sput_fail_unless(stepper_cycle_running(), "handler=STOP_MOTOR.tick5+5: tepper_cycle_running() == true");
     
     // ну и достаточно - останавливаемся
     stepper_finish_cycle();
@@ -804,9 +800,9 @@ static void test_small_pulse_delay_handlers() {
     prepare_simple_buffered_steps(&sm_x, buf_size, delay_buffer, 1, &sm_x_info);
     prepare_whirl(&sm_y, 1, 1000, NONE, &sm_y_info);
     
-    stepper_start_cycle(&cycle_info);
+    stepper_start_cycle();
     // цикл должен запуститься
-    sput_fail_unless(stepper_is_cycle_running(), "handler=CANCEL_CYCLE: stepper_is_cycle_running() == true");
+    sput_fail_unless(stepper_cycle_running(), "handler=CANCEL_CYCLE: stepper_cycle_running() == true");
     
     // шаг1 - 5 тиков таймера, всё должно быть ок
     timer_tick(4);
@@ -835,13 +831,13 @@ static void test_small_pulse_delay_handlers() {
         "handler=CANCEL_CYCLE.tick5: sm_y_info.status == STEPPER_STATUS_FINISHED");
     
     // и цикл тоже здесь закончился
-    sput_fail_unless(!stepper_is_cycle_running(), "handler=CANCEL_CYCLE.tick5: tepper_is_cycle_running() == false");
+    sput_fail_unless(!stepper_cycle_running(), "handler=CANCEL_CYCLE.tick5: tepper_cycle_running() == false");
     
     // шаг2 - не будет совершен
     timer_tick(5);
     sput_fail_unless(sm_x.current_pos == 7500, "handler=CANCEL_CYCLE.tick5+5: sm_x.current_pos == 7500");
     sput_fail_unless(sm_y.current_pos == 0, "handler=CANCEL_CYCLE.tick5+5: sm_y.current_pos == 0");
-    sput_fail_unless(!stepper_is_cycle_running(), "handler=CANCEL_CYCLE.tick5+5: tepper_is_cycle_running() == false");
+    sput_fail_unless(!stepper_cycle_running(), "handler=CANCEL_CYCLE.tick5+5: tepper_cycle_running() == false");
 }
 
 static void test_exit_bounds_issue1_whirl() {
@@ -863,7 +859,7 @@ static void test_exit_bounds_issue1_whirl() {
     
     // на всякий случай: цикл не должен быть запущен
     // (если запущен, то косяк в предыдущем тесте)
-    sput_fail_unless(!stepper_is_cycle_running(), "stepper_is_cycle_running() == false");
+    sput_fail_unless(!stepper_cycle_running(), "stepper_cycle_running() == false");
     
     // 
     // Мотор всегда делает первый шаг в цикле, даже если выходит за виртуальные границы
@@ -876,7 +872,6 @@ static void test_exit_bounds_issue1_whirl() {
     
     // получать информацию о статусе мотора и цикла
     stepper_info_t stepper_info;
-    stepper_cycle_info_t cycle_info;
     
     // готовим мотор на непрерывное вращение в сторону нуля,
     // задержку между шагами задаём как 0 (должна исправиться автоматом на
@@ -900,8 +895,8 @@ static void test_exit_bounds_issue1_whirl() {
     //
     
     // поехали
-    stepper_start_cycle(&cycle_info);
-    sput_fail_unless(stepper_is_cycle_running(), "stepper_is_cycle_running() == true");
+    stepper_start_cycle();
+    sput_fail_unless(stepper_cycle_running(), "stepper_cycle_running() == true");
     sput_fail_unless(sm_x.current_pos == 0, "current_pos == 0");
     
     // холостой ход
@@ -932,7 +927,7 @@ static void test_exit_bounds_issue1_whirl() {
     sput_fail_unless(sm_x.current_pos == 0, "step1.tick1: current_pos == 0");
     
     // цикл должен остановиться на этом же тике
-    sput_fail_unless(!stepper_is_cycle_running(), "stepper_is_cycle_running() == false");
+    sput_fail_unless(!stepper_cycle_running(), "stepper_cycle_running() == false");
 }
 
 static void test_exit_bounds_issue1_steps() {
@@ -954,7 +949,7 @@ static void test_exit_bounds_issue1_steps() {
     
     // на всякий случай: цикл не должен быть запущен
     // (если запущен, то косяк в предыдущем тесте)
-    sput_fail_unless(!stepper_is_cycle_running(), "stepper_is_cycle_running() == false");
+    sput_fail_unless(!stepper_cycle_running(), "stepper_cycle_running() == false");
     
     // Мотор всегда делает первый шаг в цикле, даже если выходит за виртуальные границы
     // в случае, если задать задержку между шагами 0 (должна исправиться на минимальную
@@ -966,7 +961,6 @@ static void test_exit_bounds_issue1_steps() {
     
     // получать информацию о статусе мотора и цикла
     stepper_info_t stepper_info;
-    stepper_cycle_info_t cycle_info;
     
     // 
     // готовим мотор на несколько шагов в сторону нуля,
@@ -992,8 +986,8 @@ static void test_exit_bounds_issue1_steps() {
     //
     
     // поехали
-    stepper_start_cycle(&cycle_info);
-    sput_fail_unless(stepper_is_cycle_running(), "stepper_is_cycle_running() == true");
+    stepper_start_cycle();
+    sput_fail_unless(stepper_cycle_running(), "stepper_cycle_running() == true");
     sput_fail_unless(sm_x.current_pos == 0, "current_pos == 0");
     
     // холостой ход
@@ -1024,7 +1018,7 @@ static void test_exit_bounds_issue1_steps() {
     sput_fail_unless(sm_x.current_pos == 0, "step1.tick1: current_pos == 0");
     
     // цикл должен остановиться на этом же тике
-    sput_fail_unless(!stepper_is_cycle_running(), "stepper_is_cycle_running() == false");
+    sput_fail_unless(!stepper_cycle_running(), "stepper_cycle_running() == false");
 }
 
 static void test_exit_bounds_issue9_steps() {
@@ -1047,7 +1041,7 @@ static void test_exit_bounds_issue9_steps() {
     
     // на всякий случай: цикл не должен быть запущен
     // (если запущен, то косяк в предыдущем тесте)
-    sput_fail_unless(!stepper_is_cycle_running(), "stepper_is_cycle_running() == false");
+    sput_fail_unless(!stepper_cycle_running(), "stepper_cycle_running() == false");
     
     // выходим за границу, в задержку между шагами не умещается
     // 3 тика таймера
@@ -1076,12 +1070,11 @@ static void test_exit_bounds_issue9_steps() {
     prepare_steps(&sm_x, -300, 400);
     
     // поехали
-    stepper_cycle_info_t cycle_info;
-    stepper_start_cycle(&cycle_info);
+    stepper_start_cycle();
     // цикл сразу не должен запуститься
-    sput_fail_unless(!stepper_is_cycle_running(), "cancel cycle: stepper_is_cycle_running() == false");
-    sput_fail_unless(cycle_info.error_status == CYCLE_ERROR_MOTOR_ERROR, 
-        "cancel cycle: cycle_info.error_status == CYCLE_ERROR_MOTOR_ERROR");
+    sput_fail_unless(!stepper_cycle_running(), "cancel cycle: stepper_cycle_running() == false");
+    sput_fail_unless(stepper_cycle_error_status() == CYCLE_ERROR_MOTOR_ERROR, 
+        "cancel cycle: stepper_cycle_error_status() == CYCLE_ERROR_MOTOR_ERROR");
     sput_fail_unless(sm_x.current_pos == 0, "cancel cycle: current_pos == 0");
     
     // #2: попробуем вариант с автоматическим исправлением задержки
@@ -1108,13 +1101,13 @@ static void test_exit_bounds_issue9_steps() {
     // поехали
     // цикл должен запуститься
     stepper_start_cycle();
-    sput_fail_unless(stepper_is_cycle_running(), "autofix: stepper_is_cycle_running() == true");
+    sput_fail_unless(stepper_cycle_running(), "autofix: stepper_cycle_running() == true");
     // холостой ход
     timer_tick(2);
-    sput_fail_unless(stepper_is_cycle_running(), "autofix tick2: stepper_is_cycle_running() == true");
+    sput_fail_unless(stepper_cycle_running(), "autofix tick2: stepper_cycle_running() == true");
     // тик на проверку границ - дожны вылететь с ошибкой выхода за гринцы
     timer_tick(1);
-    sput_fail_unless(!stepper_is_cycle_running(), "autofix tick2+1: stepper_is_cycle_running() == false");
+    sput_fail_unless(!stepper_cycle_running(), "autofix tick2+1: stepper_cycle_running() == false");
     sput_fail_unless(sm_x.current_pos == 0, "autofix: current_pos == 0");
 }
 
@@ -1139,7 +1132,7 @@ static void test_square_sig_issue16() {
     
     // на всякий случай: цикл не должен быть запущен
     // (если запущен, то косяк в предыдущем тесте)
-    sput_fail_unless(!stepper_is_cycle_running(), "stepper_is_cycle_running() == false");
+    sput_fail_unless(!stepper_cycle_running(), "stepper_cycle_running() == false");
     
     // запускаем шаги, проверяем, что сигнал действительно
     // прямоугольный на каждом шаге
@@ -1166,7 +1159,7 @@ static void test_square_sig_issue16() {
     
     // а вот теперь поехали
     stepper_start_cycle();
-    sput_fail_unless(stepper_is_cycle_running(), "stepper_is_cycle_running() == true");
+    sput_fail_unless(stepper_cycle_running(), "stepper_cycle_running() == true");
     
     // проедем 30000 шагов и для каждого шага будем проверять,
     // что пин step сначала находится в позиции LOW, затем

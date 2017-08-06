@@ -134,7 +134,7 @@ void setup() {
 
 void loop() {
     static int next_line = 1;
-    if(!stepper_is_cycle_running()) {
+    if(!stepper_cycle_running()) {
         // цикл завершился, запускаем следующую линию
         if(next_line == 1) {
             Serial.println("Prepare line1: (0,0,0) -> (150000000,50000000,20000000)");
@@ -167,7 +167,7 @@ void loop() {
     // Debug messages - print current positions of motors once per second
     // while they are rotating, once per 10 seconds when they are stopped
     int currTime = millis();
-    if( (stepper_is_cycle_running() && (currTime - prevTime) >= 1000) || (currTime - prevTime) >= 10000 ) {
+    if( (stepper_cycle_running() && (currTime - prevTime) >= 1000) || (currTime - prevTime) >= 10000 ) {
         prevTime = currTime;
         Serial.print("X.pos=");
         Serial.print(sm_x.current_pos, DEC);

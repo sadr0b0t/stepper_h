@@ -83,7 +83,7 @@ void loop() {
     // Debug messages - print current positions of motors once per second
     // while they are rotating, once per 10 seconds when they are stopped
     int currTime = millis();
-    if( (stepper_is_cycle_running() && (currTime - prevTime) >= 1000) || (currTime - prevTime) >= 10000 ) {
+    if( (stepper_cycle_running() && (currTime - prevTime) >= 1000) || (currTime - prevTime) >= 10000 ) {
         prevTime = currTime;
         Serial.print("X.pos=");
         Serial.print(sm_x.current_pos, DEC);

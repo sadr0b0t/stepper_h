@@ -200,8 +200,8 @@ static int _timer_period_us = 200;
 static bool _cycle_running = false;
 // Цикл на паузе (типа работаем, но шаги не делаем)
 static bool _cycle_paused = false;
-// для внешнего мира
-static stepper_cycle_info_t* _cycle_info;
+// Информация об ошибке цикла
+static stepper_cycle_error_t _cycle_error_status = CYCLE_ERROR_NONE;
 
 // Стратегия реакции на ошибки
 // STOP_MOTOR/CANCEL_CYCLE
@@ -801,16 +801,14 @@ void stepper_set_error_handle_strategy(
 }
 
 /**
- * Запустить цикл шагов на выполнение - запускаем таймер, 
- * обработчик прерываний отрабатывать подготовленную программу.
- *
- * @param cycle_info - информация о цикле, 
- *     обновляется динамически в процессе работы цикла.
+ * Запустить цикл шагов на выполнение - запускаем таймер с
+ * обработчиком прерываний отрабатывать подготовленную программу.
+ * 
  * @return
  *     true - цикл запущен
  *     false - цикл не запущен, т.к. предыдущий цикл еще не завершен
  */
-bool stepper_start_cycle(stepper_cycle_info_t *cycle_info) {
+bool stepper_start_cycle() {
     // Преварительные проверки перед запуском цикла
 
     // не запускать новый цикл, если старый не отработал,
@@ -822,11 +820,9 @@ bool stepper_start_cycle(stepper_cycle_info_t *cycle_info) {
     // можем считать, что цикл запущен
     
     // сбросим информацию о статусе цикла в значения по умолчанию
-    if(cycle_info != NULL) {
-        cycle_info->error_status = CYCLE_ERROR_NONE;
-        cycle_info->is_running = false;
-        cycle_info->is_paused = false;
-    }
+    _cycle_error_status = CYCLE_ERROR_NONE;
+    _cycle_running = false;
+    _cycle_paused = false;
     
     // завершить ли цикл с ошибкой, не дожидаясь первого шага
     bool canceled = false;
@@ -839,16 +835,14 @@ bool stepper_start_cycle(stepper_cycle_info_t *cycle_info) {
             // не запускать цикл, если хотябы у одного из моторов
             // минимальная задержка между шагами не вмещает минимум 3
             // периода таймера
-            if(cycle_info != NULL) {
-                cycle_info->error_status = CYCLE_ERROR_TIMER_PERIOD_TOO_LONG;
-            }
+            _cycle_error_status = CYCLE_ERROR_TIMER_PERIOD_TOO_LONG;
+            
             canceled = true;
         } else if(_smotors[i]->pulse_delay % _timer_period_us != 0) {
             // не запускать цикл, если период таймера не кратен
             // минимальной задержке между шагами хотябы одного из моторов
-            if(cycle_info != NULL) {
-                cycle_info->error_status = CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE;
-            }
+            _cycle_error_status = CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE;
+            
             canceled = true;
         } else if(_cstatuses[i].step_delay < _smotors[i]->pulse_delay) {
             // проверим, корректна ли задержка перед первым шагом,
@@ -881,9 +875,8 @@ bool stepper_start_cycle(stepper_cycle_info_t *cycle_info) {
             } else { //if(_small_pulse_delay_handle == CANCEL_CYCLE) {
                 // по умолчанию: завершаем весь цикл
                 
-                if(cycle_info != NULL) {
-                    cycle_info->error_status = CYCLE_ERROR_MOTOR_ERROR;
-                }
+                _cycle_error_status = CYCLE_ERROR_MOTOR_ERROR;
+                
                 canceled = true;
             }
         } 
@@ -893,18 +886,9 @@ bool stepper_start_cycle(stepper_cycle_info_t *cycle_info) {
         // неудачная попытка - очищаем все предварительные заготовки
         stepper_finish_cycle();
     } else {
-        // предварительные проверки прошли, запускаем цикл
-        _cycle_info = cycle_info;
-
+        _cycle_error_status = CYCLE_ERROR_NONE;
         _cycle_running = true;
         _cycle_paused = false;
-        
-        // обновим информацию о цикле для внешнего мира
-        if(_cycle_info != NULL) {
-            _cycle_info->error_status = CYCLE_ERROR_NONE;
-            _cycle_info->is_running = true;
-            _cycle_info->is_paused = false;
-        }
         
         // включить моторы
         for(int i = 0; i < _stepper_count; i++) {
@@ -951,13 +935,6 @@ void stepper_finish_cycle() {
     
     // обнулим список моторов
     _stepper_count = 0;
-    
-    // обновим информацию о цикле для внешнего мира
-    if(_cycle_info != NULL) {
-        _cycle_info->is_running = false;
-        _cycle_info->is_paused = false;
-    }
-    _cycle_info = NULL;
 }
 
 /**
@@ -965,11 +942,6 @@ void stepper_finish_cycle() {
  */
 void stepper_pause_cycle() {
     _cycle_paused = true;
-    
-    // обновим информацию о цикле для внешнего мира
-    if(_cycle_info != NULL) {
-        _cycle_info->is_paused = true;
-    }
 }
 
 /**
@@ -977,11 +949,6 @@ void stepper_pause_cycle() {
  */
 void stepper_resume_cycle() {
     _cycle_paused = false;
-    
-    // обновим информацию о цикле для внешнего мира
-    if(_cycle_info != NULL) {
-        _cycle_info->is_paused = false;
-    }
 }
 
 /**
@@ -989,7 +956,7 @@ void stepper_resume_cycle() {
  * true - в процессе выполнения,
  * false - ожидает запуска.
  */
-bool stepper_is_cycle_running() {
+bool stepper_cycle_running() {
     return _cycle_running;
 }
 
@@ -998,20 +965,18 @@ bool stepper_is_cycle_running() {
  * true - цикл на паузе (выполняется)
  * false - цикл не на паузе (выполняется или остановлен).
  */
-bool stepper_is_cycle_paused() {
+bool stepper_cycle_paused() {
     return _cycle_paused;
 }
 
 /**
- * Отладочная информация о текущем цикле.
+ * Код ошибки цикла.
+ * @return статус ошибки из перечисления stepper_cycle_error_t
+ *     CYCLE_ERROR_NONE (== 0) - ошибки нет
+ *     >0 - код ошибки из перечисления stepper_cycle_error_t
  */
-void stepper_cycle_debug_status(char* status_str) {
-    sprintf(status_str, "stepper_count=%d", _stepper_count);
-    for(int i = 0; i < _stepper_count; i++) {
-        sprintf(status_str+strlen(status_str), 
-            "; cstatuses[%d]: step_count=%ld, step_counter=%ld, step_timer=%lu",
-            i, _cstatuses[i].step_count, _cstatuses[i].step_counter, _cstatuses[i].step_timer);
-    }
+stepper_cycle_error_t stepper_cycle_error_status() {
+    return _cycle_error_status;
 }
 
 /**
@@ -1327,10 +1292,9 @@ void handle_interrupts(int timer) {
     if(cycle_time >= _timer_period_us) {
         // обработчик работает дольше, чем таймер генерирует импульсы,
         // тайминг может быть нарушен
-        // обновим информацию о цикле для внешнего мира
-        if(_cycle_info != NULL) {
-            _cycle_info->error_status = CYCLE_ERROR_HANDLER_TIMING_EXCEEDED;
-        }
+        
+        // фиксируем ошибку
+        _cycle_error_status = CYCLE_ERROR_HANDLER_TIMING_EXCEEDED;
         
         // что с этим делать
         if(_cycle_timing_exceed_handle == CANCEL_CYCLE) {

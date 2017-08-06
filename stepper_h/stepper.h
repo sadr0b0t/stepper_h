@@ -220,7 +220,7 @@ typedef struct {
  */
 typedef enum {
     /** Ошибок нет */
-    CYCLE_ERROR_NONE,
+    CYCLE_ERROR_NONE = 0,
     
     /** 
      * Хотябы у одного из моторов, добавленных в список вращения, 
@@ -271,31 +271,6 @@ typedef enum {
     /** Завершить выполнение всего цикла - остановить все моторы */
     CANCEL_CYCLE
 } error_handle_strategy_t;
-
-/**
- * Текущая информация о цикле вращения моторов
- */
-typedef struct {
-    /**
-     * Текущий статус цикла:
-     * true - в процессе выполнения,
-     * false - ожидает.
-     */
-    bool is_running = false;
-    
-    
-    /**
-     * Цикл на паузе:
-     * true - цикл на паузе (выполняется)
-     * false - цикл не на паузе (выполняется или остановлен).
-     */
-    bool is_paused = false;
-    
-    /**
-     * Информация об ошибке цикла
-     */
-    stepper_cycle_error_t error_status = CYCLE_ERROR_NONE;
-} stepper_cycle_info_t;
 
 /**
  * Инициализировать шаговый мотор необходимыми значениями.
@@ -516,16 +491,14 @@ void prepare_dynamic_whirl(stepper *smotor, int dir,
 // Управление циклом
 
 /**
- * Запустить цикл шагов на выполнение - запускаем таймер, 
- * обработчик прерываний отрабатывать подготовленную программу.
+ * Запустить цикл шагов на выполнение - запускаем таймер с
+ * обработчиком прерываний отрабатывать подготовленную программу.
  *
- * @param cycle_info - информация о цикле, 
- *     обновляется динамически в процессе работы цикла.
  * @return
  *     true - цикл запущен
  *     false - цикл не запущен, т.к. предыдущий цикл еще не завершен
  */
-bool stepper_start_cycle(stepper_cycle_info_t *cycle_info=NULL);
+bool stepper_start_cycle();
 
 /**
  * Завершить цикл шагов - остановить таймер, обнулить список моторов.
@@ -547,20 +520,22 @@ void stepper_resume_cycle();
  * true - в процессе выполнения,
  * false - ожидает запуска.
  */
-bool stepper_is_cycle_running();
+bool stepper_cycle_running();
 
 /**
  * Проверить, на паузе ли цикл:
  * true - цикл на паузе (выполняется)
  * false - цикл не на паузе (выполняется или остановлен).
  */
-bool stepper_is_cycle_paused();
+bool stepper_cycle_paused();
 
 /**
- * Отладочная информация о текущем цикле.
+ * Код ошибки цикла.
+ * @return статус ошибки из перечисления stepper_cycle_error_t
+ *     CYCLE_ERROR_NONE (== 0) - ошибки нет
+ *     >0 - код ошибки из перечисления stepper_cycle_error_t
  */
-void stepper_cycle_debug_status(char* status_str);
-
+stepper_cycle_error_t stepper_cycle_error_status();
 
 /////////////////////////////////////////
 // Системные настройки
