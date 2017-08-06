@@ -202,6 +202,9 @@ static bool _cycle_running = false;
 static bool _cycle_paused = false;
 // Информация об ошибке цикла
 static stepper_cycle_error_t _cycle_error_status = CYCLE_ERROR_NONE;
+// Максимальное время выполнения обработчика прерывания
+// таймера в текущем цикле
+static unsigned long _cycle_max_time = 0;
 
 // Стратегия реакции на ошибки
 // STOP_MOTOR/CANCEL_CYCLE
@@ -820,9 +823,10 @@ bool stepper_start_cycle() {
     // можем считать, что цикл запущен
     
     // сбросим информацию о статусе цикла в значения по умолчанию
-    _cycle_error_status = CYCLE_ERROR_NONE;
     _cycle_running = false;
     _cycle_paused = false;
+    _cycle_error_status = CYCLE_ERROR_NONE;
+    _cycle_max_time = 0;
     
     // завершить ли цикл с ошибкой, не дожидаясь первого шага
     bool canceled = false;
@@ -886,7 +890,6 @@ bool stepper_start_cycle() {
         // неудачная попытка - очищаем все предварительные заготовки
         stepper_finish_cycle();
     } else {
-        _cycle_error_status = CYCLE_ERROR_NONE;
         _cycle_running = true;
         _cycle_paused = false;
         
@@ -977,6 +980,15 @@ bool stepper_cycle_paused() {
  */
 stepper_cycle_error_t stepper_cycle_error_status() {
     return _cycle_error_status;
+}
+
+/**
+ * Максимальное время выполнения обработчика прерывания
+ * таймера в текущем цикле, микросекунды. Должно быть
+ * всегда меньше периода таймера.
+ */
+unsigned long stepper_cycle_max_time() {
+    return _cycle_max_time;
 }
 
 /**
@@ -1289,6 +1301,8 @@ void handle_interrupts(int timer) {
     // проверим, уложились ли в желаемое время
     unsigned long cycle_finish = micros();
     unsigned long cycle_time = cycle_finish - cycle_start;
+    // обновим максимальное значение, если требуется
+    _cycle_max_time = cycle_time > _cycle_max_time ? cycle_time : _cycle_max_time;
     if(cycle_time >= _timer_period_us) {
         // обработчик работает дольше, чем таймер генерирует импульсы,
         // тайминг может быть нарушен
@@ -1301,17 +1315,6 @@ void handle_interrupts(int timer) {
             // ничего хорошего - все завершаем
             stepper_finish_cycle();
         } // иначе игнорируем
-        
-        // Serial.print заведомо не уложится в период таймера, включать только для 
-        // единичных запусков при отладке вручную
-        #ifdef DEBUG_SERIAL
-            Serial.print("***ERROR: timer handler takes longer than timer period: ");
-            Serial.print("cycle time=");
-            Serial.print(cycle_time);
-            Serial.print("us, timer period=");
-            Serial.print(_timer_period_us);
-            Serial.println("us");
-        #endif // DEBUG_SERIAL
     }
 }
 
