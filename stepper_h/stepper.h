@@ -535,7 +535,7 @@ bool stepper_cycle_paused();
  *     CYCLE_ERROR_NONE (== 0) - ошибки нет
  *     >0 - код ошибки из перечисления stepper_cycle_error_t
  */
-stepper_cycle_error_t stepper_cycle_error_status();
+stepper_cycle_error_t stepper_cycle_error();
 
 /**
  * Максимальное время выполнения обработчика прерывания

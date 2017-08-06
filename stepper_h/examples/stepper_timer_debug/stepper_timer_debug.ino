@@ -174,9 +174,9 @@ void loop() {
     }
 
     // ошибки цикла
-    if(stepper_cycle_error_status()) {
+    if(stepper_cycle_error()) {
         Serial.print("Cycle error: ");
-        print_cycle_error(stepper_cycle_error_status());
+        print_cycle_error(stepper_cycle_error());
         Serial.println();
     }
     
