@@ -189,7 +189,7 @@ static void test_timer_period() {
     stepper_finish_cycle();
 }
 
-static void test_timer_period_aliquant_motor_pulse() {
+static void test_timer_period_aliquant_step_delay() {
     // период таймера некратен минимальной задержке между шагами
     // одного из моторов. Это может привести к тому, что при движении
     // на максимальной скорости минимальная задержка меджу шагами
@@ -224,8 +224,8 @@ static void test_timer_period_aliquant_motor_pulse() {
     // цикл с такой частотой с таким мотором не должен запуститься
     stepper_start_cycle();
     sput_fail_unless(!stepper_cycle_running(), "period=300uS (aliquant): stepper_cycle_running() == false");
-    sput_fail_unless(stepper_cycle_error() == CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE,
-        "period=300uS (aliquant): stepper_cycle_error() == CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE");
+    sput_fail_unless(stepper_cycle_error() == CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_STEP_DELAY,
+        "period=300uS (aliquant): stepper_cycle_error() == CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_STEP_DELAY");
 }
 
 static void test_max_speed_tick_by_tick() {
@@ -1183,8 +1183,8 @@ int main() {
     sput_enter_suite("Stepper cycle timer period settings");
     sput_run_test(test_timer_period);
     
-    sput_enter_suite("Stepper cycle timer period aliquant motor step pulse delay");
-    sput_run_test(test_timer_period_aliquant_motor_pulse);
+    sput_enter_suite("Stepper cycle timer period is aliquant part of motor step pulse delay");
+    sput_run_test(test_timer_period_aliquant_step_delay);
     
     sput_enter_suite("Single motor: 3 steps tick by tick on max speed");
     sput_run_test(test_max_speed_tick_by_tick);

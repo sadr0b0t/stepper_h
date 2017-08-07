@@ -806,7 +806,7 @@ bool stepper_start_cycle() {
         } else if(_smotors[i]->step_delay % _timer_period_us != 0) {
             // не запускать цикл, если период таймера не кратен
             // минимальной задержке между шагами хотябы одного из моторов
-            _cycle_error = CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE;
+            _cycle_error = CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_STEP_DELAY;
             
             canceled = true;
         } else if(_cstatuses[i].step_delay < _smotors[i]->step_delay) {

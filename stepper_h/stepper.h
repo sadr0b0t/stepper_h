@@ -236,7 +236,7 @@ typedef enum {
      * не будет соблюдаться, поэтому просто запретим такие комбинации:
      * см: https://github.com/1i7/stepper_h/issues/6
      */
-    CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE,
+    CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_STEP_DELAY,
     
     /**
      * Проблема с мотором: выход за границы, некорректная задержка между
