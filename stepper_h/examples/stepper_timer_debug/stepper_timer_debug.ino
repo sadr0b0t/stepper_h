@@ -12,17 +12,17 @@ static stepper sm_x, sm_y, sm_z;
 
 // для периода 1 микросекунда (1млн вызовов в секунду == 1МГц):
 //   timer handler takes longer than timer period: cycle time=3us, timer period=1us
-//int _timer_period_us = 1;
-//int _timer = TIMER3;
+//int _timer_id = TIMER3;
 //int _timer_prescaler = TIMER_PRESCALER_1_8;
 //int _timer_period = 10;
+//int _timer_period_us = 1;
 
 // для периода 5 микросекунд (200тыс вызовов в секунду == 200КГц):
 //   timer handler takes longer than timer period: cycle time=5us, timer period=5us
-//int _timer_period_us = 5;
-//int _timer = TIMER3;
+//int _timer_id = TIMER3;
 //int _timer_prescaler = TIMER_PRESCALER_1_8;
 //int _timer_period = 50;
+//int _timer_period_us = 5;
 
 
 // для периода 10 микросекунд (100тыс вызовов в секунду == 100КГц):
@@ -31,10 +31,10 @@ static stepper sm_x, sm_y, sm_z;
 //   Finished cycle, max time=9
 // 3 мотора (не ок):
 //   timer handler takes longer than timer period: cycle time=10us, timer period=10us
-//int _timer_period_us = 10;
-//int _timer = TIMER3;
+//int _timer_id = TIMER3;
 //int _timer_prescaler = TIMER_PRESCALER_1_8;
 //int _timer_period = 100;
+//int _timer_period_us = 10;
 
 // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
 // На ChipKIT Uno32 наименьший вариант ок для движения по линии
@@ -43,17 +43,17 @@ static stepper sm_x, sm_y, sm_z;
 // 2 мотора (тем более ок):
 //   Finished cycle, max time=9
 // совсем не ок для движения по дуге (по 90мкс на acos/asin)
-int _timer_period_us = 20;
-int _timer = TIMER3;
+int _timer_id = TIMER3;
 int _timer_prescaler = TIMER_PRESCALER_1_8;
 int _timer_period = 200;
+int _timer_period_us = 20;
 
 // для периода 200 микросекунд (5тыс вызовов в секунду == 5КГц):
 // ок для движения по дуге (по 90мкс на acos/asin)
-//int _timer_period_us = 200;
-//int _timer = TIMER3;
+//int _timer_id = TIMER3;
 //int _timer_prescaler = TIMER_PRESCALER_1_8;
 //int _timer_period = 2000;
+//int _timer_period_us = 200;
 
 ////////////////////////////////////////////////
 // минимальная задержка между шагами мотора
@@ -93,8 +93,8 @@ static void prepare_line3() {
     prepare_steps(&sm_x, 200000, _step_delay_us);
     // вызвать CYCLE_ERROR_MOTOR_ERROR
     //prepare_steps(&sm_x, 200000, _step_delay_us-1);
-    prepare_steps(&sm_y, 200000, _step_delay_us);
-    prepare_steps(&sm_z, 200000, _step_delay_us);
+    //prepare_steps(&sm_y, 200000, _step_delay_us);
+    //prepare_steps(&sm_z, 200000, _step_delay_us);
 }
 
 void print_cycle_error(stepper_cycle_error_t err) {
@@ -130,7 +130,7 @@ void print_motor_error(stepper &sm) {
         if(sm.error & STEPPER_ERROR_HARD_END_MIN) {
             Serial.print("STEPPER_ERROR_HARD_END_MIN");
         }
-        if(sm.error & STEPPER_ERROR_SOFT_END_MAX) {
+        if(sm.error & STEPPER_ERROR_HARD_END_MAX) {
             Serial.print("STEPPER_ERROR_HARD_END_MAX");
         }
         if(sm.error & STEPPER_ERROR_STEP_DELAY_SMALL) {
@@ -172,7 +172,7 @@ void setup() {
     init_stepper_ends(&sm_z, NO_PIN, NO_PIN, CONST, CONST, 0, 100000000);
 
     // настройки таймера
-    stepper_configure_timer(_timer_period_us, _timer, _timer_prescaler, _timer_period);
+    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_period);
     
     // configure motors before starting steps
     prepare_line3();
@@ -195,25 +195,6 @@ void loop() {
         Serial.print(sm_z.current_pos, DEC);
         Serial.println();
     }
-
-    // ошибки цикла
-    if(stepper_cycle_error()) {
-        Serial.print("Cycle error: ");
-        print_cycle_error(stepper_cycle_error());
-        Serial.println();
-        
-        Serial.println("Motor errors:");
-        
-        Serial.print("X: ");
-        print_motor_error(sm_x);
-        Serial.println();
-        Serial.print("Y: ");
-        print_motor_error(sm_y);
-        Serial.println();
-        Serial.print("Z: ");
-        print_motor_error(sm_z);
-        Serial.println();
-    }
     
     // обработчик таймера не умещается в период
     unsigned long cycle_time = stepper_cycle_max_time();
@@ -231,6 +212,26 @@ void loop() {
     if(print_once && !stepper_cycle_running()) {
         Serial.print("Finished cycle, max time=");
         Serial.println(cycle_time);
+
+        // ошибки цикла
+        if(stepper_cycle_error()) {
+            Serial.print("Cycle error: ");
+            print_cycle_error(stepper_cycle_error());
+            Serial.println();
+        }
+        
+        // ошибки моторов
+        Serial.println("Motor errors:");
+        Serial.print("X: ");
+        print_motor_error(sm_x);
+        Serial.println();
+        Serial.print("Y: ");
+        print_motor_error(sm_y);
+        Serial.println();
+        Serial.print("Z: ");
+        print_motor_error(sm_z);
+        Serial.println();
+        
         print_once = false;
     }
     
