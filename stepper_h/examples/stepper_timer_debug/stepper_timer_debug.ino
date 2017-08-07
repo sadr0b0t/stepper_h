@@ -90,9 +90,9 @@ static void prepare_line3() {
     //     calibrate_mode_t calibrate_mode=NONE);
     
     // шагаем с максимальной скоростью
-    prepare_steps(&sm_x, 200000, _step_delay_us);
+    //prepare_steps(&sm_x, 200000, _step_delay_us);
     // вызвать CYCLE_ERROR_MOTOR_ERROR
-    //prepare_steps(&sm_x, 200000, _step_delay_us-1);
+    prepare_steps(&sm_x, 200000, _step_delay_us-1);
     prepare_steps(&sm_y, 200000, _step_delay_us);
     prepare_steps(&sm_z, 200000, _step_delay_us);
 }
@@ -105,8 +105,8 @@ void print_cycle_error(stepper_cycle_error_t err) {
         case CYCLE_ERROR_TIMER_PERIOD_TOO_LONG:
             Serial.print("CYCLE_ERROR_TIMER_PERIOD_TOO_LONG");
             break;
-        case CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE:
-            Serial.print("CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_MOTOR_PULSE");
+        case CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_STEP_DELAY:
+            Serial.print("CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_STEP_DELAY");
             break;
         case CYCLE_ERROR_MOTOR_ERROR:
             Serial.print("CYCLE_ERROR_MOTOR_ERROR");
