@@ -27,9 +27,9 @@ This one runs 3 stepper motors with different speed at the same time. Motors sta
 static stepper sm_x, sm_y, sm_z;
 
 static void prepare_line1() {
-    // prepare_steps(stepper *smotor, 
-    //     long step_count, unsigned long step_delay, 
-    //     calibrate_mode_t calibrate_mode, 
+    // prepare_steps(stepper *smotor,
+    //     long step_count, unsigned long step_delay,
+    //     calibrate_mode_t calibrate_mode,
     //     stepper_info_t *stepper_info=NULL);
 
     // make 20000 steps with 1000 microseconds delay
@@ -43,27 +43,27 @@ static void prepare_line1() {
     // during 2000*10000=20000000microseconds=20seconds
     prepare_steps(&sm_y, 10000, 2000);
     // make 1000 steps with 20000 microseconds delay
-    // Z.pos would go from 0 to 
+    // Z.pos would go from 0 to
     // 7500*1000=7500000 nanometers = 7500 micrometers  = 7.5 millimeters
     // during 20000*1000=20000000microseconds=20seconds
     prepare_steps(&sm_z, 1000, 20000);
 }
 
 void setup() {
-    Serial.begin(9600);    
+    Serial.begin(9600);
     Serial.println("Starting stepper_h test...");
     
     // connected stepper motors
-    // init_stepper(stepper* smotor,  char name, 
+    // init_stepper(stepper* smotor, char name,
     //     int pin_step, int pin_dir, int pin_en,
-    //     bool invert_dir, int pulse_delay,
+    //     bool invert_dir, int step_delay,
     //     int distance_per_step)
     // init_stepper_ends(stepper* smotor,
     //     end_strategy min_end_strategy, end_strategy max_end_strategy,
     //     long min_pos, long max_pos);
     
     // X
-    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7500); 
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7500);
     init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000000);
     // Y
     init_stepper(&sm_y, 'y', 5, 6, 7, true, 1000, 7500);
@@ -71,7 +71,7 @@ void setup() {
     // Z
     init_stepper(&sm_z, 'z', 2, 3, 4, true, 1000, 7500);
     init_stepper_ends(&sm_z, NO_PIN, NO_PIN, CONST, CONST, 0, 100000000);
-      
+    
     // configure motors before starting steps
     prepare_line1();
     // start motors, non-blocking

@@ -1,14 +1,14 @@
 /**
- * stepper.cpp 
+ * stepper.cpp
  *
- * Библиотека управления шаговыми моторами, подключенными через интерфейс 
+ * Библиотека управления шаговыми моторами, подключенными через интерфейс
  * драйвера "step-dir".
  *
  * LGPLv3, 2014-2016
  *
  * @author Антон Моисеев 1i7.livejournal.com
  */
- 
+
 #include "Arduino.h"
 #include "stepper.h"
 
@@ -16,24 +16,24 @@
  * Инициализировать шаговый мотор необходимыми значениями.
  * 
  * @param smotor
- * @param name - Имя шагового мотора (один символ: X, Y, Z и т.п.) 
- * @param pin_step Подача периодического импульса HIGH/LOW будет вращать мотор 
+ * @param name - Имя шагового мотора (один символ: X, Y, Z и т.п.)
+ * @param pin_step Подача периодического импульса HIGH/LOW будет вращать мотор
  *     (шаг происходит по фронту HIGH > LOW)
  * @param pin_dir - Направление вращения
  *     1 (HIGH): в одну сторону
  *     0 (LOW): в другую
  *
- *     Для движения вправо (в сторону увеличения значения виртуальной координаты): 
+ *     Для движения вправо (в сторону увеличения значения виртуальной координаты):
  *     при invert_dir==false: запись 1 (HIGH) в pin_dir
  *     при invert_dir==true: запись 0 (LOW) в pin_dir
  * 
- * @param pin_en - вкл (0)/выкл (1) мотор 
+ * @param pin_en - вкл (0)/выкл (1) мотор
  *     -1 (NO_PIN): выход не подключен
  * @param invert_dir - Инверсия направления вращения
  *     true: инвертировать направление вращения
  *     false: не инвертировать
- * @param pulse_delay - Минимальная задержка между импульсами, микросекунды
- *     (для движения с максимальной скоростью) 
+ * @param step_delay - Минимальная задержка между импульсами, микросекунды
+ *     (для движения с максимальной скоростью)
  * @param distance_per_step - Расстояние, проходимое координатой за шаг,
  *     базовая единица измерения мотора.
  *     
@@ -43,7 +43,7 @@
  *     Единица измерения выбирается в зависимости от задачи и свойств
  *     передаточного механизма.
  * 
- *     Если брать базовую единицу изменения за нанометры (1/1000 микрометра), 
+ *     Если брать базовую единицу изменения за нанометры (1/1000 микрометра),
  *     то диапазон значений для рабочей области будет от нуля в одну сторону:
  *     2^31=2147483648-1 нанометров * 7.5/1000/1000/1000=16 метров
  *     в обе строны: [16м, 16м], т.е. всего 32 метра.
@@ -51,11 +51,11 @@
  *     Для базовой единицы микрометр (микрон) рабочая область
  *     от -16км до 16км, всего 32км.
  */
-void init_stepper(stepper* smotor,  char name, 
+void init_stepper(stepper* smotor, char name,
         int pin_step, int pin_dir, int pin_en,
-        bool invert_dir, int pulse_delay,
+        bool invert_dir, int step_delay,
         int distance_per_step) {
-  
+    
     smotor->name = name;
     
     smotor->pin_step = pin_step;
@@ -63,7 +63,7 @@ void init_stepper(stepper* smotor,  char name,
     smotor->pin_en = pin_en;
     
     smotor->dir_inv = invert_dir ? -1 : 1;
-    smotor->pulse_delay = pulse_delay;
+    smotor->step_delay = step_delay;
     
     smotor->distance_per_step = distance_per_step;
     
@@ -74,7 +74,7 @@ void init_stepper(stepper* smotor,  char name,
     // по умолчанию рабочая область не ограничена, концевиков нет
     smotor->pin_min = NO_PIN;
     smotor->pin_max = NO_PIN;
-          
+    
     smotor->min_end_strategy = INF;
     smotor->max_end_strategy = INF;
     
@@ -101,11 +101,11 @@ void init_stepper(stepper* smotor,  char name,
  * Движение влево ограничено значением min_pos, движение вправо ограничено значением max_pos
  * (min_pos<=curr_pos<=max_pos).
  * 
- * При калибровке начальной позиции мотора CALIBRATE_START_MIN_POS 
+ * При калибровке начальной позиции мотора CALIBRATE_START_MIN_POS
  * текущее положение мотора curr_pos сбрасывается в значение min_pos (curr_pos=min_pos)
  * на каждом шаге.
  * 
- * При калибровке ширины рабочей области CALIBRATE_BOUNDS_MAX_POS 
+ * При калибровке ширины рабочей области CALIBRATE_BOUNDS_MAX_POS
  * текущее положение мотора curr_pos задает значение max_pos (max_pos=curr_pos)
  * на каждом шаге.
  *
@@ -131,10 +131,10 @@ void init_stepper_ends(stepper* smotor,
         int pin_min, int pin_max,
         end_strategy_t min_end_strategy, end_strategy_t max_end_strategy,
         long min_pos, long max_pos) {
-          
+    
     smotor->pin_min = pin_min;
     smotor->pin_max = pin_max;
-          
+    
     smotor->min_end_strategy = min_end_strategy;
     smotor->max_end_strategy = max_end_strategy;
     

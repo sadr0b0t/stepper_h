@@ -26,9 +26,9 @@ static void prepare_line1() {
     int steps_z = (20000000 - sm_z.current_pos) / 7500;
     int delay_z = time_x / abs(steps_z);
 
-    // prepare_steps(stepper *smotor, 
-    //     long step_count, unsigned long step_delay, 
-    //     calibrate_mode_t calibrate_mode, 
+    // prepare_steps(stepper *smotor,
+    //     long step_count, unsigned long step_delay,
+    //     calibrate_mode_t calibrate_mode,
     //     stepper_info_t *stepper_info=NULL);
     prepare_steps(&sm_x, steps_x, delay_x);
     prepare_steps(&sm_y, steps_y, delay_y);
@@ -63,9 +63,9 @@ static void prepare_line2() {
     //int steps_z = (20000000 - sm_z.current_pos) / 7500;
     //int delay_z = time_x / abs(steps_z);
 
-    // prepare_steps(stepper *smotor, 
-    //     long step_count, unsigned long step_delay, 
-    //     calibrate_mode_t calibrate_mode, 
+    // prepare_steps(stepper *smotor,
+    //     long step_count, unsigned long step_delay,
+    //     calibrate_mode_t calibrate_mode,
     //     stepper_info_t *stepper_info=NULL);
     prepare_steps(&sm_x, steps_x, delay_x);
     prepare_steps(&sm_y, steps_y, delay_y);
@@ -95,9 +95,9 @@ static void prepare_line3() {
     int steps_z = (0 - sm_z.current_pos) / 7500;
     int delay_z = time_y / abs(steps_z);
 
-    // prepare_steps(stepper *smotor, 
-    //     long step_count, unsigned long step_delay, 
-    //     calibrate_mode_t calibrate_mode, 
+    // prepare_steps(stepper *smotor,
+    //     long step_count, unsigned long step_delay,
+    //     calibrate_mode_t calibrate_mode,
     //     stepper_info_t *stepper_info=NULL);
     prepare_steps(&sm_x, steps_x, delay_x);
     prepare_steps(&sm_y, steps_y, delay_y);
@@ -105,13 +105,13 @@ static void prepare_line3() {
 }
 
 void setup() {
-    Serial.begin(9600);    
+    Serial.begin(9600);
     Serial.println("Starting stepper_h test...");
     
     // connected stepper motors
-    // init_stepper(stepper* smotor,  char name, 
+    // init_stepper(stepper* smotor, char name,
     //     int pin_step, int pin_dir, int pin_en,
-    //     bool invert_dir, int pulse_delay,
+    //     bool invert_dir, int step_delay,
     //     int distance_per_step)
     // init_stepper_ends(stepper* smotor,
     //     end_strategy min_end_strategy, end_strategy max_end_strategy,

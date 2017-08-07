@@ -20,7 +20,7 @@ static void prepare_line1() {
     // during 2000*10000=20000000microseconds=20seconds
     prepare_steps(&sm_y, 10000, 2000);
     // make 1000 steps with 20000 microseconds delay
-    // Z.pos would go from 0 to 
+    // Z.pos would go from 0 to
     // 7500*1000=7500000 nanometers = 7500 micrometers  = 7.5 millimeters
     // during 20000*1000=20000000microseconds=20seconds
     prepare_steps(&sm_z, 1000, 20000);
@@ -31,9 +31,9 @@ void setup() {
     Serial.println("Starting stepper_h test...");
     
     // connected stepper motors
-    // init_stepper(stepper* smotor,  char name, 
+    // init_stepper(stepper* smotor, char name,
     //     int pin_step, int pin_dir, int pin_en,
-    //     bool invert_dir, int pulse_delay,
+    //     bool invert_dir, int step_delay,
     //     int distance_per_step)
     // init_stepper_ends(stepper* smotor,
     //     end_strategy min_end_strategy, end_strategy max_end_strategy,
