@@ -93,8 +93,8 @@ static void prepare_line3() {
     prepare_steps(&sm_x, 200000, _step_delay_us);
     // вызвать CYCLE_ERROR_MOTOR_ERROR
     //prepare_steps(&sm_x, 200000, _step_delay_us-1);
-    //prepare_steps(&sm_y, 200000, _step_delay_us);
-    //prepare_steps(&sm_z, 200000, _step_delay_us);
+    prepare_steps(&sm_y, 200000, _step_delay_us);
+    prepare_steps(&sm_z, 200000, _step_delay_us);
 }
 
 void print_cycle_error(stepper_cycle_error_t err) {
