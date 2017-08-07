@@ -91,6 +91,8 @@ static void prepare_line3() {
     
     // шагаем с максимальной скоростью
     prepare_steps(&sm_x, 200000, _step_delay_us);
+    // вызвать CYCLE_ERROR_MOTOR_ERROR
+    //prepare_steps(&sm_x, 200000, _step_delay_us-1);
     prepare_steps(&sm_y, 200000, _step_delay_us);
     prepare_steps(&sm_z, 200000, _step_delay_us);
 }
@@ -114,6 +116,30 @@ void print_cycle_error(stepper_cycle_error_t err) {
             break;
         default:
             break;
+    }
+}
+
+void print_motor_error(stepper &sm) {
+    if(sm.error_soft_end_min || sm.error_soft_end_max ||
+            sm.error_hard_end_min || sm.error_hard_end_max ||
+            sm.error_step_delay_small) {
+        if(sm.error_soft_end_min) {
+            Serial.print("error_soft_end_min");
+        }
+        if(sm.error_soft_end_max) {
+            Serial.print("error_soft_end_max");
+        }
+        if(sm.error_hard_end_min) {
+            Serial.print("error_hard_end_min");
+        }
+        if(sm.error_hard_end_max) {
+            Serial.print("error_hard_end_max");
+        }
+        if(sm.error_step_delay_small) {
+            Serial.print("error_step_delay_small");
+        }
+    } else {
+        Serial.print("none");
     }
 }
 
@@ -176,6 +202,18 @@ void loop() {
     if(stepper_cycle_error()) {
         Serial.print("Cycle error: ");
         print_cycle_error(stepper_cycle_error());
+        Serial.println();
+        
+        Serial.println("Motor errors:");
+        
+        Serial.print("X: ");
+        print_motor_error(sm_x);
+        Serial.println();
+        Serial.print("Y: ");
+        print_motor_error(sm_y);
+        Serial.println();
+        Serial.print("Z: ");
+        print_motor_error(sm_z);
         Serial.println();
     }
     
