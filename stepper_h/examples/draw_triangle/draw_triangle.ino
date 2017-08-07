@@ -28,8 +28,7 @@ static void prepare_line1() {
 
     // prepare_steps(stepper *smotor,
     //     long step_count, unsigned long step_delay,
-    //     calibrate_mode_t calibrate_mode,
-    //     stepper_info_t *stepper_info=NULL);
+    //     calibrate_mode_t calibrate_mode=NONE);
     prepare_steps(&sm_x, steps_x, delay_x);
     prepare_steps(&sm_y, steps_y, delay_y);
     prepare_steps(&sm_z, steps_z, delay_z);
@@ -65,8 +64,7 @@ static void prepare_line2() {
 
     // prepare_steps(stepper *smotor,
     //     long step_count, unsigned long step_delay,
-    //     calibrate_mode_t calibrate_mode,
-    //     stepper_info_t *stepper_info=NULL);
+    //     calibrate_mode_t calibrate_mode=NONE);
     prepare_steps(&sm_x, steps_x, delay_x);
     prepare_steps(&sm_y, steps_y, delay_y);
     //prepare_steps(&sm_z, steps_z, delay_z);
@@ -97,8 +95,7 @@ static void prepare_line3() {
 
     // prepare_steps(stepper *smotor,
     //     long step_count, unsigned long step_delay,
-    //     calibrate_mode_t calibrate_mode,
-    //     stepper_info_t *stepper_info=NULL);
+    //     calibrate_mode_t calibrate_mode=NONE);
     prepare_steps(&sm_x, steps_x, delay_x);
     prepare_steps(&sm_y, steps_y, delay_y);
     prepare_steps(&sm_z, steps_z, delay_z);

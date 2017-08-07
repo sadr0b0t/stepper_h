@@ -6,8 +6,7 @@ static stepper sm_x, sm_y, sm_z;
 static void prepare_line1() {
     // prepare_steps(stepper *smotor,
     //     long step_count, unsigned long step_delay,
-    //     calibrate_mode_t calibrate_mode,
-    //     stepper_info_t *stepper_info=NULL);
+    //     calibrate_mode_t calibrate_mode=NONE);
 
     // make 20000 steps with 1000 microseconds delay
     // X.pos would go from 0 to

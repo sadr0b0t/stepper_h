@@ -580,8 +580,7 @@ static void test_draw_triangle() {
 
     // prepare_steps(stepper *smotor,
     //     long step_count, unsigned long step_delay,
-    //     calibrate_mode_t calibrate_mode,
-    //     stepper_info_t *stepper_info=NULL);
+    //     calibrate_mode_t calibrate_mode=NONE);
     prepare_steps(&sm_x, steps_x, delay_x);
     prepare_steps(&sm_y, steps_y, delay_y);
     prepare_steps(&sm_z, steps_z, delay_z);
@@ -615,8 +614,7 @@ static void test_draw_triangle() {
 
     // prepare_steps(stepper *smotor,
     //     long step_count, unsigned long step_delay,
-    //     calibrate_mode_t calibrate_mode,
-    //     stepper_info_t *stepper_info=NULL);
+    //     calibrate_mode_t calibrate_mode=NONE);
     prepare_steps(&sm_x, steps_x, delay_x);
     prepare_steps(&sm_y, steps_y, delay_y);
     //prepare_steps(&sm_z, steps_z, delay_z);
@@ -646,8 +644,7 @@ static void test_draw_triangle() {
 
     // prepare_steps(stepper *smotor,
     //     long step_count, unsigned long step_delay,
-    //     calibrate_mode_t calibrate_mode,
-    //     stepper_info_t *stepper_info=NULL);
+    //     calibrate_mode_t calibrate_mode=NONE);
     prepare_steps(&sm_x, steps_x, delay_x);
     prepare_steps(&sm_y, steps_y, delay_y);
     prepare_steps(&sm_z, steps_z, delay_z);
@@ -696,7 +693,6 @@ static void test_small_step_delay_handlers() {
     // во время работы цикла, её-то мы и должны поймать и обработать
     int buf_size = 2;
     unsigned long delay_buffer[] = {1000, 800};
-    stepper_info_t sm_x_info, sm_y_info;
     
     // stepper_set_error_handle_strategy(
     //     error_handle_strategy_t hard_end_handle,
@@ -710,8 +706,8 @@ static void test_small_step_delay_handlers() {
     // исправиться на 1000мкс
     stepper_set_error_handle_strategy(DONT_CHANGE, DONT_CHANGE, FIX, DONT_CHANGE);
     
-    prepare_simple_buffered_steps(&sm_x, buf_size, delay_buffer, 1, &sm_x_info);
-    prepare_whirl(&sm_y, 1, 1000, NONE, &sm_y_info);
+    prepare_simple_buffered_steps(&sm_x, buf_size, delay_buffer, 1);
+    prepare_whirl(&sm_y, 1, 1000, NONE);
     
     stepper_start_cycle();
     // цикл должен запуститься
@@ -719,8 +715,8 @@ static void test_small_step_delay_handlers() {
     
     // шаг1 - 5 тиков таймера, всё должно быть ок
     timer_tick(4);
-    sput_fail_unless(sm_x_info.error_step_delay_small == false,
-        "handler=FIX.tick4: sm_x_info.error_step_delay_small == false");
+    sput_fail_unless(sm_x.error_step_delay_small == false,
+        "handler=FIX.tick4: sm_x.error_step_delay_small == false");
     timer_tick(1);
     sput_fail_unless(sm_x.current_pos == 7500, "handler=FIX.tick5: sm_x.current_pos == 7500");
     sput_fail_unless(sm_y.current_pos == 7500, "handler=FIX.tick5: sm_y.current_pos == 7500");
@@ -728,8 +724,8 @@ static void test_small_step_delay_handlers() {
     // на 5м тике должны поймать ошибку с новой задержкой перед новым шагом small_step_delay:
     // для мотора и цикла должны выставиться флаги с указанием проблемы, но цикл должен продолжить
     // работу
-    sput_fail_unless(sm_x_info.error_step_delay_small == true,
-        "handler=FIX.tick5: sm_x_info.error_step_delay_small == true");
+    sput_fail_unless(sm_x.error_step_delay_small == true,
+        "handler=FIX.tick5: sm_x.error_step_delay_small == true");
     
     // шаг2 - должны совершить за 5 тиков, цикл должен работать
     timer_tick(5);
@@ -750,8 +746,8 @@ static void test_small_step_delay_handlers() {
     sm_x.current_pos = 0;
     sm_y.current_pos = 0;
     // и готовим те же шаги
-    prepare_simple_buffered_steps(&sm_x, buf_size, delay_buffer, 1, &sm_x_info);
-    prepare_whirl(&sm_y, 1, 1000, NONE, &sm_y_info);
+    prepare_simple_buffered_steps(&sm_x, buf_size, delay_buffer, 1);
+    prepare_whirl(&sm_y, 1, 1000, NONE);
     
     stepper_start_cycle();
     // цикл должен запуститься
@@ -759,10 +755,10 @@ static void test_small_step_delay_handlers() {
     
     // шаг1 - 5 тиков таймера, всё должно быть ок
     timer_tick(4);
-    sput_fail_unless(sm_x_info.error_step_delay_small == false,
-        "handler=STOP_MOTOR.tick4: sm_x_info.error_step_delay_small == false");
-    sput_fail_unless(sm_x_info.status == STEPPER_STATUS_RUNNING,
-        "handler=STOP_MOTOR.tick4: sm_x_info.status == STEPPER_STATUS_RUNNING");
+    sput_fail_unless(sm_x.error_step_delay_small == false,
+        "handler=STOP_MOTOR.tick4: sm_x.error_step_delay_small == false");
+    sput_fail_unless(sm_x.status == STEPPER_STATUS_RUNNING,
+        "handler=STOP_MOTOR.tick4: sm_x.status == STEPPER_STATUS_RUNNING");
     
     timer_tick(1);
     sput_fail_unless(sm_x.current_pos == 7500, "handler=STOP_MOTOR.tick5: sm_x.current_pos == 7500");
@@ -771,12 +767,12 @@ static void test_small_step_delay_handlers() {
     // на 5м тике должны поймать ошибку с новой задержкой перед новым шагом small_step_delay:
     // для мотора и цикла должны выставиться флаги с указанием проблемы, мотор X остановится,
     // но цикл должен продолжить работу
-    sput_fail_unless(sm_x_info.error_step_delay_small == true,
-        "handler=STOP_MOTOR.tick5: sm_x_info.error_step_delay_small == true");
-    sput_fail_unless(sm_x_info.status == STEPPER_STATUS_FINISHED,
-        "handler=STOP_MOTOR.tick5: sm_x_info.status == STEPPER_STATUS_FINISHED");
-    sput_fail_unless(sm_y_info.status == STEPPER_STATUS_RUNNING,
-        "handler=STOP_MOTOR.tick5: sm_y_info.status == STEPPER_STATUS_RUNNING");
+    sput_fail_unless(sm_x.error_step_delay_small == true,
+        "handler=STOP_MOTOR.tick5: sm_x.error_step_delay_small == true");
+    sput_fail_unless(sm_x.status == STEPPER_STATUS_FINISHED,
+        "handler=STOP_MOTOR.tick5: sm_x.status == STEPPER_STATUS_FINISHED");
+    sput_fail_unless(sm_y.status == STEPPER_STATUS_RUNNING,
+        "handler=STOP_MOTOR.tick5: sm_y.status == STEPPER_STATUS_RUNNING");
     
     // шаг2 - должны совершить за 5 тиков, цикл должен работать
     timer_tick(5);
@@ -796,8 +792,8 @@ static void test_small_step_delay_handlers() {
     sm_x.current_pos = 0;
     sm_y.current_pos = 0;
     // и готовим те же шаги
-    prepare_simple_buffered_steps(&sm_x, buf_size, delay_buffer, 1, &sm_x_info);
-    prepare_whirl(&sm_y, 1, 1000, NONE, &sm_y_info);
+    prepare_simple_buffered_steps(&sm_x, buf_size, delay_buffer, 1);
+    prepare_whirl(&sm_y, 1, 1000, NONE);
     
     stepper_start_cycle();
     // цикл должен запуститься
@@ -805,10 +801,10 @@ static void test_small_step_delay_handlers() {
     
     // шаг1 - 5 тиков таймера, всё должно быть ок
     timer_tick(4);
-    sput_fail_unless(sm_x_info.error_step_delay_small == false,
-        "handler=CANCEL_CYCLE.tick4: sm_x_info.error_step_delay_small == false");
-    sput_fail_unless(sm_x_info.status == STEPPER_STATUS_RUNNING,
-        "handler=CANCEL_CYCLE.tick4: sm_x_info.status == STEPPER_STATUS_RUNNING");
+    sput_fail_unless(sm_x.error_step_delay_small == false,
+        "handler=CANCEL_CYCLE.tick4: sm_x.error_step_delay_small == false");
+    sput_fail_unless(sm_x.status == STEPPER_STATUS_RUNNING,
+        "handler=CANCEL_CYCLE.tick4: sm_x.status == STEPPER_STATUS_RUNNING");
     
     // на 5м тике должны поймать ошибку с новой задержкой перед новым шагом small_step_delay:
     // завершаем весь цикл - останавливаем оба мотора
@@ -820,14 +816,14 @@ static void test_small_step_delay_handlers() {
     //cout<<sm_y.current_pos<<endl;
     
     // флаг ошибки
-    sput_fail_unless(sm_x_info.error_step_delay_small == true,
-        "handler=CANCEL_CYCLE.tick5: sm_x_info.error_step_delay_small == true");
+    sput_fail_unless(sm_x.error_step_delay_small == true,
+        "handler=CANCEL_CYCLE.tick5: sm_x.error_step_delay_small == true");
     
     // моторы стоят
-    sput_fail_unless(sm_x_info.status == STEPPER_STATUS_FINISHED,
-        "handler=CANCEL_CYCLE.tick5: sm_x_info.status == STEPPER_STATUS_FINISHED");
-    sput_fail_unless(sm_y_info.status == STEPPER_STATUS_FINISHED,
-        "handler=CANCEL_CYCLE.tick5: sm_y_info.status == STEPPER_STATUS_FINISHED");
+    sput_fail_unless(sm_x.status == STEPPER_STATUS_FINISHED,
+        "handler=CANCEL_CYCLE.tick5: sm_x.status == STEPPER_STATUS_FINISHED");
+    sput_fail_unless(sm_y.status == STEPPER_STATUS_FINISHED,
+        "handler=CANCEL_CYCLE.tick5: sm_y.status == STEPPER_STATUS_FINISHED");
     
     // и цикл тоже здесь закончился
     sput_fail_unless(!stepper_cycle_running(), "handler=CANCEL_CYCLE.tick5: tepper_cycle_running() == false");
@@ -869,16 +865,13 @@ static void test_exit_bounds_issue1_whirl() {
     
     // попробуем выйти в минус за 0
     
-    // получать информацию о статусе мотора и цикла
-    stepper_info_t stepper_info;
-    
     // готовим мотор на непрерывное вращение в сторону нуля,
     // задержку между шагами задаём как 0 (должна исправиться автоматом на
     // sm_x->step_delay, т.е. на 1000)
     // void prepare_whirl(stepper *smotor,
     //     int dir, unsigned long step_delay,
-    //     calibrate_mode_t calibrate_mode=NONE, stepper_info_t *stepper_info=NULL);
-    prepare_whirl(&sm_x, -1, 0, NONE, &stepper_info);
+    //     calibrate_mode_t calibrate_mode=NONE);
+    prepare_whirl(&sm_x, -1, 0, NONE);
     
     // "идеальные" шаги - каждые 1000 микросекунд:
     // 1000, 2000, 3000
@@ -918,9 +911,9 @@ static void test_exit_bounds_issue1_whirl() {
     timer_tick(1);
     // здесь мы должны увидеть, что этот шаг приведет в выходу за виртуальную границу,
     // должны быть выставлены коды ошибок, статус мотора обозначен как "остановлен"
-    sput_fail_unless(stepper_info.status == STEPPER_STATUS_FINISHED, "step1.tick1: status == STEPPER_STATUS_FINISHED");
-    sput_fail_unless(stepper_info.error_soft_end_min, "step1.tick3: error_soft_end_min == true");
-    sput_fail_unless(!stepper_info.error_soft_end_max, "step1.tick3: error_soft_end_max == false");
+    sput_fail_unless(sm_x.status == STEPPER_STATUS_FINISHED, "step1.tick1: status == STEPPER_STATUS_FINISHED");
+    sput_fail_unless(sm_x.error_soft_end_min, "step1.tick3: error_soft_end_min == true");
+    sput_fail_unless(!sm_x.error_soft_end_max, "step1.tick3: error_soft_end_max == false");
     
     // на всякий случай проверим финальное положение
     sput_fail_unless(sm_x.current_pos == 0, "step1.tick1: current_pos == 0");
@@ -958,18 +951,14 @@ static void test_exit_bounds_issue1_steps() {
     
     // попробуем выйти в минус за 0
     
-    // получать информацию о статусе мотора и цикла
-    stepper_info_t stepper_info;
-    
     // 
     // готовим мотор на несколько шагов в сторону нуля,
     // задержку между шагами задаём как 0 (должна исправиться автоматом на
     // sm_x->step_delay, т.е. на 1000)
     // void prepare_steps(stepper *smotor,
     //     long step_count, unsigned long step_delay,
-    //     calibrate_mode_t calibrate_mode,
-    //     stepper_info_t *stepper_info) {
-    prepare_steps(&sm_x, -300, 0, NONE, &stepper_info);
+    //     calibrate_mode_t calibrate_mode=NONE) {
+    prepare_steps(&sm_x, -300, 0, NONE);
     
     // "идеальные" шаги - каждые 1000 микросекунд:
     // 1000, 2000, 3000
@@ -1009,9 +998,9 @@ static void test_exit_bounds_issue1_steps() {
     timer_tick(1);
     // здесь мы должны увидеть, что этот шаг приведет в выходу за виртуальную границу,
     // должны быть выставлены коды ошибок, статус мотора обозначен как "остановлен"
-    sput_fail_unless(stepper_info.status == STEPPER_STATUS_FINISHED, "step1.tick1: status == STEPPER_STATUS_FINISHED");
-    sput_fail_unless(stepper_info.error_soft_end_min, "step1.tick3: error_soft_end_min == true");
-    sput_fail_unless(!stepper_info.error_soft_end_max, "step1.tick3: error_soft_end_max == false");
+    sput_fail_unless(sm_x.status == STEPPER_STATUS_FINISHED, "step1.tick1: status == STEPPER_STATUS_FINISHED");
+    sput_fail_unless(sm_x.error_soft_end_min, "step1.tick3: error_soft_end_min == true");
+    sput_fail_unless(!sm_x.error_soft_end_max, "step1.tick3: error_soft_end_max == false");
     
     // на всякий случай проверим финальное положение
     sput_fail_unless(sm_x.current_pos == 0, "step1.tick1: current_pos == 0");
@@ -1064,8 +1053,7 @@ static void test_exit_bounds_issue9_steps() {
     // 400 < 200*3=600
     // void prepare_steps(stepper *smotor,
     //     long step_count, unsigned long step_delay,
-    //     calibrate_mode_t calibrate_mode,
-    //     stepper_info_t *stepper_info)
+    //     calibrate_mode_t calibrate_mode=NONE)
     prepare_steps(&sm_x, -300, 400);
     
     // поехали
@@ -1093,8 +1081,7 @@ static void test_exit_bounds_issue9_steps() {
     // 400 < 200*3=600
     // void prepare_steps(stepper *smotor,
     //     long step_count, unsigned long step_delay,
-    //     calibrate_mode_t calibrate_mode,
-    //     stepper_info_t *stepper_info)
+    //     calibrate_mode_t calibrate_mode=NONE)
     prepare_steps(&sm_x, -300, 400);
     
     // поехали

@@ -87,8 +87,7 @@ int _step_delay_us = 60;
 static void prepare_line3() {
     // prepare_steps(stepper *smotor,
     //     long step_count, unsigned long step_delay,
-    //     calibrate_mode_t calibrate_mode,
-    //     stepper_info_t *stepper_info=NULL);
+    //     calibrate_mode_t calibrate_mode=NONE);
     
     // шагаем с максимальной скоростью
     prepare_steps(&sm_x, 200000, _step_delay_us);
