@@ -276,13 +276,8 @@ void prepare_steps(stepper *smotor, long step_count, unsigned long step_delay, c
     // Динамический статус мотора в цикле вращения
     // ожидаем пуска
     _smotors[sm_i]->status = STEPPER_STATUS_IDLE;
-    
     // обнулим ошибки
-    _smotors[sm_i]->error_soft_end_min = false;
-    _smotors[sm_i]->error_soft_end_max = false;
-    _smotors[sm_i]->error_hard_end_min = false;
-    _smotors[sm_i]->error_hard_end_max = false;
-    _smotors[sm_i]->error_step_delay_small = false;
+    _smotors[sm_i]->error = STEPPER_ERROR_NONE;
     
     //
     _cstatuses[sm_i].stopped = false;
@@ -346,13 +341,8 @@ void prepare_whirl(stepper *smotor, int dir, unsigned long step_delay, calibrate
     // Динамический статус мотора в цикле вращения
     // ожидаем пуска
     _smotors[sm_i]->status = STEPPER_STATUS_IDLE;
-    
     // обнулим ошибки
-    _smotors[sm_i]->error_soft_end_min = false;
-    _smotors[sm_i]->error_soft_end_max = false;
-    _smotors[sm_i]->error_hard_end_min = false;
-    _smotors[sm_i]->error_hard_end_max = false;
-    _smotors[sm_i]->error_step_delay_small = false;
+    _smotors[sm_i]->error = STEPPER_ERROR_NONE;
     
     //
     _cstatuses[sm_i].stopped = false;
@@ -443,13 +433,8 @@ void prepare_simple_buffered_steps(stepper *smotor, int buf_size, unsigned long*
     // Динамический статус мотора в цикле вращения
     // ожидаем пуска
     _smotors[sm_i]->status = STEPPER_STATUS_IDLE;
-    
     // обнулим ошибки
-    _smotors[sm_i]->error_soft_end_min = false;
-    _smotors[sm_i]->error_soft_end_max = false;
-    _smotors[sm_i]->error_hard_end_min = false;
-    _smotors[sm_i]->error_hard_end_max = false;
-    _smotors[sm_i]->error_step_delay_small = false;
+    _smotors[sm_i]->error = STEPPER_ERROR_NONE;
     
     //
     _cstatuses[sm_i].stopped = false;
@@ -507,13 +492,8 @@ void prepare_buffered_steps(stepper *smotor, int buf_size, unsigned long* delay_
     // Динамический статус мотора в цикле вращения
     // ожидаем пуска
     _smotors[sm_i]->status = STEPPER_STATUS_IDLE;
-    
     // обнулим ошибки
-    _smotors[sm_i]->error_soft_end_min = false;
-    _smotors[sm_i]->error_soft_end_max = false;
-    _smotors[sm_i]->error_hard_end_min = false;
-    _smotors[sm_i]->error_hard_end_max = false;
-    _smotors[sm_i]->error_step_delay_small = false;
+    _smotors[sm_i]->error = STEPPER_ERROR_NONE;
     
     //
     _cstatuses[sm_i].stopped = false;
@@ -568,13 +548,8 @@ void prepare_dynamic_steps(stepper *smotor, long step_count,
     // Динамический статус мотора в цикле вращения
     // ожидаем пуска
     _smotors[sm_i]->status = STEPPER_STATUS_IDLE;
-    
     // обнулим ошибки
-    _smotors[sm_i]->error_soft_end_min = false;
-    _smotors[sm_i]->error_soft_end_max = false;
-    _smotors[sm_i]->error_hard_end_min = false;
-    _smotors[sm_i]->error_hard_end_max = false;
-    _smotors[sm_i]->error_step_delay_small = false;
+    _smotors[sm_i]->error = STEPPER_ERROR_NONE;
     
     //
     _cstatuses[sm_i].stopped = false;
@@ -630,13 +605,8 @@ void prepare_dynamic_whirl(stepper *smotor, int dir,
     // Динамический статус мотора в цикле вращения
     // ожидаем пуска
     _smotors[sm_i]->status = STEPPER_STATUS_IDLE;
-    
     // обнулим ошибки
-    _smotors[sm_i]->error_soft_end_min = false;
-    _smotors[sm_i]->error_soft_end_max = false;
-    _smotors[sm_i]->error_hard_end_min = false;
-    _smotors[sm_i]->error_hard_end_max = false;
-    _smotors[sm_i]->error_step_delay_small = false;
+    _smotors[sm_i]->error = STEPPER_ERROR_NONE;
     
     //
     _cstatuses[sm_i].stopped = false;
@@ -644,54 +614,54 @@ void prepare_dynamic_whirl(stepper *smotor, int dir,
 
 /**
  * Настроить таймер для шагов.
- * Частота ядра PIC32MX - 80МГц=80млн операций в секунду.
+ * Частота ядра PIC32MX - 80МГц == 80млн операций в секунду.
  * Берем базовый предварительный масштаб таймера
  * (например, TIMER_PRESCALER_1_8), дальше подбираем
  * частоту под нужный период
  * 
- * Example: to set timer clock period to 20ms (50 operations per second)
+ * Example: to set timer clock period to 20ms (50 operations per second == 50Hz)
  * use prescaler 1:64 (0x0060) and period=0x61A8:
  * 80000000/64/50=25000=0x61A8
  * 
- * для периода 1 микросекунда (1млн вызовов в секунду):
+ * для периода 1 микросекунда (1млн вызовов в секунду == 1МГц):
  * // (уже подглючивает)
  * 80000000/8/1000000=10=0xA
  *   target_period_us = 1
  *   prescalar = TIMER_PRESCALER_1_8 = 8
  *   period = 10
  * 
- * для периода 5 микросекунд (200тыс вызовов в секунду):
+ * для периода 5 микросекунд (200тыс вызовов в секунду == 200КГц):
  * 80000000/8/1000000=10
  *   target_period_us = 5
  *   prescalar = TIMER_PRESCALER_1_8 = 8
  *   period = 50
  * 
- * для периода 10 микросекунд (100тыс вызовов в секунду):
+ * для периода 10 микросекунд (100тыс вызовов в секунду == 100КГц):
  * // ок для движения по линии, совсем не ок для движения по дуге (по 90мкс на acos/asin)
  * 80000000/8/100000=100=0x64
  *   target_period_us = 10
  *   prescalar = TIMER_PRESCALER_1_8 = 8
  *   period = 100
  *
- * для периода 20 микросекунд (50тыс вызовов в секунду):
+ * для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
  * 80000000/8/50000=200
  *   target_period_us = 20
  *   prescalar = TIMER_PRESCALER_1_8 = 8
  *   period = 200
  *
- * для периода 80 микросекунд (12.5тыс вызовов в секунду):
+ * для периода 80 микросекунд (12.5тыс вызовов в секунду == 12.5КГц):
  * 80000000/8/12500=200
  *   target_period_us = 80
  *   prescalar = TIMER_PRESCALER_1_8 = 8
  *   period = 800
  *
- * для периода 100 микросекунд (10тыс вызовов в секунду):
+ * для периода 100 микросекунд (10тыс вызовов в секунду == 10КГц):
  * 80000000/8/10000=1000
  *   target_period_us = 100
  *   prescalar = TIMER_PRESCALER_1_8 = 8
  *   period = 1000
  *
- * для периода 200 микросекунд (5тыс вызовов в секунду):
+ * для периода 200 микросекунд (5тыс вызовов в секунду == 5КГц):
  * // ок для движения по дуге (по 90мкс на acos/asin)
  * 80000000/8/5000=2000
  *   target_period_us = 200
@@ -817,7 +787,7 @@ bool stepper_start_cycle() {
             // между двумя шагами мотора - это не хорошо
             
             // обозначим ошибку в статусе мотора
-            _smotors[i]->error_step_delay_small = true;
+            _smotors[i]->error |= STEPPER_ERROR_STEP_DELAY_SMALL;
             
             // посмотрим, что делать с ошибкой
             if(_small_step_delay_handle == FIX) {
@@ -1025,7 +995,7 @@ void handle_interrupts(int timer) {
                     _smotors[i]->status = STEPPER_STATUS_FINISHED;
                     
                     // обозначим ошибку
-                    _smotors[i]->error_hard_end_min = true;
+                    _smotors[i]->error |= STEPPER_ERROR_HARD_END_MIN;
                     
                     // как себя вести - остановить только этот мотор (в любом случае) или
                     // сразу завершить весь цикл
@@ -1045,7 +1015,7 @@ void handle_interrupts(int timer) {
                     _smotors[i]->status = STEPPER_STATUS_FINISHED;
                         
                     // обозначим ошибку
-                    _smotors[i]->error_hard_end_max = true;
+                    _smotors[i]->error |= STEPPER_ERROR_HARD_END_MAX;
                     
                     // как себя вести - остановить только этот мотор (в любом случае) или
                     // сразу завершить весь цикл
@@ -1071,9 +1041,9 @@ void handle_interrupts(int timer) {
                         
                     // обозначим ошибку
                     if(_cstatuses[i].dir < 0) {
-                        _smotors[i]->error_soft_end_min = true;
+                        _smotors[i]->error |= STEPPER_ERROR_SOFT_END_MIN;
                     } else {
-                        _smotors[i]->error_soft_end_max = true;
+                        _smotors[i]->error |= STEPPER_ERROR_SOFT_END_MAX;
                     }
                     
                     // как себя вести - остановить только этот мотор (в любом случае) или
@@ -1095,7 +1065,7 @@ void handle_interrupts(int timer) {
                     _smotors[i]->status = STEPPER_STATUS_FINISHED;
                         
                     // обозначим ошибку мотора
-                    _smotors[i]->error_soft_end_min = true;
+                    _smotors[i]->error |= STEPPER_ERROR_SOFT_END_MIN;
                     
                     // как себя вести - остановить только этот мотор (в любом случае) или
                     // сразу завершить весь цикл
@@ -1225,7 +1195,7 @@ void handle_interrupts(int timer) {
                     }
                     
                     // в любом случае, обозначим ошибку
-                    _smotors[i]->error_step_delay_small = true;
+                    _smotors[i]->error |= STEPPER_ERROR_STEP_DELAY_SMALL;
                 }
                 
                 // взводим таймер на новый шаг с учетом погрешности

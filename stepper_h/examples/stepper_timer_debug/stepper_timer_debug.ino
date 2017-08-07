@@ -10,14 +10,14 @@ static stepper sm_x, sm_y, sm_z;
 /////////////////////////////////////////////////////
 // настройки таймера
 
-// для периода 1 микросекунда (1млн вызовов в секунду):
+// для периода 1 микросекунда (1млн вызовов в секунду == 1МГц):
 //   timer handler takes longer than timer period: cycle time=3us, timer period=1us
 //int _timer_period_us = 1;
 //int _timer = TIMER3;
 //int _timer_prescaler = TIMER_PRESCALER_1_8;
 //int _timer_period = 10;
 
-// для периода 5 микросекунд (200тыс вызовов в секунду):
+// для периода 5 микросекунд (200тыс вызовов в секунду == 200КГц):
 //   timer handler takes longer than timer period: cycle time=5us, timer period=5us
 //int _timer_period_us = 5;
 //int _timer = TIMER3;
@@ -25,7 +25,7 @@ static stepper sm_x, sm_y, sm_z;
 //int _timer_period = 50;
 
 
-// для периода 10 микросекунд (100тыс вызовов в секунду):
+// для периода 10 микросекунд (100тыс вызовов в секунду == 100КГц):
 // На ChipKIT Uno32
 // 2 мотора (ок):
 //   Finished cycle, max time=9
@@ -36,7 +36,7 @@ static stepper sm_x, sm_y, sm_z;
 //int _timer_prescaler = TIMER_PRESCALER_1_8;
 //int _timer_period = 100;
 
-// для периода 20 микросекунд (50тыс вызовов в секунду):
+// для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
 // На ChipKIT Uno32 наименьший вариант ок для движения по линии
 // 3 мотора (ок):
 //   Finished cycle, max time=11
@@ -48,7 +48,7 @@ int _timer = TIMER3;
 int _timer_prescaler = TIMER_PRESCALER_1_8;
 int _timer_period = 200;
 
-// для периода 200 микросекунд (5тыс вызовов в секунду):
+// для периода 200 микросекунд (5тыс вызовов в секунду == 5КГц):
 // ок для движения по дуге (по 90мкс на acos/asin)
 //int _timer_period_us = 200;
 //int _timer = TIMER3;
@@ -90,9 +90,9 @@ static void prepare_line3() {
     //     calibrate_mode_t calibrate_mode=NONE);
     
     // шагаем с максимальной скоростью
-    //prepare_steps(&sm_x, 200000, _step_delay_us);
+    prepare_steps(&sm_x, 200000, _step_delay_us);
     // вызвать CYCLE_ERROR_MOTOR_ERROR
-    prepare_steps(&sm_x, 200000, _step_delay_us-1);
+    //prepare_steps(&sm_x, 200000, _step_delay_us-1);
     prepare_steps(&sm_y, 200000, _step_delay_us);
     prepare_steps(&sm_z, 200000, _step_delay_us);
 }
@@ -120,23 +120,21 @@ void print_cycle_error(stepper_cycle_error_t err) {
 }
 
 void print_motor_error(stepper &sm) {
-    if(sm.error_soft_end_min || sm.error_soft_end_max ||
-            sm.error_hard_end_min || sm.error_hard_end_max ||
-            sm.error_step_delay_small) {
-        if(sm.error_soft_end_min) {
-            Serial.print("error_soft_end_min");
+    if(sm.error) {
+        if(sm.error & STEPPER_ERROR_SOFT_END_MIN) {
+            Serial.print("STEPPER_ERROR_SOFT_END_MIN");
         }
-        if(sm.error_soft_end_max) {
-            Serial.print("error_soft_end_max");
+        if(sm.error & STEPPER_ERROR_SOFT_END_MAX) {
+            Serial.print("STEPPER_ERROR_SOFT_END_MAX");
         }
-        if(sm.error_hard_end_min) {
-            Serial.print("error_hard_end_min");
+        if(sm.error & STEPPER_ERROR_HARD_END_MIN) {
+            Serial.print("STEPPER_ERROR_HARD_END_MIN");
         }
-        if(sm.error_hard_end_max) {
-            Serial.print("error_hard_end_max");
+        if(sm.error & STEPPER_ERROR_SOFT_END_MAX) {
+            Serial.print("STEPPER_ERROR_HARD_END_MAX");
         }
-        if(sm.error_step_delay_small) {
-            Serial.print("error_step_delay_small");
+        if(sm.error & STEPPER_ERROR_STEP_DELAY_SMALL) {
+            Serial.print("STEPPER_ERROR_STEP_DELAY_SMALL");
         }
     } else {
         Serial.print("none");

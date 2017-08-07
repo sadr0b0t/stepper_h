@@ -715,8 +715,8 @@ static void test_small_step_delay_handlers() {
     
     // шаг1 - 5 тиков таймера, всё должно быть ок
     timer_tick(4);
-    sput_fail_unless(sm_x.error_step_delay_small == false,
-        "handler=FIX.tick4: sm_x.error_step_delay_small == false");
+    sput_fail_unless(!(sm_x.error&STEPPER_ERROR_STEP_DELAY_SMALL),
+        "handler=FIX.tick4: sm_x.error&STEPPER_ERROR_STEP_DELAY_SMALL == false");
     timer_tick(1);
     sput_fail_unless(sm_x.current_pos == 7500, "handler=FIX.tick5: sm_x.current_pos == 7500");
     sput_fail_unless(sm_y.current_pos == 7500, "handler=FIX.tick5: sm_y.current_pos == 7500");
@@ -724,8 +724,8 @@ static void test_small_step_delay_handlers() {
     // на 5м тике должны поймать ошибку с новой задержкой перед новым шагом small_step_delay:
     // для мотора и цикла должны выставиться флаги с указанием проблемы, но цикл должен продолжить
     // работу
-    sput_fail_unless(sm_x.error_step_delay_small == true,
-        "handler=FIX.tick5: sm_x.error_step_delay_small == true");
+    sput_fail_unless(sm_x.error&STEPPER_ERROR_STEP_DELAY_SMALL,
+        "handler=FIX.tick5: sm_x.error&STEPPER_ERROR_STEP_DELAY_SMALL == true");
     
     // шаг2 - должны совершить за 5 тиков, цикл должен работать
     timer_tick(5);
@@ -755,8 +755,8 @@ static void test_small_step_delay_handlers() {
     
     // шаг1 - 5 тиков таймера, всё должно быть ок
     timer_tick(4);
-    sput_fail_unless(sm_x.error_step_delay_small == false,
-        "handler=STOP_MOTOR.tick4: sm_x.error_step_delay_small == false");
+    sput_fail_unless(!(sm_x.error&STEPPER_ERROR_STEP_DELAY_SMALL),
+        "handler=STOP_MOTOR.tick4: sm_x.error&STEPPER_ERROR_STEP_DELAY_SMALL == false");
     sput_fail_unless(sm_x.status == STEPPER_STATUS_RUNNING,
         "handler=STOP_MOTOR.tick4: sm_x.status == STEPPER_STATUS_RUNNING");
     
@@ -767,8 +767,8 @@ static void test_small_step_delay_handlers() {
     // на 5м тике должны поймать ошибку с новой задержкой перед новым шагом small_step_delay:
     // для мотора и цикла должны выставиться флаги с указанием проблемы, мотор X остановится,
     // но цикл должен продолжить работу
-    sput_fail_unless(sm_x.error_step_delay_small == true,
-        "handler=STOP_MOTOR.tick5: sm_x.error_step_delay_small == true");
+    sput_fail_unless(sm_x.error&STEPPER_ERROR_STEP_DELAY_SMALL,
+        "handler=STOP_MOTOR.tick5: sm_x.error&STEPPER_ERROR_STEP_DELAY_SMALL == true");
     sput_fail_unless(sm_x.status == STEPPER_STATUS_FINISHED,
         "handler=STOP_MOTOR.tick5: sm_x.status == STEPPER_STATUS_FINISHED");
     sput_fail_unless(sm_y.status == STEPPER_STATUS_RUNNING,
@@ -801,8 +801,8 @@ static void test_small_step_delay_handlers() {
     
     // шаг1 - 5 тиков таймера, всё должно быть ок
     timer_tick(4);
-    sput_fail_unless(sm_x.error_step_delay_small == false,
-        "handler=CANCEL_CYCLE.tick4: sm_x.error_step_delay_small == false");
+    sput_fail_unless(!(sm_x.error&STEPPER_ERROR_STEP_DELAY_SMALL),
+        "handler=CANCEL_CYCLE.tick4: sm_x.error&STEPPER_ERROR_STEP_DELAY_SMALL == false");
     sput_fail_unless(sm_x.status == STEPPER_STATUS_RUNNING,
         "handler=CANCEL_CYCLE.tick4: sm_x.status == STEPPER_STATUS_RUNNING");
     
@@ -816,8 +816,8 @@ static void test_small_step_delay_handlers() {
     //cout<<sm_y.current_pos<<endl;
     
     // флаг ошибки
-    sput_fail_unless(sm_x.error_step_delay_small == true,
-        "handler=CANCEL_CYCLE.tick5: sm_x.error_step_delay_small == true");
+    sput_fail_unless(sm_x.error&STEPPER_ERROR_STEP_DELAY_SMALL,
+        "handler=CANCEL_CYCLE.tick5: sm_x.error&STEPPER_ERROR_STEP_DELAY_SMALL == true");
     
     // моторы стоят
     sput_fail_unless(sm_x.status == STEPPER_STATUS_FINISHED,
@@ -912,8 +912,10 @@ static void test_exit_bounds_issue1_whirl() {
     // здесь мы должны увидеть, что этот шаг приведет в выходу за виртуальную границу,
     // должны быть выставлены коды ошибок, статус мотора обозначен как "остановлен"
     sput_fail_unless(sm_x.status == STEPPER_STATUS_FINISHED, "step1.tick1: status == STEPPER_STATUS_FINISHED");
-    sput_fail_unless(sm_x.error_soft_end_min, "step1.tick3: error_soft_end_min == true");
-    sput_fail_unless(!sm_x.error_soft_end_max, "step1.tick3: error_soft_end_max == false");
+    sput_fail_unless(sm_x.error&STEPPER_ERROR_SOFT_END_MIN,
+        "step1.tick3: error&STEPPER_ERROR_SOFT_END_MIN == true");
+    sput_fail_unless(!(sm_x.error&STEPPER_ERROR_SOFT_END_MAX),
+        "step1.tick3: error&STEPPER_ERROR_SOFT_END_MAX == false");
     
     // на всякий случай проверим финальное положение
     sput_fail_unless(sm_x.current_pos == 0, "step1.tick1: current_pos == 0");
@@ -999,8 +1001,8 @@ static void test_exit_bounds_issue1_steps() {
     // здесь мы должны увидеть, что этот шаг приведет в выходу за виртуальную границу,
     // должны быть выставлены коды ошибок, статус мотора обозначен как "остановлен"
     sput_fail_unless(sm_x.status == STEPPER_STATUS_FINISHED, "step1.tick1: status == STEPPER_STATUS_FINISHED");
-    sput_fail_unless(sm_x.error_soft_end_min, "step1.tick3: error_soft_end_min == true");
-    sput_fail_unless(!sm_x.error_soft_end_max, "step1.tick3: error_soft_end_max == false");
+    sput_fail_unless(sm_x.error&STEPPER_ERROR_SOFT_END_MIN, "step1.tick3: error&STEPPER_ERROR_SOFT_END_MIN == true");
+    sput_fail_unless(!(sm_x.error&STEPPER_ERROR_SOFT_END_MAX), "step1.tick3: error&STEPPER_ERROR_SOFT_END_MAX == false");
     
     // на всякий случай проверим финальное положение
     sput_fail_unless(sm_x.current_pos == 0, "step1.tick1: current_pos == 0");
