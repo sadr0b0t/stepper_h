@@ -182,17 +182,40 @@ static int _stepper_count = 0;
 static stepper* _smotors[MAX_STEPPERS];
 static motor_cycle_info_t _cstatuses[MAX_STEPPERS];
 
+///////////////////////////
 // Настройки таймера
 // значения по умолчанию для таймера
-// с периодом 200 микросекунд (5тыс вызовов в секунду)
-// ок для движения по дуге (по 90мкс на acos/asin)
-// 80000000/8/5000=2000
-static int _timer_id = TIMER3;
-static int _timer_prescaler = TIMER_PRESCALER_1_8;
-static int _timer_period = 2000;
-// Период таймера, мкс
-static int _timer_period_us = 200;
 
+// для периода 10 микросекунд (100тыс вызовов в секунду == 100КГц):
+// На ChipKIT Uno32 ок для движения по линии 2 мотора, не ок для 3х,
+// максимальная аппаратная скорость на исследованных моторах
+//int _timer = TIMER3;
+//int _timer_prescaler = TIMER_PRESCALER_1_8;
+//int _timer_period = 100;
+// Период таймера, мкс
+//int _timer_period_us = 10;
+
+// для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
+// На ChipKIT Uno32 наименьший вариант для движения по линии 3 мотора,
+// в 3 раза медленнее максимальной аппаратной скорости на исследованных моторах.
+// совсем не ок для движения по дуге (по 90мкс на acos/asin)
+int _timer = TIMER3;
+int _timer_prescaler = TIMER_PRESCALER_1_8;
+int _timer_period = 200;
+// Период таймера, мкс
+int _timer_period_us = 20;
+
+// для периода 200 микросекунд (5тыс вызовов в секунду == 5КГц):
+// На ChipKIT Uno32 ок для движения по дуге (по 90мкс на acos/asin)
+//int _timer = TIMER3;
+//int _timer_prescaler = TIMER_PRESCALER_1_8;
+//int _timer_period = 2000;
+// Период таймера, мкс
+//int _timer_period_us = 200;
+
+
+
+///////////////////////////
 // Текущий статус цикла
 static bool _cycle_running = false;
 // Цикл на паузе (типа работаем, но шаги не делаем)
