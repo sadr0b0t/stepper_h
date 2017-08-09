@@ -41,15 +41,7 @@
  *     текущее положение рабочей координаты.
  * 
  *     Единица измерения выбирается в зависимости от задачи и свойств
- *     передаточного механизма.
- * 
- *     Если брать базовую единицу изменения за нанометры (1/1000 микрометра),
- *     то диапазон значений для рабочей области будет от нуля в одну сторону:
- *     2^31=2147483648-1 нанометров /1000/1000/1000=2.15 метров
- *     в обе строны: [-2.15м, 2.15м], т.е. всего 4.3 метра.
- *
- *     Для базовой единицы микрометр (микрон) рабочая область
- *     от -2км до 2км, всего 4км.
+ *     передаточного механизма (рекомендуется считать за нанометры)
  */
 void init_stepper(stepper* smotor, char name,
         int pin_step, int pin_dir, int pin_en,
@@ -130,7 +122,7 @@ void init_stepper(stepper* smotor, char name,
 void init_stepper_ends(stepper* smotor,
         int pin_min, int pin_max,
         end_strategy_t min_end_strategy, end_strategy_t max_end_strategy,
-        long min_pos, long max_pos) {
+        long long min_pos, long long max_pos) {
     
     smotor->pin_min = pin_min;
     smotor->pin_max = pin_max;
@@ -149,5 +141,4 @@ void init_stepper_ends(stepper* smotor,
         pinMode(pin_max, INPUT);
     }
 }
-
 

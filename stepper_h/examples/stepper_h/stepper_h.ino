@@ -36,7 +36,7 @@ void setup() {
     //     int distance_per_step)
     // init_stepper_ends(stepper* smotor,
     //     end_strategy min_end_strategy, end_strategy max_end_strategy,
-    //     long min_pos, long max_pos);
+    //     long long min_pos, long long max_pos);
     
     // Pinout for CNC-shield
     
@@ -60,6 +60,8 @@ void loop() {
     static int prevTime = 0;
     // Debug messages - print current positions of motors once per second
     // while they are rotating, once per 10 seconds when they are stopped
+    // (see https://github.com/1i7/stepper_h/3pty/arduino/README
+    // to fix compile proplem)
     int currTime = millis();
     if( (stepper_cycle_running() && (currTime - prevTime) >= 1000) || (currTime - prevTime) >= 10000 ) {
         prevTime = currTime;

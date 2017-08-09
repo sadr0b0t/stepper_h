@@ -112,7 +112,7 @@ void setup() {
     //     int distance_per_step)
     // init_stepper_ends(stepper* smotor,
     //     end_strategy min_end_strategy, end_strategy max_end_strategy,
-    //     long min_pos, long max_pos);
+    //     long long min_pos, long long max_pos);
     
     // Pinout for CNC-shield
     
@@ -130,6 +130,9 @@ void setup() {
 
 
 void loop() {
+    // (see https://github.com/1i7/stepper_h/3pty/arduino/README
+    // to fix compile proplem)
+    
     static int next_line = 1;
     if(!stepper_cycle_running()) {
         // цикл завершился, запускаем следующую линию

@@ -19,7 +19,7 @@ git clone https://github.com/1i7/stepper_h.git
 
 basic example should appear in Arduino examples menu: File/Examples/stepper_h/stepper_h
 
-This one runs 3 stepper motors with different speed at the same time. Motors start to run after calling start_stepper_cycle(). Note, that loop can contain any code (or have no code at all) - the motors would work in background.
+This one runs 3 stepper motors with different speed at the same time. Motors start to run after calling stepper_start_cycle(). Note, that loop can contain any code (or have no code at all) - the motors would work in background.
 ```c++
 #include "stepper.h"
 
@@ -59,7 +59,7 @@ void setup() {
     //     int distance_per_step)
     // init_stepper_ends(stepper* smotor,
     //     end_strategy min_end_strategy, end_strategy max_end_strategy,
-    //     long min_pos, long max_pos);
+    //     long long min_pos, long long max_pos);
     
     // X
     init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7500);
@@ -132,8 +132,84 @@ https://vimeo.com/133592759
 https://vimeo.com/93176233
 https://vimeo.com/93395529
 
+---
+
+# Note for example sketch compile error
+
+For Serial.println(int64_t, DEC)
+copy patched 3pty/arduino/Print.cpp and 3pty/arduino/Print.h to:
+
+for Arduino platform
+~/.arduino15/packages/arduino/hardware/avr/1.6.19/cores/arduino/
+for ChipKIT platform
+~/.arduino15/packages/chipKIT/hardware/pic32/1.4.3/cores/pic32/
+
+This is required to compile example sketch:
+
+~~~cpp
+    Serial.print(sm_x.current_pos, DEC);
+~~~
+
+(sm_x.current_pos has int64_t/"long long" data type)
+
+Or remove/replace this line in example sketch,
+patched Print is not required to compile stepper_h library core.
+
+patched version of Print by
+Rob Tillaart https://github.com/RobTillaart
+
+Code to print int64_t and uint64_t for UNO (and maybe DUE)
+http://forum.arduino.cc/index.php/topic,143584.0.html
+https://github.com/arduino/Arduino/issues/1236
 
 ---
+# Про базовую единицу измерения и размеры рабочей области
+
+Единица измерения выбирается в зависимости от задачи и свойств
+передаточного механизма (проще всего считать за нанометры).
+
+Тип данных curren_pos, min_pos и max_pos - long long (int64_t),
+64-битное знаковое целое.
+
+Для 64-битного значения current_pos размеры рабочей области
+с базовой единицей нанометры:
+  2^63=9223372036854776000 нанометров /1000/1000/1000 =
+  9223372037 метров /1000 = 9223372км (9 миллионов км).
+в обе стороны от -9млн км до 9млн км, всего 18млн км (1/3 пути до Марса)
+
+64-битные типы данных не поддерживаются аппаратно на 32-битных
+(тем более, на 16-битных) контроллерах, но они реализованы на уровне
+компилятора и библиотеки libc (как минимум, для платформ ChipKIT и Arduino).
+Они могу работать чуть медленнее, чем "родные" (на 32-битных контроллерах),
+32-битные переменные long, но потеря производительности по факту
+оказывается не существенной даже в критических частях кода
+(сравнение с точностью до микросекунд не показало разницы).
+
+При этом использование 64-битных значений фактически позволяет
+не задумываться о максимальных границах рабочей области.
+
+Для 32хбитного значения current_pos размеры рабочей области были бы:
+
+- Если брать базовую единицу измерения за нанометры (1/1000 микрометра),
+то диапазон значений для рабочей области будет от нуля в одну сторону:
+  2^31=2147483648-1 нанометров/1000/1000/1000=2.15метра
+в обе строны: [-2.15м, 2.15м], т.е. всего 4.3 метра.
+
+- Для базовой единицы микрометр (микрон) рабочая область
+от -2.15км до 2.15км, всего 4.3км.
+
+Для 32-битного случая вариант рабочей области 4.3 метра (2.15, если считать от 0)
+с нанометрами для многих случаев в принципе приемлем, но почти не оставляет запаса
+для экспериментов.
+
+Вариант размера рабочей области с базовой идиницей микрометры более, чем
+достаточен, но размер шага для настольных станков (хотя они на уровне механики
+могут не поддерживать такую точность) математически часто предполагает доли
+микрон (6.15мкм, 7.5мкм и т.п.), поэтому в качестве целевой единицы измерения
+рекомендуется ориентироваться на целочисленные нанометры.
+
+---
+
 # Внутреннее устройство
 
 Код обработчика таймера handle_interrupts

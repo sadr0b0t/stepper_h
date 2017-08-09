@@ -1,0 +1,26 @@
+For Serial.println(int64_t, DEC)
+copy patched Print.cpp and Print.h to:
+
+for Arduino platform
+~/.arduino15/packages/arduino/hardware/avr/1.6.19/cores/arduino/
+for ChipKIT platform
+~/.arduino15/packages/chipKIT/hardware/pic32/1.4.3/cores/pic32/
+
+This is required to compile example sketch:
+
+~~~cpp
+    Serial.print(sm_x.current_pos, DEC);
+~~~
+
+(sm_x.current_pos has int64_t/"long long" data type)
+
+Or remove/replace this line in example sketch,
+patched Print is not required to compile stepper_h library core.
+
+patched version of Print by
+Rob Tillaart https://github.com/RobTillaart
+
+Code to print int64_t and uint64_t for UNO (and maybe DUE)
+http://forum.arduino.cc/index.php/topic,143584.0.html
+https://github.com/arduino/Arduino/issues/1236
+
