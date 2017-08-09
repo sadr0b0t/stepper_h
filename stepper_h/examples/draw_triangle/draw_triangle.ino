@@ -130,7 +130,7 @@ void setup() {
 
 
 void loop() {
-    // (see https://github.com/1i7/stepper_h/3pty/arduino/README
+    // (see https://github.com/1i7/stepper_h/blob/master/3pty/arduino/README
     // to fix compile proplem)
     
     static int next_line = 1;
