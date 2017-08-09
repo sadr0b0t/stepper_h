@@ -136,11 +136,16 @@ https://vimeo.com/93395529
 
 # Note for example sketch compile error
 
-For Serial.println(int64_t, DEC)
-copy patched 3pty/arduino/Print.cpp and 3pty/arduino/Print.h to:
+Unfortunately, provided above example won't compile with upstream
+Arduino (both Arduino and ChipKIT platforms) due to lack of support
+of 64-bit values in Serial.println(xxx) functions:
+Serial.println(int64_t, DEC) is missing
+
+To fix this issue, copy patched 3pty/arduino/Print.cpp and 3pty/arduino/Print.h to:
 
 for Arduino platform
 ~/.arduino15/packages/arduino/hardware/avr/1.6.19/cores/arduino/
+
 for ChipKIT platform
 ~/.arduino15/packages/chipKIT/hardware/pic32/1.4.3/cores/pic32/
 
@@ -173,8 +178,10 @@ https://github.com/arduino/Arduino/issues/1236
 
 Для 64-битного значения current_pos размеры рабочей области
 с базовой единицей нанометры:
+
   2^63=9223372036854776000 нанометров /1000/1000/1000 =
   9223372037 метров /1000 = 9223372км (9 миллионов км).
+
 в обе стороны от -9млн км до 9млн км, всего 18млн км (1/3 пути до Марса)
 
 64-битные типы данных не поддерживаются аппаратно на 32-битных
@@ -193,6 +200,7 @@ https://github.com/arduino/Arduino/issues/1236
 - Если брать базовую единицу измерения за нанометры (1/1000 микрометра),
 то диапазон значений для рабочей области будет от нуля в одну сторону:
   2^31=2147483648-1 нанометров/1000/1000/1000=2.15метра
+
 в обе строны: [-2.15м, 2.15м], т.е. всего 4.3 метра.
 
 - Для базовой единицы микрометр (микрон) рабочая область
