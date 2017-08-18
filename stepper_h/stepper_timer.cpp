@@ -464,7 +464,31 @@ void prepare_simple_buffered_steps(stepper *smotor, int buf_size, unsigned long*
 }
 
 /**
- * @param buf_size - количество элементов в буфере delay_buffer
+ * Подготовить серию шагов с переменной скоростью. Для каждой подсерии задаётся задержка между шагами,
+ * количество шагов и направление вращения (знак количества шагов) - соответствующие элементы
+ * массивов delay_buffer и step_buffer.
+ * 
+ * Оба массива delay_buffer и step_buffer должны существовать и не меняться до завершения
+ * цикла вращения (рекомендуется объявлять их как глобальные переменные модуля или
+ * как локальные переменные внутри функции с модификатором static).
+ * 
+ *   // 
+ *   static unsigned long delay_buffer[3];
+ *   static long step_buffer[3];
+ * 
+ *   // значения задержек между шагами на каждом подцикле
+ *   delay_buffer[0] = y_step_delay_us; // базовая скорость
+ *   delay_buffer[1] = y_step_delay_us*10; // в 10 раз медленнее
+ *   delay_buffer[2] = y_step_delay_us*2; // в 2 раза медленнее
+ * 
+ *   // количество шагов на каждом подцикле
+ *   step_buffer[0] = 200*10; // туда
+ *   step_buffer[1] = -200*5; // обратно
+ *   step_buffer[2] = 200*2; // туда
+ * 
+ *   prepare_buffered_steps(&sm_y, 3, delay_buffer, step_buffer);
+ * 
+ * @param buf_size - количество элементов в буфере delay_buffer (количество подциклов)
  * @param delay_buffer - (step delay buffer) - массив задержек перед каждым следующим шагом, микросекунды
  * @param step_buffer - (step count buffer) - массив с количеством шагов для каждого
  *     значения задержки из delay_buffer. Может содержать положительные и отрицательные значения,
@@ -1086,7 +1110,7 @@ void handle_interrupts(int timer) {
                     
                     // обновим статус мотора
                     _smotors[i]->status = STEPPER_STATUS_FINISHED;
-                        
+                    
                     // обозначим ошибку мотора
                     _smotors[i]->error |= STEPPER_ERROR_SOFT_END_MIN;
                     
@@ -1160,14 +1184,13 @@ void handle_interrupts(int timer) {
                             digitalWrite(_smotors[i]->pin_dir, LOW); // обратно
                         }
                         
-                        // скорость вращения
-                        int step_delay = _cstatuses[i].delay_buffer[_cstatuses[i].cycle_counter];
+                        // скорость вращения (задержка между шагами)
+                        _cstatuses[i].step_delay = _cstatuses[i].delay_buffer[_cstatuses[i].cycle_counter];
                         
-                        // Взводим счетчики
+                        // взводим счетчик шагов в новом цикле
                         _cstatuses[i].step_counter = _cstatuses[i].step_count;
-                        // задержка перед первым шагом
-                        _cstatuses[i].step_timer = _cstatuses[i].step_delay;
                         
+                        // задержку перед первым шагом ставим ниже
                     } else {
                         // сделали последний шаг в последнем цикле
                         _smotors[i]->status = STEPPER_STATUS_FINISHED;
@@ -1177,10 +1200,10 @@ void handle_interrupts(int timer) {
                 // вычисляем задержку перед следующим шагом
                 int step_delay;
                 if(_cstatuses[i].delay_source == CONSTANT) {
-                    // координата движется с постоянной скоростью
+                    // координата внутри цикла движется с постоянной скоростью
                     step_delay = _cstatuses[i].step_delay;
                 } if(_cstatuses[i].delay_source == BUFFER) {
-                    // координата движется с переменной скоростью,
+                    // координата внутри цикла движется с переменной скоростью,
                     // значения задержек получаем из буфера
                     
                     // вычислим время до следующего шага (step_counter уже уменьшили)

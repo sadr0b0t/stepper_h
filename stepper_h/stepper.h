@@ -467,7 +467,31 @@ void prepare_whirl(stepper *smotor, int dir, unsigned long step_delay, calibrate
 void prepare_simple_buffered_steps(stepper *smotor, int buf_size, unsigned long* delay_buffer, long step_count=1);
 
 /**
- * @param buf_size - количество элементов в буфере delay_buffer
+ * Подготовить серию шагов с переменной скоростью. Для каждой подсерии задаётся задержка между шагами,
+ * количество шагов и направление вращения (знак количества шагов) - соответствующие элементы
+ * массивов delay_buffer и step_buffer.
+ * 
+ * Оба массива delay_buffer и step_buffer должны существовать и не меняться до завершения
+ * цикла вращения (рекомендуется объявлять их как глобальные переменные модуля или
+ * как локальные переменные внутри функции с модификатором static).
+ * 
+ *   // 
+ *   static unsigned long delay_buffer[3];
+ *   static long step_buffer[3];
+ * 
+ *   // значения задержек между шагами на каждом подцикле
+ *   delay_buffer[0] = y_step_delay_us; // базовая скорость
+ *   delay_buffer[1] = y_step_delay_us*10; // в 10 раз медленнее
+ *   delay_buffer[2] = y_step_delay_us*2; // в 2 раза медленнее
+ * 
+ *   // количество шагов на каждом подцикле
+ *   step_buffer[0] = 200*10; // туда
+ *   step_buffer[1] = -200*5; // обратно
+ *   step_buffer[2] = 200*2; // туда
+ * 
+ *   prepare_buffered_steps(&sm_y, 3, delay_buffer, step_buffer);
+ * 
+ * @param buf_size - количество элементов в буфере delay_buffer (количество подциклов)
  * @param delay_buffer - (step delay buffer) - массив задержек перед каждым следующим шагом, микросекунды
  * @param step_buffer - (step count buffer) - массив с количеством шагов для каждого
  *     значения задержки из delay_buffer. Может содержать положительные и отрицательные значения,

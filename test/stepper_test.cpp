@@ -835,6 +835,247 @@ static void test_small_step_delay_handlers() {
     sput_fail_unless(!stepper_cycle_running(), "handler=CANCEL_CYCLE.tick5+5: tepper_cycle_running() == false");
 }
 
+static void test_buffered_steps_tick_by_tick() {
+    // Проверим движение с переменной скоростью с
+    // prepare_buffered_steps
+    
+    // настройки частоты таймера
+    int timer_period_us = 200;
+    stepper_configure_timer(timer_period_us, TIMER3, TIMER_PRESCALER_1_8, 2000);
+    
+    // мотор
+    stepper sm_x;
+    
+    // мотор - минимальная задержка между шагами 1000 мкс,
+    // расстояние за шаг - 7.5мкм=7500нм
+    int step_delay_us = 1000;
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, step_delay_us, 7500);
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000000);
+    
+    // готовим шаги с переменной скоростью
+    // void prepare_buffered_steps(stepper *smotor,
+    //    int buf_size, unsigned long* delay_buffer, long* step_buffer)
+    const int buf_size = 3;
+    static unsigned long delay_buffer[buf_size];
+    static long step_buffer[buf_size];
+
+    delay_buffer[0] = step_delay_us; // максимальная скорость
+    delay_buffer[1] = step_delay_us*10; // в 10 раз медленнее
+    delay_buffer[2] = step_delay_us*2; // в 2 раза медленнее
+
+    step_buffer[0] = 4; // 4 шага туда
+    step_buffer[1] = -2; // 2 шага обратно
+    step_buffer[2] = 4; // 4 шага туда
+    
+    prepare_buffered_steps(&sm_x, buf_size, delay_buffer, step_buffer);
+    
+    // шагаем
+    stepper_start_cycle();
+    
+    // #1
+    // первый цикл: 4 шага с задержкой 1000 мкс
+    // delay_buffer[0] = step_delay_us; // = 1000мкс
+    // step_buffer[0] = 4; // = 4шага
+    
+    // расстояние: 7500нм/шаг * 4шага = 30000нм
+    // позиция в конце цикла: 0+30000=300000
+    
+    // период таймера 200 мкс, задержка между шагами - 1000 мкс:
+    // 1000/200=5 тиков таймера на шаг,
+    // всего 5тиков/шаг * 4шага = 20 тиков на подцикл
+    
+    // первый цикл - 20 тиков
+    timer_tick(20);
+    sput_fail_unless(sm_x.status == STEPPER_STATUS_RUNNING,
+        "buffered steps: cycle 1 of 3: sm_x.status == STEPPER_STATUS_RUNNING");
+    sput_fail_unless(sm_x.current_pos == 30000,
+        "buffered steps: cycle 1 of 3: sm_x.current_pos == 30000");
+    
+    // #2
+    // второй цикл: 2 шага в обратном направлении с задержкой 10000 мкс
+    // delay_buffer[1] = step_delay_us*10; // = 1000мкс*10=10000мкс
+    // step_buffer[1] = -2; // = -2шага
+    
+    // расстояние: 7500нм/шаг * 2шага = 15000нм
+    //   минус - обратное направление (движемся к нулю,
+    //   значение координаты уменьшаем на расстояние)
+    // позиция в конце цикла: 30000-15000=15000
+    
+    // период таймера 200 мкс, задержка между шагами - 10000 мкс:
+    // 10000/200=50 тиков таймера на шаг,
+    // всего 50тиков/шаг * 2шага = 100 тиков на подцикл
+    
+    // поехали цикл - 100 тиков
+    
+    // шаг2.1:
+    // новое положение: 30000-7500=22500
+    timer_tick(50);
+    sput_fail_unless(sm_x.current_pos == 30000-7500,
+        "buffered steps: cycle 2 of 3, step1: sm_x.current_pos == 30000-7500 (=22500)");
+    
+    // шаг2.2:
+    // новое положение: 22500-7500=15000
+    timer_tick(50);
+    sput_fail_unless(sm_x.current_pos == 30000-7500*2,
+        "buffered steps: cycle 2 of 3, step2: sm_x.current_pos == 30000-7500*2 (=15000)");
+    
+    // цикл завершен, всё еще работаем
+    sput_fail_unless(sm_x.status == STEPPER_STATUS_RUNNING,
+        "buffered steps: cycle 2 of 3: sm_x.status == STEPPER_STATUS_RUNNING");
+    sput_fail_unless(sm_x.current_pos == 30000-7500*2,
+        "buffered steps: cycle 2 of 3: sm_x.current_pos == 15000");
+    
+    // #3
+    // третий цикл: 4 шага с задержкой 2000 мкс
+    // delay_buffer[2] = step_delay_us*2; // = 1000мкс*2=2000мкс
+    // step_buffer[2] = 4; // = 4шага
+    
+    // расстояние: 7500нм/шаг * 4шага = 30000нм
+    // позиция в конце цикла: 15000+30000=45000
+    
+    // период таймера 200 мкс, задержка между шагами - 2000 мкс:
+    // 2000/200=10 тиков таймера на шаг,
+    // всего 10тиков/шаг * 4шага = 40 тиков на подцикл
+    
+    // третий цикл - 40 тиков + 1 завершающий тик
+    
+    // шаг3.1:
+    // новое положение: 15000+7500=22500
+    timer_tick(10);
+    sput_fail_unless(sm_x.current_pos == 15000+7500,
+        "buffered steps: cycle 3 of 3, step1: sm_x.current_pos == 15000+7500 (=22500)");
+    
+    // шаг3.2:
+    // новое положение: 22500+7500=30000
+    timer_tick(10);
+    sput_fail_unless(sm_x.current_pos == 15000+7500*2,
+        "buffered steps: cycle 3 of 3, step2: sm_x.current_pos == 15000+7500*2 (=30000)");
+    
+    // шаг3.3:
+    // новое положение: 30000+7500=37500
+    timer_tick(10);
+    sput_fail_unless(sm_x.current_pos == 15000+7500*3,
+        "buffered steps: cycle 3 of 3, step3: sm_x.current_pos == 15000+7500*3 (=37500)");
+    
+    // шаг3.4:
+    // новое положение: 37500+7500=45000
+    timer_tick(10);
+    sput_fail_unless(sm_x.current_pos == 15000+7500*4,
+        "buffered steps: cycle 3 of 3, step4: sm_x.current_pos == 15000+7500*4 (=45000)");
+    
+    // завершающий тик
+    timer_tick(1);
+    sput_fail_unless(sm_x.status == STEPPER_STATUS_FINISHED,
+        "buffered steps: cycle 3 of 3: sm_x.status == STEPPER_STATUS_FINISHED");
+    sput_fail_unless(sm_x.current_pos == 45000,
+        "buffered steps: cycle 3 of 3: sm_x.current_pos == 45000");
+}
+
+
+static void test_buffered_steps() {
+    // Проверим движение с переменной скоростью с
+    // prepare_buffered_steps
+    
+    // настройки частоты таймера
+    int timer_period_us = 200;
+    stepper_configure_timer(timer_period_us, TIMER3, TIMER_PRESCALER_1_8, 2000);
+    
+    // мотор
+    stepper sm_x;
+    
+    // мотор - минимальная задержка между шагами 1000 мкс,
+    // расстояние за шаг - 7.5мкм=7500нм
+    int step_delay_us = 1000;
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, step_delay_us, 7500);
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000000);
+    
+    // готовим шаги с переменной скоростью
+    // void prepare_buffered_steps(stepper *smotor,
+    //    int buf_size, unsigned long* delay_buffer, long* step_buffer)
+    const int buf_size = 3;
+    static unsigned long delay_buffer[buf_size];
+    static long step_buffer[buf_size];
+
+    delay_buffer[0] = step_delay_us; // максимальная скорость
+    delay_buffer[1] = step_delay_us*10; // в 10 раз медленнее
+    delay_buffer[2] = step_delay_us*2; // в 2 раза медленнее
+
+    step_buffer[0] = 400*10; // 10 кругов туда
+    step_buffer[1] = -400*5; // 5 кругов обратно
+    step_buffer[2] = 400*2; // 2 круга туда
+    
+    prepare_buffered_steps(&sm_x, buf_size, delay_buffer, step_buffer);
+    
+    // шагаем
+    stepper_start_cycle();
+    
+    // #1
+    // первый цикл: 4000 шагов с задержкой 1000 мкс
+    // delay_buffer[0] = step_delay_us; // = 1000мкс
+    // step_buffer[0] = 400*10; // = 4000шагов
+    
+    // расстояние: 7500нм/шаг * 4000шагов = 30000000нм
+    // позиция в конце цикла: 0+30000000=30000000
+    
+    // период таймера 200 мкс, задержка между шагами - 1000 мкс:
+    // 1000/200=5 тиков таймера на шаг,
+    // всего 5тиков/шаг * 4000шагов = 20000 тиков на подцикл
+    
+    // первый цикл - 20000 тиков
+    timer_tick(20000);
+    sput_fail_unless(sm_x.status == STEPPER_STATUS_RUNNING,
+        "buffered steps: cycle 1 of 3: sm_x.status == STEPPER_STATUS_RUNNING");
+    sput_fail_unless(sm_x.current_pos == 30000000,
+        "buffered steps: cycle 1 of 3: sm_x.current_pos == 30000000");
+    
+    // #2
+    // второй цикл: 2000 шагов в обратном направлении с задержкой 10000 мкс
+    // delay_buffer[1] = step_delay_us*10; // = 1000мкс*10=10000мкс
+    // step_buffer[1] = -400*5; // = -2000шагов
+    
+    // расстояние: 7500нм/шаг * 2000шагов = 15000000нм
+    //   минус - обратное направление (движемся к нулю,
+    //   значение координаты уменьшаем на расстояние)
+    // позиция в конце цикла: 30000000-15000000=15000000
+    
+    // период таймера 200 мкс, задержка между шагами - 10000 мкс:
+    // 10000/200=50 тиков таймера на шаг,
+    // всего 50тиков/шаг * 2000шагов = 100000 тиков на подцикл
+    
+    // второй цикл - 100000 тиков
+    
+    // проверим первый шаг
+    timer_tick(50);
+    sput_fail_unless(sm_x.current_pos == 30000000-7500,
+        "buffered steps: cycle 2 of 3, step1: sm_x.current_pos == 30000000-7500");
+    
+    // оставшиеся шаги
+    timer_tick(100000-50);
+    sput_fail_unless(sm_x.status == STEPPER_STATUS_RUNNING,
+        "buffered steps: cycle 2 of 3: sm_x.status == STEPPER_STATUS_RUNNING");
+    sput_fail_unless(sm_x.current_pos == 15000000,
+        "buffered steps: cycle 2 of 3: sm_x.current_pos == 15000000");
+    
+    // #3
+    // третий цикл: 800 шагов с задержкой 2000 мкс
+    // delay_buffer[2] = step_delay_us*2; // = 1000мкс*2=2000мкс
+    // step_buffer[2] = 400*2; // = 800шагов
+    
+    // расстояние: 7500нм/шаг * 800шагов = 6000000нм
+    // позиция в конце цикла: 15000000+6000000=21000000
+    
+    // период таймера 200 мкс, задержка между шагами - 2000 мкс:
+    // 2000/200=10 тиков таймера на шаг,
+    // всего 10тиков/шаг * 800шагов = 8000 тиков на подцикл
+    
+    // третий цикл - 8000 тиков + 1 завершающий тик
+    timer_tick(8000+1);
+    sput_fail_unless(sm_x.status == STEPPER_STATUS_FINISHED,
+        "buffered steps: cycle 3 of 3: sm_x.status == STEPPER_STATUS_FINISHED");
+    sput_fail_unless(sm_x.current_pos == 21000000,
+        "buffered steps: cycle 3 of 3: sm_x.current_pos == 21000000");
+}
+
 static void test_driver_std_modes() {
     // Проверим стандартные режимы драйвера step-dir
     // на полный проворот с делителями шага 1/1, 1/8, 1/16, 1/32
@@ -1628,6 +1869,13 @@ int main() {
     
     sput_enter_suite("Small step delay error handlers");
     sput_run_test(test_small_step_delay_handlers);
+    
+    sput_enter_suite("Moving with variable speed: buffered steps tick by tick");
+    sput_run_test(test_buffered_steps_tick_by_tick);
+    
+    sput_enter_suite("Moving with variable speed: buffered steps");
+    sput_run_test(test_buffered_steps);
+    
     
     sput_enter_suite("Step-dir driver std divider modes: 1/1, 1/18, 1/16, 1/32");
     sput_run_test(test_driver_std_modes);
