@@ -26,6 +26,7 @@ static stepper sm_x, sm_y, sm_z;
 
 
 // для периода 10 микросекунд (100тыс вызовов в секунду == 100КГц):
+// На ChipKIT Uno32 наименьший вариант ок для движения по линии 3х моторов
 // На ChipKIT Uno32
 // 2 мотора (ок):
 //   Finished cycle, max time=9
@@ -37,7 +38,7 @@ static stepper sm_x, sm_y, sm_z;
 //int _timer_period_us = 10;
 
 // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
-// На ChipKIT Uno32 наименьший вариант ок для движения по линии
+// На ChipKIT Uno32 наименьший вариант ок для движения по линии 3х моторов
 // 3 мотора (ок):
 //   Finished cycle, max time=11
 // 2 мотора (тем более ок):
@@ -84,17 +85,66 @@ int _step_delay_us = 60;
 //int _step_delay_us = 600;
 //int _step_delay_us = 1000;
 
+
+// Вариант с индивидуальными задержками для разных моторов
+
+// X
+// 1/32, 104 mm/s
+int x_step_delay_us = 60;
+int x_dist_per_step = 6250;
+
+// Y
+// 1/32, 104 mm/s
+//int y_step_delay_us = 60;
+//int y_dist_per_step = 6250;
+
+// 1/1, 132 mm/s
+int y_step_delay_us = 1500;
+int y_dist_per_step = 200000;
+
+
 static void prepare_line3() {
     // prepare_steps(stepper *smotor,
     //     long step_count, unsigned long step_delay,
     //     calibrate_mode_t calibrate_mode=NONE);
     
     // шагаем с максимальной скоростью
-    prepare_steps(&sm_x, 200000, _step_delay_us);
+    prepare_steps(&sm_x, 200000, x_step_delay_us);
     // вызвать CYCLE_ERROR_MOTOR_ERROR
-    //prepare_steps(&sm_x, 200000, _step_delay_us-1);
-    prepare_steps(&sm_y, 200000, _step_delay_us);
+    //prepare_steps(&sm_x, 200000, x_step_delay_us-1);
+    prepare_steps(&sm_y, 200000, y_step_delay_us);
     prepare_steps(&sm_z, 200000, _step_delay_us);
+}
+
+static void prepare_whirl2() {
+    // prepare_steps(stepper *smotor,
+    //     long step_count, unsigned long step_delay,
+    //     calibrate_mode_t calibrate_mode=NONE);
+    
+    // шагаем с максимальной скоростью
+    prepare_whirl(&sm_x, 1, x_step_delay_us);
+    prepare_whirl(&sm_y, 1, y_step_delay_us);
+}
+
+static void prepare_buffered2() {
+    // void prepare_buffered_steps(stepper *smotor,
+    //    int buf_size, unsigned long* delay_buffer, long* step_buffer)
+ 
+    static unsigned long delay_buffer[3];
+    static long step_buffer[3];
+
+    delay_buffer[0] = y_step_delay_us;
+    delay_buffer[1] = y_step_delay_us*10;
+    delay_buffer[2] = y_step_delay_us*2;
+
+    step_buffer[0] = 200*10;
+    step_buffer[1] = -200*5;
+    step_buffer[2] = 200*2;
+    
+    prepare_buffered_steps(&sm_y, 3, delay_buffer, step_buffer);
+
+    // для икса просто шаги
+    prepare_steps(&sm_x, 200000, x_step_delay_us);
 }
 
 void print_cycle_error(stepper_cycle_error_t err) {
@@ -162,11 +212,16 @@ void setup() {
     // step_delay=60 микросекунд (20*3)
     
     // X
-    init_stepper(&sm_x, 'x', 2, 5, 8, false, _step_delay_us, 750);
-    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000000);
+    
+    init_stepper(&sm_x, 'x', 2, 5, 8, false, x_step_delay_us, x_dist_per_step);
+    //init_stepper(&sm_x, 'x', 2, 5, 8, false, _step_delay_us, 750);
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 30000000000);
+    
     // Y
-    init_stepper(&sm_y, 'y', 3, 6, 8, false, _step_delay_us, 750);
-    init_stepper_ends(&sm_y, NO_PIN, NO_PIN, CONST, CONST, 0, 216000000);
+    init_stepper(&sm_y, 'y', 3, 6, 8, false, y_step_delay_us, y_dist_per_step);
+    //init_stepper(&sm_y, 'y', 3, 6, 8, false, _step_delay_us, 750);
+    init_stepper_ends(&sm_y, NO_PIN, NO_PIN, CONST, CONST, 0, 21600000000);
+    
     // Z
     init_stepper(&sm_z, 'z', 4, 7, 8, false, _step_delay_us, 750);
     init_stepper_ends(&sm_z, NO_PIN, NO_PIN, CONST, CONST, 0, 100000000);
@@ -175,7 +230,10 @@ void setup() {
     stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_period);
     
     // configure motors before starting steps
-    prepare_line3();
+    //prepare_line3();
+    //prepare_whirl2();
+    prepare_buffered2();
+    
     // start motors, non-blocking
     stepper_start_cycle();
 }

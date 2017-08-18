@@ -835,6 +835,432 @@ static void test_small_step_delay_handlers() {
     sput_fail_unless(!stepper_cycle_running(), "handler=CANCEL_CYCLE.tick5+5: tepper_cycle_running() == false");
 }
 
+static void test_driver_std_modes() {
+    // Проверим стандартные режимы драйвера step-dir
+    // на полный проворот с делителями шага 1/1, 1/8, 1/16, 1/32
+    // на разных частотах
+    // https://github.com/1i7/stepper_h/issues/23
+    
+    // мотор
+    stepper sm_x;
+    
+    // настройки мотора
+    int _step_delay_us;
+    int _dist_per_step;
+    
+    // шагов в цикле для полного оборота
+    int _step_count;
+    
+    // настройки таймера
+    int _timer_id = TIMER3;
+    int _timer_prescaler = TIMER_PRESCALER_1_8;
+    int _timer_period;
+    int _timer_period_us;
+
+    ///////////
+    // #1
+    // Шагаем полный оборот с делителем 1/1 (без деления шага)
+    // с периодом таймера 200мкс
+    // шагов в полном обороте: 200
+    // расстояние при полном обороте: 4см = 40000000 нм
+    // длина шага: 40000000нм/200 = 200000 нм
+    // период таймера: 200 мкс
+    // задержка между шагами (кратно 200, чуть менее стабильно, чем 1500): 1400 мкс
+    // тиков таймера на шаг: 1400мкс/200мкс=7
+    // тиков таймера на оборот: 7*200=1400
+    
+    // настройки таймера
+    // для периода 200 микросекунд (5тыс вызовов в секунду == 5КГц)
+    _timer_period = 2000;
+    _timer_period_us = 200;
+    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_period);
+
+    // настройки мотора
+    _step_delay_us = 1400;
+    _dist_per_step = 200000;
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, _step_delay_us, _dist_per_step);
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000000);
+    
+    // готовим шаги на полный круг (шагаем с максимальной скоростью)
+    _step_count = 200;
+    prepare_steps(&sm_x, _step_count, _step_delay_us);
+    
+    // шагаем
+    stepper_start_cycle();
+    
+    // должны уложиться ровно в 1400 тиков + 1 завершающий
+    timer_tick(1400+1);
+    sput_fail_unless(sm_x.status == STEPPER_STATUS_FINISHED,
+        "step_divider=1/1, timer_period=200us: sm_x.status == STEPPER_STATUS_FINISHED");
+    sput_fail_unless(sm_x.current_pos == 40000000,
+        "step_divider=1/1, timer_period=200us: sm_x.current_pos == 40000000");
+    
+    ///////////
+    // #2
+    // Шагаем полный оборот с делителем 1/1 (без деления шага)
+    // с периодом таймера 20мкс
+    // шагов в полном обороте: 200
+    // расстояние при полном обороте: 4см = 40000000 нм
+    // длина шага: 40000000нм/200 = 200000 нм
+    // период таймера: 20 мкс
+    // задержка между шагами: 1500 мкс
+    // тиков таймера на шаг: 1500мкс/20мкс=75
+    // тиков таймера на оборот: 75*200=15000
+    
+    // настройки таймера
+    // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
+    _timer_period = 200;
+    _timer_period_us = 20;
+    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_period);
+
+    // настройки мотора
+    _step_delay_us = 1500;
+    _dist_per_step = 200000;
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, _step_delay_us, _dist_per_step);
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000000);
+    
+    // готовим шаги на полный круг (шагаем с максимальной скоростью)
+    _step_count = 200;
+    prepare_steps(&sm_x, _step_count, _step_delay_us);
+    
+    // шагаем
+    stepper_start_cycle();
+    
+    // должны уложиться ровно в 15000 тиков + 1 завершающий
+    timer_tick(15000+1);
+    sput_fail_unless(sm_x.status == STEPPER_STATUS_FINISHED,
+        "step_divider=1/1, timer_period=20us: sm_x.status == STEPPER_STATUS_FINISHED");
+    sput_fail_unless(sm_x.current_pos == 40000000,
+        "step_divider=1/1, timer_period=20us: sm_x.current_pos == 40000000");
+    
+    ///////////
+    // #3
+    // Шагаем полный оборот с делителем 1/2
+    // с периодом таймера 20мкс
+    // шагов в полном обороте: 200*2=400
+    // расстояние при полном обороте: 4см = 40000000 нм
+    // длина шага: 40000000нм/400 = 100000 нм
+    // период таймера: 20 мкс
+    // задержка между шагами (кратно 20): 660 мкс
+    // тиков таймера на шаг: 660мкс/20мкс=33
+    // тиков таймера на оборот: 33*400=13200
+    
+    // настройки таймера
+    // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
+    _timer_period = 200;
+    _timer_period_us = 20;
+    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_period);
+
+    // настройки мотора
+    _step_delay_us = 660;
+    _dist_per_step = 100000;
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, _step_delay_us, _dist_per_step);
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000000);
+    
+    // готовим шаги на полный круг (шагаем с максимальной скоростью)
+    _step_count = 400;
+    prepare_steps(&sm_x, _step_count, _step_delay_us);
+    
+    // шагаем
+    stepper_start_cycle();
+    
+    // должны уложиться ровно в 13200 тиков + 1 завершающий
+    timer_tick(13200+1);
+    sput_fail_unless(sm_x.status == STEPPER_STATUS_FINISHED,
+        "step_divider=1/2, timer_period=20us: sm_x.status == STEPPER_STATUS_FINISHED");
+    sput_fail_unless(sm_x.current_pos == 40000000,
+        "step_divider=1/2, timer_period=20us: sm_x.current_pos == 40000000");
+    
+    ///////////
+    // #4
+    // Шагаем полный оборот с делителем 1/4
+    // с периодом таймера 20мкс
+    // шагов в полном обороте: 200*4=800
+    // расстояние при полном обороте: 4см = 40000000 нм
+    // длина шага: 40000000нм/800 = 50000 нм
+    // период таймера: 20 мкс
+    // задержка между шагами (кратно 20): 340 мкс
+    // тиков таймера на шаг: 340мкс/20мкс=17
+    // тиков таймера на оборот: 17*800=13600
+    
+    // настройки таймера
+    // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
+    _timer_period = 200;
+    _timer_period_us = 20;
+    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_period);
+
+    // настройки мотора
+    _step_delay_us = 340;
+    _dist_per_step = 50000;
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, _step_delay_us, _dist_per_step);
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000000);
+    
+    // готовим шаги на полный круг (шагаем с максимальной скоростью)
+    _step_count = 800;
+    prepare_steps(&sm_x, _step_count, _step_delay_us);
+    
+    // шагаем
+    stepper_start_cycle();
+    
+    // должны уложиться ровно в 13600 тиков + 1 завершающий
+    timer_tick(13600+1);
+    sput_fail_unless(sm_x.status == STEPPER_STATUS_FINISHED,
+        "step_divider=1/4, timer_period=20us: sm_x.status == STEPPER_STATUS_FINISHED");
+    sput_fail_unless(sm_x.current_pos == 40000000,
+        "step_divider=1/4, timer_period=20us: sm_x.current_pos == 40000000");
+    
+    ///////////
+    // #5
+    // Шагаем полный оборот с делителем 1/8
+    // с периодом таймера 20мкс
+    // шагов в полном обороте: 200*8=1600
+    // расстояние при полном обороте: 4см = 40000000 нм
+    // длина шага: 40000000нм/1600 = 25000 нм
+    // период таймера: 20 мкс
+    // задержка между шагами (кратно 20): 180 мкс
+    // тиков таймера на шаг: 180мкс/20мкс=9
+    // тиков таймера на оборот: 9*1600=14400
+    
+    // настройки таймера
+    // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
+    _timer_period = 200;
+    _timer_period_us = 20;
+    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_period);
+
+    // настройки мотора
+    _step_delay_us = 180;
+    _dist_per_step = 25000;
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, _step_delay_us, _dist_per_step);
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000000);
+    
+    // готовим шаги на полный круг (шагаем с максимальной скоростью)
+    _step_count = 1600;
+    prepare_steps(&sm_x, _step_count, _step_delay_us);
+    
+    // шагаем
+    stepper_start_cycle();
+    
+    // должны уложиться ровно в 14400 тиков + 1 завершающий
+    timer_tick(14400+1);
+    sput_fail_unless(sm_x.status == STEPPER_STATUS_FINISHED,
+        "step_divider=1/8, timer_period=20us: sm_x.status == STEPPER_STATUS_FINISHED");
+    sput_fail_unless(sm_x.current_pos == 40000000,
+        "step_divider=1/8, timer_period=20us: sm_x.current_pos == 40000000");
+        
+    ///////////
+    // #6
+    // Шагаем полный оборот с делителем 1/16
+    // с периодом таймера 20мкс
+    // шагов в полном обороте: 200*16=3200
+    // расстояние при полном обороте: 4см = 40000000 нм
+    // длина шага: 40000000нм/3200 = 12500 нм
+    // период таймера: 20 мкс
+    // задержка между шагами (кратно 20): 80 мкс
+    // тиков таймера на шаг: 80мкс/20мкс=4
+    // тиков таймера на оборот: 4*3200=12800
+    
+    // настройки таймера
+    // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
+    _timer_period = 200;
+    _timer_period_us = 20;
+    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_period);
+
+    // настройки мотора
+    _step_delay_us = 80;
+    _dist_per_step = 12500;
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, _step_delay_us, _dist_per_step);
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000000);
+    
+    // готовим шаги на полный круг (шагаем с максимальной скоростью)
+    _step_count = 3200;
+    prepare_steps(&sm_x, _step_count, _step_delay_us);
+    
+    // шагаем
+    stepper_start_cycle();
+    
+    // должны уложиться ровно в 12800 тиков + 1 завершающий
+    timer_tick(12800+1);
+    sput_fail_unless(sm_x.status == STEPPER_STATUS_FINISHED,
+        "step_divider=1/16, timer_period=20us: sm_x.status == STEPPER_STATUS_FINISHED");
+    sput_fail_unless(sm_x.current_pos == 40000000,
+        "step_divider=1/16, timer_period=20us: sm_x.current_pos == 40000000");
+    
+    ///////////
+    // #7
+    // Шагаем полный оборот с делителем 1/32
+    // с периодом таймера 10 мкс
+    // шагов в полном обороте: 200*32=6400
+    // расстояние при полном обороте: 4см = 40000000 нм
+    // длина шага: 40000000нм/6400 = 6250 нм
+    // период таймера: 10 мкс
+    // задержка между шагами: 40 мкс
+    // тиков таймера на шаг: 40мкс/10мкс=4
+    // тиков таймера на оборот: 4*6400=25600
+    
+    // настройки таймера
+    // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
+    _timer_period = 100;
+    _timer_period_us = 10;
+    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_period);
+
+    // настройки мотора
+    _step_delay_us = 40;
+    _dist_per_step = 6250;
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, _step_delay_us, _dist_per_step);
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000000);
+    
+    // готовим шаги на полный круг (шагаем с максимальной скоростью)
+    _step_count = 6400;
+    prepare_steps(&sm_x, _step_count, _step_delay_us);
+    
+    // шагаем
+    stepper_start_cycle();
+    
+    // должны уложиться ровно в 25600 тиков + 1 завершающий
+    timer_tick(25600+1);
+    sput_fail_unless(sm_x.status == STEPPER_STATUS_FINISHED,
+        "step_divider=1/32, timer_period=10us: sm_x.status == STEPPER_STATUS_FINISHED");
+    sput_fail_unless(sm_x.current_pos == 40000000,
+        "step_divider=1/32, timer_period=10us: sm_x.current_pos == 40000000");
+    
+    ///////////
+    // #8
+    // Шагаем полный оборот с делителем 1/32
+    // с периодом таймера 20 мкс
+    // шагов в полном обороте: 200*32=6400
+    // расстояние при полном обороте: 4см = 40000000 нм
+    // длина шага: 40000000нм/6400 = 6250 нм
+    // период таймера: 20 мкс
+    // задержка между шагами: 60 мкс
+    // тиков таймера на шаг: 60мкс/20мкс=3
+    // тиков таймера на оборот: 3*6400=19200
+    
+    // настройки таймера
+    // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
+    _timer_period = 200;
+    _timer_period_us = 20;
+    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_period);
+
+    // настройки мотора
+    _step_delay_us = 60;
+    _dist_per_step = 6250;
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, _step_delay_us, _dist_per_step);
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000000);
+    
+    // готовим шаги на полный круг (шагаем с максимальной скоростью)
+    _step_count = 6400;
+    prepare_steps(&sm_x, _step_count, _step_delay_us);
+    
+    // шагаем
+    stepper_start_cycle();
+    
+    // должны уложиться ровно в 19200 тиков + 1 завершающий
+    timer_tick(19200+1);
+    sput_fail_unless(sm_x.status == STEPPER_STATUS_FINISHED,
+        "step_divider=1/32, timer_period=20us: sm_x.status == STEPPER_STATUS_FINISHED");
+    sput_fail_unless(sm_x.current_pos == 40000000,
+        "step_divider=1/32, timer_period=20us: sm_x.current_pos == 40000000");
+}
+
+static void test_driver_std_modes_2motors() {
+    // Проверим стандартные режимы драйвера step-dir
+    // на полный проворот с разными делителями шага
+    // на разных частотах для 2х моторов одновременно
+    // https://github.com/1i7/stepper_h/issues/23
+    
+    // моторы
+    stepper sm_x, sm_y;
+    
+    // настройки мотора
+    int x_step_delay_us;
+    int x_dist_per_step;
+    
+    int y_step_delay_us;
+    int y_dist_per_step;
+    
+    // шагов в цикле для полного оборота
+    int x_step_count;
+    int y_step_count;
+    
+    // настройки таймера
+    int _timer_id = TIMER3;
+    int _timer_prescaler = TIMER_PRESCALER_1_8;
+    int _timer_period;
+    int _timer_period_us;
+
+    ///////////
+    // мотор X
+    // Шагаем полный оборот с делителем 1/32
+    // с периодом таймера 20 мкс
+    // шагов в полном обороте: 200*32=6400
+    // расстояние при полном обороте: 4см = 40000000 нм
+    // длина шага: 40000000нм/6400 = 6250 нм
+    // период таймера: 20 мкс
+    // задержка между шагами (кратно 20): 60 мкс
+    // тиков таймера на шаг: 60мкс/20мкс=3
+    // тиков таймера на оборот: 3*6400=19200
+    
+    ///////////
+    // мотор Y
+    // Шагаем полный оборот с делителем 1/1 (без деления шага)
+    // с периодом таймера 20мкс
+    // шагов в полном обороте: 200
+    // расстояние при полном обороте: 4см = 40000000 нм
+    // длина шага: 40000000нм/200 = 200000 нм
+    // период таймера: 20 мкс
+    // задержка между шагами: 1500 мкс
+    // тиков таймера на шаг: 1500мкс/20мкс=75
+    // тиков таймера на оборот: 75*200=15000
+    
+    // настройки таймера
+    // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
+    _timer_period = 200;
+    _timer_period_us = 20;
+    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_period);
+
+    // настройки моторов
+    x_step_delay_us = 60;
+    x_dist_per_step = 6250;
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, x_step_delay_us, x_dist_per_step);
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000000);
+    
+    y_step_delay_us = 800;
+    y_dist_per_step = 200000;
+    init_stepper(&sm_y, 'y', 11, 12, 13, false, y_step_delay_us, y_dist_per_step);
+    init_stepper_ends(&sm_y, NO_PIN, NO_PIN, INF, INF, 0, 300000000);
+    
+    // готовим шаги на полный круг (шагаем с максимальной скоростью)
+    x_step_count = 6400;
+    prepare_steps(&sm_x, x_step_count, x_step_delay_us);
+    
+    y_step_count = 200;
+    prepare_steps(&sm_y, y_step_count, y_step_delay_us);
+    
+    // 
+    stepper_set_error_handle_strategy(DONT_CHANGE, DONT_CHANGE, DONT_CHANGE, IGNORE);
+    
+    // шагаем
+    stepper_start_cycle();
+    
+    // для мотора Y должны уложиться ровно в 15000 тиков + 1 завершающий,
+    // X пока продолжает вращение
+    timer_tick(15000+1);
+    sput_fail_unless(sm_x.status == STEPPER_STATUS_RUNNING,
+        "x+y, tick 15000+1: sm_x.status == STEPPER_STATUS_RUNNING");
+    sput_fail_unless(sm_y.status == STEPPER_STATUS_FINISHED,
+        "x+y, tick 15000+1: sm_y.status == STEPPER_STATUS_FINISHED");
+    sput_fail_unless(sm_y.current_pos == 40000000,
+        "x+y, tick 15000+1: sm_y.current_pos == 40000000");
+    
+    // после 19200 тиков + 1 завершающий оба мотора должны остановиться
+    // (Y и так стоял, X остановился)
+    timer_tick(19200-(15000+1)+1);
+    sput_fail_unless(sm_x.status == STEPPER_STATUS_FINISHED,
+        "x+y, tick 19200+1: sm_x.status == STEPPER_STATUS_FINISHED");
+    sput_fail_unless(sm_x.current_pos == 40000000,
+        "x+y, tick 19200+1: sm_x.current_pos == 40000000");
+}
+
 static void test_exit_bounds_issue1_whirl() {
 
     // мотор - минимальная задежка между шагами: 1000 микросекунд
@@ -1202,6 +1628,13 @@ int main() {
     
     sput_enter_suite("Small step delay error handlers");
     sput_run_test(test_small_step_delay_handlers);
+    
+    sput_enter_suite("Step-dir driver std divider modes: 1/1, 1/18, 1/16, 1/32");
+    sput_run_test(test_driver_std_modes);
+    
+    sput_enter_suite("Step-dir driver std divider modes for 2 motors at a time");
+    sput_run_test(test_driver_std_modes_2motors);
+    
     
     sput_enter_suite("Single motor: exit bounds (issue #1) - whirl");
     sput_run_test(test_exit_bounds_issue1_whirl);
