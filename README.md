@@ -8,7 +8,10 @@ https://github.com/1i7/stepper_h
 
 The major benefit in comparison to Arduino Stepper.h lib https://www.arduino.cc/en/Reference/StepperStep is that my stepper_h calls are non-blocking: you can run simultaneously multiple motors and receive commands via Wify, Serial port and do anything else in the main loop at the same time.
 
-It uses PIC32 timer interrupts to generate step signals in background (basic code to init timer taken from ChipKIT Servo.h library port) and ChipKIT/Arduino API to deal with pins, so it would work only on ChipKIT boards with Arduino-compatible firmware (will not work on classic Arduino or pure PIC32 chip).
+It uses PIC32 timer interrupts to generate step signals in background (basic code to init timer taken from ChipKIT Servo.h library port) and ChipKIT/Arduino API to deal with pins, so it would work only on ChipKIT boards with Arduino-compatible firmware (~~will not work on classical Arduino~~ or pure PIC32 chip).
+
+UPDT: also works on AVR/Arduino
+https://github.com/sadr0b0t/stepper_h/issues/4
 
 to install, just take stepper_h dir from https://github.com/1i7/stepper_h git repo and put it to $HOME/Arduino/libraries (for the new ChipKIT IDE)
 
@@ -506,6 +509,14 @@ _замечание: для выполнения условия кратност
 
 ---
 # Единицы зимерения, типы данных и граничные значения
+
+В большинстве ситуаций руководствуемся правилом:
+
+- 32 бит (тип данных long/unsigned long, 32 бит на AVR и PIC32) - везде, где используются единицы измерения из реального мира (длина или время) или значения, на них влияющие (количество шагов в цикле),
+- 64 бит (тип данных long long, 64 бит на AVR и PIC32) - там, где не хватает long
+- 16/32 бит (тип данных int, 16 бит на AVR, 32 бит на PIC32) - для вспомогательной целочисленной мелочевки (номера пинов, индексы массивов и т.п.)
+
+Во-первых, для большинства рассмотренных ситуаций 16-битных значений действительно мало. Во-вторых, использование long даёт единообразие на всех платформах.
 
 ## Про базовую единицу измерения и размеры рабочей области
 
