@@ -59,24 +59,26 @@ typedef struct {
     /**
      * Количество шагов в текущей серии (если non_stop=false).
      * 
-     * Для мотора с приводом шаг 7.5мкм, 1000мкс минимальная задержка между шагами мотора.
+     * Для мотора с приводом шаг 1мкм (берем по минимуму, обычно будет раз 5-6 больше),
+     * 10мкс минимальная задержка между шагами мотора (тоже по минимуму - реально,
+     * мотор Nema17 с драйвером с делителем шага 1/32 начинает работать при задержке 20мкс).
      * 
-     * для 32битного знакового целого:
+     * для 32-битного знакового целого:
      * макс расстояние за серию=
-     * (2^31-1)*7.5мкм=(2147483648-1)*7.5мкм=16106127360мкм=16106127мм=16106м=16км
+     *   (2^31)*1мкм=2147483648мкм=2147483мм=2147м=2км
      * макс время при движении с макс скоростью=
-     * (2^31-1)*1000мкс=(2147483648-1)*1000мкс=2147483сек=35791мин=596ч=24дня
+     *   (2^31)*10мкс=2147483648*10мкс=21474836480мкс=21474сек=358мин=6ч
      * 
-     * для 16битного знакового целого:
+     * для 16-битного знакового целого:
      * макс расстояние за серию=
-     * (2^15-1)*7.5мкм=(32768-1)*7.5мкм=245752мкм=245мм=24см
+     *   (2^15)*1мкм=32768мкм=32мм=3см - ни о чем
      * макс время при движении с макс скоростью=
-     * (2^15-1)*1000мкс=(32768-1)*1000мкс=32сек
+     *   (2^15)*10мкс=32768*10мкс=327680мкс=328млс=0.3сек - ни о чем
      * 
-     * В PIC32 int и long - 32 бит.
-     * В Arduino long - 32 бит, int - 16 бит.
+     * В PIC32/ChipKIT int и long - 32 бит.
+     * В AVR/Arduino long - 32 бит, int - 16 бит.
      * 
-     * итого: нам нужны 32 бит, для PIC32+Arduino без лишних макросов - это long.
+     * итого: нам нужны 32 бит, для всех платформ (PIC32/ChipKIT, AVR/Arduino) это long.
      */
     long step_count;
     
@@ -93,26 +95,24 @@ typedef struct {
      * 
      * Используется при delay_source=CONSTANT
      * 
-     * Задержка в микросекундах.
+     * для 32-битного знакового целого:
+     *   макс задержка=2^31=2147483648 микросекунд=2147483 миллисекунд=2147 секунды=35 минут
+     * для 32-битного беззнакового целого:
+     *   макс задержка=2^32=4294967296 микросекунд=4294967 миллисекунд=4294 секунды=71 минута=~1 час
      * 
-     * для 32битного знакового целого:
-     * макс задержка=2^31-1=2147483648-1 микросекунд=2147483 миллисекунд=2147 секунд=35 минут
-     * для беззнакового целого:
-     * макс задержка=2^32-1=4294967296-1 микросекунд=4294967 миллисекунд=4294 секунд=71 минута=~1 час
+     * итого 32 бит: оба варианта - более, чем достаточно
      * 
-     * итого 32 бит: для 32 бит оба варианта - более, чем достаточно
+     * для 16-битного знакового целого:
+     *   макс задержка=2^15=32768 микросекунд=33 миллисекунды - с натягом норм, но на грани (1/30 макс скрости)
+     * для 16-битного беззнакового целого:
+     *   макс задержка=2^16=65536 микросекунд=65 миллисекунд - не сильно лучше
      * 
-     * для 16битного знакового целого:
-     * макс задержка=2^15-1=32768-1 микросекунд=33 миллисекунды - так себе задержечка
-     * для 16битного беззнакового целого:
-     * макс задержка=2^16-1=65536-1 микросекунд=65 миллисекунд - тоже не особо
+     * итого 16 бит: задержки не подходят.
      * 
-     * итого 16 бит: для 16 бит - задержки не подходят.
+     * В PIC32/ChipKIT int и long - 32 бит.
+     * В AVR/Arduino long - 32 бит, int - 16 бит.
      * 
-     * В PIC32 int и long - 32 бит.
-     * В Arduino long - 32 бит, int - 16 бит.
-     * 
-     * итого: нам нужны 32 бит, для PIC32+Arduino без лишних макросов - это long.
+     * итого: нам нужны 32 бит, для всех платформ (PIC32/ChipKIT, AVR/Arduino) это long.
      */
     unsigned long step_delay;
     
@@ -155,25 +155,26 @@ typedef struct {
      *     времени до следующего шага
      * @return время до следующего шага, микросекунды
      */
-    unsigned long (*next_step_delay)(int curr_step, void* curve_context);
+    unsigned long (*next_step_delay)(unsigned long curr_step, void* curve_context);
     
     /** Режим калибровки */
     calibrate_mode_t calibrate_mode;
 
 //// Динамика
     /** Счетчик циклов (возрастает) */
-    int cycle_counter = 0;
+    unsigned int cycle_counter = 0;
     
     /** Мотор остановлен в процессе работы */
     bool stopped = false;
 
     /** Счетчик шагов для текущей серии (убывает) */
-    long step_counter = 0;
+    unsigned long step_counter = 0;
     
     /** Счетчик микросекунд для текущего шага (убывает) */
     unsigned long step_timer = 0;
 } motor_cycle_info_t;
 
+// из stepper_lib_config.h
 #ifndef MAX_STEPPERS
 #define MAX_STEPPERS 6
 #endif
@@ -184,35 +185,69 @@ static motor_cycle_info_t _cstatuses[MAX_STEPPERS];
 
 ///////////////////////////
 // Настройки таймера
-// значения по умолчанию для таймера
+// значения по умолчанию для таймера будут отличаться для разных архитектур,
+// универсальный вариант задать пока не получается.
 
-// для периода 10 микросекунд (100тыс вызовов в секунду == 100КГц):
-// На ChipKIT Uno32 ок для движения по линии 2 мотора, не ок для 3х,
-// максимальная аппаратная скорость на исследованных моторах
-//static int _timer_id = TIMER3;
-//static int _timer_prescaler = TIMER_PRESCALER_1_8;
-//static int _timer_period = 100;
-// Период таймера, мкс
-//static int _timer_period_us = 10;
+// из stepper_lib_config.h
+#ifdef ARDUINO_ARCH_AVR
+// AVR 16МГц
+
+// для периода 200 микросекунд (5тыс вызовов в секунду == 5КГц)
+// На AVR/Arduino наименьший вариант для движения по линии 3 моторов
+// to set timer clock period to 200us (5000 operations per second == 5KHz) on 16MHz CPU
+// use prescaler 1:8 (TIMER_PRESCALER_1_8) and adjustment=400:
+// 16000000/8/5000 = 2000000/5000 = 400
+#ifndef STEPPER_TIMER_DEFAULT_PRESCALER
+#define STEPPER_TIMER_DEFAULT_PRESCALER TIMER_PRESCALER_1_8
+#endif
+
+#ifndef STEPPER_TIMER_DEFAULT_ADJUSTMENT
+#define STEPPER_TIMER_DEFAULT_ADJUSTMENT 400
+#endif
+
+#ifndef STEPPER_TIMER_DEFAULT_PERIOD_US
+#define STEPPER_TIMER_DEFAULT_PERIOD_US 200
+#endif
+
+//#endif // ARDUINO_ARCH_AVR
+#elif defined( __PIC32__ )
+// PIC32MX 80МГц
 
 // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
-// На ChipKIT Uno32 наименьший вариант для движения по линии 3 мотора,
-// в 3 раза медленнее максимальной аппаратной скорости на исследованных моторах.
-// совсем не ок для движения по дуге (по 90мкс на acos/asin)
-static int _timer_id = TIMER3;
-static int _timer_prescaler = TIMER_PRESCALER_1_8;
-static int _timer_period = 200;
-// Период таймера, мкс
-static int _timer_period_us = 20;
+// На PIC32MX/ChipKIT наименьший вариант для движения по линии 3 моторов
+// to set timer clock period to 20us (50000 operations per second == 50KHz) on 80MHz CPU
+// use prescaler 1:8 (TIMER_PRESCALER_1_8) and adjustment=200:
+// 80000000/8/50000 = 10000000/50000 = 200
+#ifndef STEPPER_TIMER_DEFAULT_PRESCALER
+#define STEPPER_TIMER_DEFAULT_PRESCALER TIMER_PRESCALER_1_8
+#endif
 
-// для периода 200 микросекунд (5тыс вызовов в секунду == 5КГц):
-// На ChipKIT Uno32 ок для движения по дуге (по 90мкс на acos/asin)
-//static int _timer_id = TIMER3;
-//static int _timer_prescaler = TIMER_PRESCALER_1_8;
-//static int _timer_period = 2000;
-// Период таймера, мкс
-//static int _timer_period_us = 200;
+#ifndef STEPPER_TIMER_DEFAULT_ADJUSTMENT
+#define STEPPER_TIMER_DEFAULT_ADJUSTMENT 200
+#endif
 
+#ifndef STEPPER_TIMER_DEFAULT_PERIOD_US
+#define STEPPER_TIMER_DEFAULT_PERIOD_US 20
+#endif
+
+//#endif // __PIC32__
+#else // unknown arch (most likely in test mode)
+
+// test mode: put some values looking like true
+// тестовый режим - зададим какие-нибудь правдоподобные значения
+#define STEPPER_TIMER_DEFAULT_PRESCALER TIMER_PRESCALER_1_8
+#define STEPPER_TIMER_DEFAULT_ADJUSTMENT 0
+#define STEPPER_TIMER_DEFAULT_PERIOD_US 10
+
+#endif
+
+// Настройки таймера
+static int _timer_id = TIMER_DEFAULT;
+static int _timer_prescaler = STEPPER_TIMER_DEFAULT_PRESCALER;
+static unsigned int _timer_adjustment = STEPPER_TIMER_DEFAULT_ADJUSTMENT;
+
+// Период таймера, мкс
+static unsigned long _timer_period_us = STEPPER_TIMER_DEFAULT_PERIOD_US;
 
 
 ///////////////////////////
@@ -257,7 +292,6 @@ static error_handle_strategy_t _cycle_timing_exceed_handle = CANCEL_CYCLE;
  *     CALIBRATE_BOUNDS_MAX_POS: установка размеров рабочей области (сбрасывать max_pos в current_pos при каждом шаге)
  */
 void prepare_steps(stepper *smotor, long step_count, unsigned long step_delay, calibrate_mode_t calibrate_mode) {
-    
     // резерв нового места на мотор в списке
     int sm_i = _stepper_count;
     _stepper_count++;
@@ -288,6 +322,7 @@ void prepare_steps(stepper *smotor, long step_count, unsigned long step_delay, c
     } else {
         _cstatuses[sm_i].step_delay = step_delay;
     }
+    
     // режим калибровки
     _cstatuses[sm_i].calibrate_mode = calibrate_mode;
     
@@ -508,7 +543,7 @@ void prepare_buffered_steps(stepper *smotor, int buf_size, unsigned long* delay_
     _cstatuses[sm_i].cycle_counter = 0;
     _cstatuses[sm_i].step_buffer = step_buffer;
 
-    int step_count = _cstatuses[sm_i].step_buffer[0];
+    long step_count = _cstatuses[sm_i].step_buffer[0];
     // сделать step_count положительным
     _cstatuses[sm_i].step_count = step_count > 0 ? step_count : -step_count;
     
@@ -523,7 +558,7 @@ void prepare_buffered_steps(stepper *smotor, int buf_size, unsigned long* delay_
     // скорость вращения - постоянная на каждом цикле
     _cstatuses[sm_i].delay_source = CONSTANT;
     _cstatuses[sm_i].delay_buffer = delay_buffer;
-    int step_delay = _cstatuses[sm_i].delay_buffer[0];
+    unsigned long step_delay = _cstatuses[sm_i].delay_buffer[0];
     if(step_delay == 0) {
         // движение с максимальной скоростью
         _cstatuses[sm_i].step_delay = _smotors[sm_i]->step_delay;
@@ -556,7 +591,7 @@ void prepare_buffered_steps(stepper *smotor, int buf_size, unsigned long* delay_
  * @param next_step_delay - указатель на функцию, вычисляющую задержку перед следующим шагом, микросекунды
  */
 void prepare_dynamic_steps(stepper *smotor, long step_count,
-        void* curve_context, unsigned long (*next_step_delay)(int curr_step, void* curve_context)) {
+        void* curve_context, unsigned long (*next_step_delay)(unsigned long curr_step, void* curve_context)) {
     // резерв нового места на мотор в списке
     int sm_i = _stepper_count;
     _stepper_count++;
@@ -612,7 +647,7 @@ void prepare_dynamic_steps(stepper *smotor, long step_count,
  * @param next_step_delay - указатель на функцию, вычисляющую задержку перед следующим шагом, микросекунды
  */
 void prepare_dynamic_whirl(stepper *smotor, int dir,
-        void* curve_context, unsigned long (*next_step_delay)(int curr_step, void* curve_context)) {
+        void* curve_context, unsigned long (*next_step_delay)(unsigned long curr_step, void* curve_context)) {
     // резерв нового места на мотор в списке
     int sm_i = _stepper_count;
     _stepper_count++;
@@ -718,10 +753,10 @@ void prepare_dynamic_whirl(stepper *smotor, int dir,
  * @param target_period_us - целевой период таймера, микросекунды.
  * @param timer - системный идентификатор таймера (должен поддерживаться аппаратно)
  * @param prescalar - предварительный масштаб таймера
- * @param period - значение для периода таймера: делитель частоты таймера
+ * @param adjustment - значение корректировки для периода таймера: делитель частоты таймера
  *     после того, как к ней применен предварительный масштаб (prescaler)
  */
-void stepper_configure_timer(int target_period_us, int timer, int prescaler, int period) {
+void stepper_configure_timer(unsigned long target_period_us, int timer, int prescaler, unsigned int adjustment) {
     // не ломать настройки таймера, пока не отарботал старый цикл
     if(_cycle_running) {
         return;
@@ -731,7 +766,7 @@ void stepper_configure_timer(int target_period_us, int timer, int prescaler, int
     
     _timer_id = timer;
     _timer_prescaler = prescaler;
-    _timer_period = period;
+    _timer_adjustment = adjustment;
 }
 
 /**
@@ -879,8 +914,8 @@ bool stepper_start_cycle() {
         }
         
         // Запустим таймер с периодом _timer_period_us, для этого
-        // должны быть заданы правильные _timer_prescaler и _timer_period
-        initTimerISR(_timer_id, _timer_prescaler, _timer_period);
+        // должны быть заданы правильные _timer_prescaler и _timer_adjustment
+        _timer_init_ISR(_timer_id, _timer_prescaler, _timer_adjustment-1);
     }
     return true;
 }
@@ -890,7 +925,7 @@ bool stepper_start_cycle() {
  */
 void stepper_finish_cycle() {
     // остановим таймер
-    stopTimerISR(TIMER3);
+    _timer_stop_ISR(_timer_id);
     
     // выключим все моторы
     for(int i = 0; i < _stepper_count; i++) {
@@ -982,7 +1017,7 @@ unsigned long stepper_cycle_max_time() {
  * для разных моторов на разные итерации таймера, но для этого придется усложнить
  * алгоритм, сейчас не рализовано).
  */
-void handle_interrupts(int timer) {
+void _timer_handle_interrupts(int timer) {
 
     // если на паузе, вообще ничего не трогаем
     if(_cycle_paused) {
@@ -1074,9 +1109,9 @@ void handle_interrupts(int timer) {
                 } else if( _cstatuses[i].calibrate_mode == NONE &&
                         (_cstatuses[i].dir > 0 ?
                             _smotors[i]->max_end_strategy != INF &&
-                                _smotors[i]->current_pos + _smotors[i]->distance_per_step > _smotors[i]->max_pos :
+                                _smotors[i]->current_pos + (long long)_smotors[i]->distance_per_step > _smotors[i]->max_pos :
                             _smotors[i]->min_end_strategy != INF &&
-                                _smotors[i]->current_pos - _smotors[i]->distance_per_step < _smotors[i]->min_pos) ) {
+                                _smotors[i]->current_pos - (long long)_smotors[i]->distance_per_step < _smotors[i]->min_pos) ) {
                     // выход за пределы виртуальной границы:
                     // не в режиме калибровки, включены виртуальные границы координаты и
                     // собираемся выйти за виртуальные границы во время предстоящего шага -
@@ -1102,7 +1137,7 @@ void handle_interrupts(int timer) {
                     
                 } else if( _cstatuses[i].calibrate_mode == CALIBRATE_BOUNDS_MAX_POS &&
                         _cstatuses[i].dir < 0 &&
-                        _smotors[i]->current_pos - _smotors[i]->distance_per_step < _smotors[i]->min_pos ) {
+                        _smotors[i]->current_pos - (long long)_smotors[i]->distance_per_step < _smotors[i]->min_pos ) {
                     // в режиме калибровки размера рабочей области при движении влево
                     // собираемся сместиться ниже нижней виртуальной границы
                     // во время предстоящего шага - завершаем вращение для этого мотора
@@ -1172,7 +1207,7 @@ void handle_interrupts(int timer) {
                     // загружаем настройки для нового цикла
                     if (_cstatuses[i].cycle_counter < _cstatuses[i].cycle_count) {
                         // заходим на новый цикл внутри текущей серии
-                        int step_count = _cstatuses[i].step_buffer[_cstatuses[i].cycle_counter];
+                        long step_count = _cstatuses[i].step_buffer[_cstatuses[i].cycle_counter];
                         // сделать step_count положительным
                         _cstatuses[i].step_count = step_count > 0 ? step_count : -step_count;
                         
@@ -1198,7 +1233,7 @@ void handle_interrupts(int timer) {
                 }
                 
                 // вычисляем задержку перед следующим шагом
-                int step_delay;
+                unsigned long step_delay;
                 if(_cstatuses[i].delay_source == CONSTANT) {
                     // координата внутри цикла движется с постоянной скоростью
                     step_delay = _cstatuses[i].step_delay;

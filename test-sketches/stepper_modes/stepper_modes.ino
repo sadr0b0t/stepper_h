@@ -32,8 +32,8 @@ static void prepare_test_1_1(int turns) {
     // connected stepper motors
     // init_stepper(stepper* smotor, char name,
     //     int pin_step, int pin_dir, int pin_en,
-    //     bool invert_dir, int step_delay,
-    //     int distance_per_step)
+    //     bool invert_dir, unsigned long step_delay,
+    //     unsigned long distance_per_step)
     // init_stepper_ends(stepper* smotor,
     //     end_strategy min_end_strategy, end_strategy max_end_strategy,
     //     long long min_pos, long long max_pos);
@@ -53,13 +53,13 @@ static void prepare_test_1_1(int turns) {
     // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
     int _timer_id = TIMER3;
     int _timer_prescaler = TIMER_PRESCALER_1_8;
-    int _timer_period = 200;
+    unsigned int _timer_adjustment = 200;
     _timer_period_us = 20;
-    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_period);
+    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_adjustment);
 
     // настройки мотора
-    int _step_delay_us = 1500; // us
-    int _dist_per_step = 200000; // nm
+    unsigned long _step_delay_us = 1500; // us
+    unsigned long _dist_per_step = 200000; // nm
     init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _step_delay_us, _dist_per_step);
     init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000000);
     
@@ -74,8 +74,8 @@ static void prepare_test_1_2(int turns) {
     // connected stepper motors
     // init_stepper(stepper* smotor, char name,
     //     int pin_step, int pin_dir, int pin_en,
-    //     bool invert_dir, int step_delay,
-    //     int distance_per_step)
+    //     bool invert_dir, unsigned long step_delay,
+    //     unsigned long distance_per_step)
     // init_stepper_ends(stepper* smotor,
     //     end_strategy min_end_strategy, end_strategy max_end_strategy,
     //     long long min_pos, long long max_pos);
@@ -95,13 +95,13 @@ static void prepare_test_1_2(int turns) {
     // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
     int _timer_id = TIMER3;
     int _timer_prescaler = TIMER_PRESCALER_1_8;
-    int _timer_period = 200;
+    unsigned int _timer_adjustment = 200;
     _timer_period_us = 20;
-    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_period);
+    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_adjustment);
 
     // настройки мотора
-    int _step_delay_us = 660; // us
-    int _dist_per_step = 100000; // nm
+    unsigned long _step_delay_us = 660; // us
+    unsigned long _dist_per_step = 100000; // nm
     init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _step_delay_us, _dist_per_step);
     init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000000);
     
@@ -115,8 +115,8 @@ static void prepare_test_1_4(int turns) {
     // connected stepper motors
     // init_stepper(stepper* smotor, char name,
     //     int pin_step, int pin_dir, int pin_en,
-    //     bool invert_dir, int step_delay,
-    //     int distance_per_step)
+    //     bool invert_dir, unsigned long step_delay,
+    //     unsigned long distance_per_step)
     // init_stepper_ends(stepper* smotor,
     //     end_strategy min_end_strategy, end_strategy max_end_strategy,
     //     long long min_pos, long long max_pos);
@@ -136,13 +136,13 @@ static void prepare_test_1_4(int turns) {
     // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
     int _timer_id = TIMER3;
     int _timer_prescaler = TIMER_PRESCALER_1_8;
-    int _timer_period = 200;
+    unsigned int _timer_adjustment = 200;
     _timer_period_us = 20;
-    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_period);
+    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_adjustment);
 
     // настройки мотора
-    int _step_delay_us = 340; // us
-    int _dist_per_step = 50000; // nm
+    unsigned long _step_delay_us = 340; // us
+    unsigned long _dist_per_step = 50000; // nm
     init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _step_delay_us, _dist_per_step);
     init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000000);
     
@@ -156,8 +156,8 @@ static void prepare_test_1_8(int turns) {
     // connected stepper motors
     // init_stepper(stepper* smotor, char name,
     //     int pin_step, int pin_dir, int pin_en,
-    //     bool invert_dir, int step_delay,
-    //     int distance_per_step)
+    //     bool invert_dir, unsigned long step_delay,
+    //     unsigned long distance_per_step)
     // init_stepper_ends(stepper* smotor,
     //     end_strategy min_end_strategy, end_strategy max_end_strategy,
     //     long long min_pos, long long max_pos);
@@ -177,13 +177,13 @@ static void prepare_test_1_8(int turns) {
     // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
     int _timer_id = TIMER3;
     int _timer_prescaler = TIMER_PRESCALER_1_8;
-    int _timer_period = 200;
+    unsigned int _timer_adjustment = 200;
     _timer_period_us = 20;
-    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_period);
+    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_adjustment);
 
     // настройки мотора
-    int _step_delay_us = 180; // us
-    int _dist_per_step = 25000; // nm
+    unsigned long _step_delay_us = 180; // us
+    unsigned long _dist_per_step = 25000; // nm
     init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _step_delay_us, _dist_per_step);
     init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000000);
     
@@ -197,8 +197,8 @@ static void prepare_test_1_16(int turns) {
     // connected stepper motors
     // init_stepper(stepper* smotor, char name,
     //     int pin_step, int pin_dir, int pin_en,
-    //     bool invert_dir, int step_delay,
-    //     int distance_per_step)
+    //     bool invert_dir, unsigned long step_delay,
+    //     unsigned long distance_per_step)
     // init_stepper_ends(stepper* smotor,
     //     end_strategy min_end_strategy, end_strategy max_end_strategy,
     //     long long min_pos, long long max_pos);
@@ -218,13 +218,13 @@ static void prepare_test_1_16(int turns) {
     // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
     int _timer_id = TIMER3;
     int _timer_prescaler = TIMER_PRESCALER_1_8;
-    int _timer_period = 200;
+    unsigned int _timer_adjustment = 200;
     _timer_period_us = 20;
-    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_period);
+    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_adjustment);
 
     // настройки мотора
-    int _step_delay_us = 80; // us
-    int _dist_per_step = 12500; // nm
+    unsigned long _step_delay_us = 80; // us
+    unsigned long _dist_per_step = 12500; // nm
     init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _step_delay_us, _dist_per_step);
     init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000000);
     
@@ -238,8 +238,8 @@ static void prepare_test_1_32(int turns) {
     // connected stepper motors
     // init_stepper(stepper* smotor, char name,
     //     int pin_step, int pin_dir, int pin_en,
-    //     bool invert_dir, int step_delay,
-    //     int distance_per_step)
+    //     bool invert_dir, unsigned long step_delay,
+    //     unsigned long distance_per_step)
     // init_stepper_ends(stepper* smotor,
     //     end_strategy min_end_strategy, end_strategy max_end_strategy,
     //     long long min_pos, long long max_pos);
@@ -259,13 +259,13 @@ static void prepare_test_1_32(int turns) {
     // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
     int _timer_id = TIMER3;
     int _timer_prescaler = TIMER_PRESCALER_1_8;
-    int _timer_period = 200;
+    unsigned int _timer_adjustment = 200;
     _timer_period_us = 20;
-    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_period);
+    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_adjustment);
 
     // настройки мотора
-    int _step_delay_us = 60; // us
-    int _dist_per_step = 6250; // nm
+    unsigned long _step_delay_us = 60; // us
+    unsigned long _dist_per_step = 6250; // nm
     init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _step_delay_us, _dist_per_step);
     init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000000);
     
@@ -347,12 +347,12 @@ void setup() {
 }
 
 void loop() {
-    static int prevTime = 0;
+    static unsigned long prevTime = 0;
     // Debug messages - print current positions of motors once per second
     // while they are rotating, once per 10 seconds when they are stopped
     // (see https://github.com/1i7/stepper_h/blob/master/3pty/arduino/README
     // to fix compile proplem)
-    int currTime = millis();
+    unsigned long currTime = millis();
     if( (stepper_cycle_running() && (currTime - prevTime) >= 1000) || (currTime - prevTime) >= 10000 ) {
         prevTime = currTime;
         Serial.print("X.pos=");

@@ -145,9 +145,28 @@ typedef struct {
     
     /**
      * Минимальная задержка между импульсами step, микросекунды
-     * (для движения с максимальной скоростью)
+     * (для движения с максимальной скоростью).
+     * 
+     * для 32-битного знакового целого:
+     *   макс задержка=2^31=2147483648 микросекунд=2147483 миллисекунд=2147 секунды=35 минут
+     * для 32-битного беззнакового целого:
+     *   макс задержка=2^32=4294967296 микросекунд=4294967 миллисекунд=4294 секунды=71 минута=~1 час
+     * 
+     * итого 32 бит: оба варианта - более, чем достаточно
+     * 
+     * для 16-битного знакового целого:
+     *   макс задержка=2^15=32768 микросекунд=33 миллисекунды - с натягом норм, но на грани (1/30 макс скрости)
+     * для 16-битного беззнакового целого:
+     *   макс задержка=2^16=65536 микросекунд=65 миллисекунд - не сильно лучше
+     * 
+     * итого 16 бит: задержки не подходят.
+     * 
+     * В PIC32/ChipKIT int и long - 32 бит.
+     * В AVR/Arduino long - 32 бит, int - 16 бит.
+     * 
+     * итого: нам нужны 32 бит, для всех платформ (PIC32/ChipKIT, AVR/Arduino) это long.
      */
-    int step_delay;
+    unsigned long step_delay;
     
     /**
      * Расстояние, проходимое координатой за один шаг мотора,
@@ -157,9 +176,26 @@ typedef struct {
      * текущее положение рабочей координаты current_pos.
      * 
      * Единица измерения выбирается в зависимости от задачи и свойств
-     * передаточного механизма (рекомендуется считать за нанометры)
+     * передаточного механизма (рекомендуется считать за нанометры).
+     * 
+     * для 32-битного беззнакового целого:
+     *   макс расстояние/шаг = 2^32 = 4294967296 нанометров = 4294967 микрометров = 4294 миллиметров = 4 метра
+     * 
+     * итого 32 бит: вполне достаточно
+     * 
+     * для 16-битного беззнакового целого:
+     *   макс расстояние/шаг = 2^16 = 65536 нанометров = 65 микрометра
+     * 
+     * итого 16 бит: в ряде ситуаций приемлемо, но уже не достаточно:
+     * например, для шкива 3д-принтера на моторе без делителя 1 шаг может
+     * быть уже 200 микрометров, т.е. не вмещаться в 16 бит.
+     * 
+     * В PIC32/ChipKIT int и long - 32 бит.
+     * В AVR/Arduino long - 32 бит, int - 16 бит.
+     * 
+     * итого: нам нужны 32 бит, для всех платформ (PIC32/ChipKIT, AVR/Arduino) это long.
      */
-    long distance_per_step;
+    unsigned long distance_per_step;
     
     /*************************************************************/
     /* Характеристики рабочей области */
@@ -345,8 +381,8 @@ typedef enum {
  */
 void init_stepper(stepper* smotor, char name,
         int pin_step, int pin_dir, int pin_en,
-        bool invert_dir, int step_delay,
-        int distance_per_step);
+        bool invert_dir, unsigned long step_delay,
+        unsigned long distance_per_step);
 
 /**
  * Задать настройки границ рабочей области для шагового мотора.
@@ -510,7 +546,7 @@ void prepare_buffered_steps(stepper *smotor, int buf_size, unsigned long* delay_
  * @param next_step_delay - указатель на функцию, вычисляющую задержку перед следующим шагом, микросекунды
  */
 void prepare_dynamic_steps(stepper *smotor, long step_count,
-        void* curve_context, unsigned long (*next_step_delay)(int curr_step, void* curve_context));
+        void* curve_context, unsigned long (*next_step_delay)(unsigned long curr_step, void* curve_context));
 
 /**
  * Подготовить мотор к запуску на беспрерывное вращение с переменной скоростью - задать нужное количество
@@ -522,7 +558,7 @@ void prepare_dynamic_steps(stepper *smotor, long step_count,
  * @param next_step_delay - указатель на функцию, вычисляющую задержку перед следующим шагом, микросекунды
  */
 void prepare_dynamic_whirl(stepper *smotor, int dir,
-        void* curve_context, unsigned long (*next_step_delay)(int curr_step, void* curve_context));
+        void* curve_context, unsigned long (*next_step_delay)(unsigned long curr_step, void* curve_context));
 
 
 //////////////////////////////////////////
@@ -644,10 +680,10 @@ unsigned long stepper_cycle_max_time();
  * @param target_period_us - целевой период таймера, микросекунды.
  * @param timer - системный идентификатор таймера (должен поддерживаться аппаратно)
  * @param prescalar - предварительный масштаб таймера
- * @param period - значение для периода таймера: делитель частоты таймера
+ * @param adjustment - значение корректировки для периода таймера: делитель частоты таймера
  *     после того, как к ней применен предварительный масштаб (prescaler)
  */
-void stepper_configure_timer(int target_period_us, int timer, int prescaler, int period);
+void stepper_configure_timer(unsigned long target_period_us, int timer, int prescaler, unsigned int adjustment);
 
 /**
  * Стратегия реакции на некоторые исключительные ситуации, которые

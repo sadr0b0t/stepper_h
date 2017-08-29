@@ -32,8 +32,8 @@ void setup() {
     // connected stepper motors
     // init_stepper(stepper* smotor, char name,
     //     int pin_step, int pin_dir, int pin_en,
-    //     bool invert_dir, int step_delay,
-    //     int distance_per_step)
+    //     bool invert_dir, unsigned long step_delay,
+    //     unsigned long distance_per_step)
     // init_stepper_ends(stepper* smotor,
     //     end_strategy min_end_strategy, end_strategy max_end_strategy,
     //     long long min_pos, long long max_pos);
@@ -57,12 +57,12 @@ void setup() {
 }
 
 void loop() {
-    static int prevTime = 0;
+    static unsigned long prevTime = 0;
     // Debug messages - print current positions of motors once per second
     // while they are rotating, once per 10 seconds when they are stopped
     // (see https://github.com/1i7/stepper_h/blob/master/3pty/arduino/README
     // to fix compile proplem)
-    int currTime = millis();
+    unsigned long currTime = millis();
     if( (stepper_cycle_running() && (currTime - prevTime) >= 1000) || (currTime - prevTime) >= 10000 ) {
         prevTime = currTime;
         Serial.print("X.pos=");

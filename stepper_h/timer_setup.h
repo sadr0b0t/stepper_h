@@ -1,61 +1,86 @@
-/************************************************************************/
-/*																		*/
-/*	int.h	--	Handles timer interrupts for PIC32      				*/
-/*																		*/
-/************************************************************************/
-/*	Author:		Michelle Yu                                             */
-/*                          											*/
-/*	Copyright 2011, Digilent Inc.										*/
-/*  This library is free software; you can redistribute it and/or       */
-/*  modify it under the terms of the GNU Lesser General Public          */
-/*  License as published by the Free Software Foundation; either        */
-/*  version 2.1 of the License, or (at your option) any later version.  */
-/*                                                                      */
-/*  This library is distributed in the hope that it will be useful,     */
-/*  but WITHOUT ANY WARRANTY; without even the implied warranty of      */
-/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU   */
-/*  Lesser General Public License for more details.                     */
-/*                                                                      */
-/*  You should have received a copy of the GNU Lesser General Public    */
-/*  License along with this library; if not, write to the Free Software */
-/*  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA           */
-/*  02110-1301 USA                                                      */
-/************************************************************************/
-/*  File Description:													*/
-/*	This file declares functions that handle timer interrupts for       */
-/*  chipKIT PIC32 boards.												*/
-/************************************************************************/
-//************************************************************************
-//*	Edit History
-//************************************************************************
-//*	Aug 18,	2011	<MichelleY> file header comment block reformatted
-//*	Sep  5,	2011	<GeneA> moved include of p32xxxx.h and plib.h from here
-//************************************************************************
-
 #ifndef TIMER_SETUP_H
 #define TIMER_SETUP_H
 
-// define timer ids
-#define TIMER3 0
-#define TIMER4 1
-#define TIMER5 2
+// Define timer ids
+extern const int _TIMER1;
+extern const int _TIMER2;
+extern const int _TIMER3;
+extern const int _TIMER4;
+extern const int _TIMER5;
 
+// 32-bit timers
+extern const int _TIMER2_32BIT;
+extern const int _TIMER4_32BIT;
 
-// Define timer prescaler values: 3 bits in TxCON<6:4> register 
-// give 8 different values for prescalar:
-#define TIMER_PRESCALER_1_1   0x0000
-#define TIMER_PRESCALER_1_2   0x0010
-#define TIMER_PRESCALER_1_4   0x0020
-#define TIMER_PRESCALER_1_8   0x0030
-#define TIMER_PRESCALER_1_16  0x0040
-#define TIMER_PRESCALER_1_32  0x0050
-#define TIMER_PRESCALER_1_64  0x0060
-#define TIMER_PRESCALER_1_256 0x0070
+extern const int TIMER_DEFAULT;
 
+// Define timer prescaler options
+extern const int TIMER_PRESCALER_1_1;
+extern const int TIMER_PRESCALER_1_2;
+extern const int TIMER_PRESCALER_1_4;
+extern const int TIMER_PRESCALER_1_8;
+extern const int TIMER_PRESCALER_1_16;
+extern const int TIMER_PRESCALER_1_32;
+extern const int TIMER_PRESCALER_1_64;
+extern const int TIMER_PRESCALER_1_256;
+extern const int TIMER_PRESCALER_1_1024;
 
-void initTimerISR(int timer, int prescalar, int period);
-void stopTimerISR(int timer);
-void handle_interrupts(int timer);
+/**
+ * Init ISR (Interrupt service routine) for the timer and start timer.
+ * 
+ * General algorithm
+ * http://www.robotshop.com/letsmakerobots/arduino-101-timers-and-interrupts
+ * 1. CPU frequency 16Mhz for Arduino
+ * 2. maximum timer counter value (256 for 8bit, 65536 for 16bit timer)
+ * 3. Divide CPU frequency through the choosen prescaler (16000000 / 256 = 62500)
+ * 4. Divide result through the desired frequency (62500 / 2Hz = 31250)
+ * 5. Verify the result against the maximum timer counter value (31250 < 65536 success).
+ *    If fail, choose bigger prescaler.
+ * 
+ * Example: to set timer clock period to 20ms (50 operations per second == 50Hz)
+ * 
+ * 1) on 16MHz CPU (AVR Arduino)
+ *   use prescaler 1:8 (TIMER_PRESCALER_1_8) and adjustment=40000:
+ *   16000000/8/50=40000
+ * 
+ * 2) on 80MHz CPU (PIC32MX ChipKIT)
+ *   use prescaler 1:64 (TIMER_PRESCALER_1_64) and adjustment=25000:
+ *   80000000/64/50=25000
+ * 
+ * Timer interrupt handler timer_handle_interrupts would be called every 20ms
+ * (50 times per second == 50Hz freq) in this case.
+ * 
+ * @param timer
+ *   system timer id: use TIMER_DEFAULT for default timer
+ *   or _TIMER1, _TIMER2, _TIMER3, _TIMER4, TIMER5,
+ *   _TIMER2_32BIT or _TIMER4_32BIT for specific timer.
+ *   note: _TIMERX constant would be set to '-1' if selected timer
+ *   is not available on current platform.
+ * @param prescaler
+ *   timer prescaler (1, 2, 4, 8, 16, 32, 64, 256),
+ *   use constants: PRESCALER_1, PRESCALER_2, PRESCALER_8,
+ *   PRESCALER_16, PRESCALER_32, PRESCALER_64, PRESCALER_256
+ * @param adjustment
+ *   adjustment divider after timer prescaled - timer compare match value.
+ */
+void _timer_init_ISR(int timer, int prescaler, unsigned int period);
+
+/**
+ * Stop ISR (Interrupt service routine) for the timer.
+ * 
+ * @param timer
+ *     system timer id for started ISR
+ */
+void _timer_stop_ISR(int timer);
+
+/**
+ * Timer ISR (Interrupt service routine) handler.
+ * Implementation must be provided in module with user code.
+ * 
+ * @param timer
+ *     system timer id for started ISR
+ */
+void _timer_handle_interrupts(int timer);
 
 #endif
 

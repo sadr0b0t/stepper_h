@@ -17,13 +17,13 @@ using namespace std;
 
 /**
  * Симуляция таймера: "сгенерировать" нужное количество импульсов -
- * вызвать обработчик прерывания handle_interrupts нужное количество
+ * вызвать обработчик прерывания stepper_handle_interrupts нужное количество
  * раз.
  * @param count - количество тиков (импульсов) таймера
  */
 void timer_tick(int count) {
     for(int i = 0; i < count; i++) {
-        handle_interrupts(3);
+        _timer_handle_interrupts(3);
     }
 }
 
@@ -45,8 +45,8 @@ static void test_lifecycle() {
     
     
     // настройки частоты таймера
-    int timer_period_us = 200;
-    stepper_configure_timer(timer_period_us, TIMER3, TIMER_PRESCALER_1_8, 2000);
+    unsigned long timer_period_us = 200;
+    stepper_configure_timer(timer_period_us, TIMER_DEFAULT, TIMER_PRESCALER_1_8, 2000);
     
     /////////////////
     
@@ -113,14 +113,14 @@ static void test_timer_period() {
     init_stepper(&sm_z, 'z', 2, 3, 4, true, 500, 7500);
     init_stepper_ends(&sm_z, NO_PIN, NO_PIN, INF, INF, 0, 100000000);
     
-    int timer_period_us;
+    unsigned long timer_period_us;
     
     // #1
     // период таймера 200 микросекунд
     // минимальная задержка между шагами моторов X и Y 1000 микросекунд
     // 200*3=600 < 1000 => цикл должен запуститься
     timer_period_us = 200;
-    stepper_configure_timer(timer_period_us, TIMER3, TIMER_PRESCALER_1_8, 2000);
+    stepper_configure_timer(timer_period_us, TIMER_DEFAULT, TIMER_PRESCALER_1_8, 2000);
     
     prepare_whirl(&sm_x, 1, 1000);
     prepare_whirl(&sm_y, 1, 2000);
@@ -140,7 +140,7 @@ static void test_timer_period() {
     // для мотора Z - 500 микросекунд
     // 200*3=600 < 1000, но 600 > 500 => цикл НЕ должен запуститься
     timer_period_us = 200;
-    stepper_configure_timer(timer_period_us, TIMER3, TIMER_PRESCALER_1_8, 2000);
+    stepper_configure_timer(timer_period_us, TIMER_DEFAULT, TIMER_PRESCALER_1_8, 2000);
     
     prepare_whirl(&sm_x, 1, 1000);
     prepare_whirl(&sm_y, 1, 2000);
@@ -157,7 +157,7 @@ static void test_timer_period() {
     // минимальная задержка между шагами моторов X и Y 1000 микросекунд
     // 350*3=1050 > 1000 => цикл НЕ должен запуститься
     timer_period_us = 350;
-    stepper_configure_timer(timer_period_us, TIMER3, TIMER_PRESCALER_1_8, 3500);
+    stepper_configure_timer(timer_period_us, TIMER_DEFAULT, TIMER_PRESCALER_1_8, 3500);
     
     prepare_whirl(&sm_x, 1, 1000);
     prepare_whirl(&sm_y, 1, 2000);
@@ -174,7 +174,7 @@ static void test_timer_period() {
     // минимальная задержка между шагами моторов X и Y 1000 микросекунд
     // 200*3=600 < 1000 => цикл должен запуститься
     timer_period_us = 200;
-    stepper_configure_timer(timer_period_us, TIMER3, TIMER_PRESCALER_1_8, 2000);
+    stepper_configure_timer(timer_period_us, TIMER_DEFAULT, TIMER_PRESCALER_1_8, 2000);
     
     prepare_whirl(&sm_x, 1, 1000);
     prepare_whirl(&sm_y, 1, 2000);
@@ -204,8 +204,8 @@ static void test_timer_period_aliquant_step_delay() {
     init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000000);
     
     // настройки частоты таймера
-    int timer_period_us = 300;
-    stepper_configure_timer(timer_period_us, TIMER3, TIMER_PRESCALER_1_8, 3000);
+    unsigned long timer_period_us = 300;
+    stepper_configure_timer(timer_period_us, TIMER_DEFAULT, TIMER_PRESCALER_1_8, 3000);
     
     //////////////
     
@@ -238,8 +238,8 @@ static void test_max_speed_tick_by_tick() {
     init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000000);
     
     // настройки частоты таймера
-    int timer_period_us = 200;
-    stepper_configure_timer(timer_period_us, TIMER3, TIMER_PRESCALER_1_8, 2000);
+    unsigned long timer_period_us = 200;
+    stepper_configure_timer(timer_period_us, TIMER_DEFAULT, TIMER_PRESCALER_1_8, 2000);
     
     //////////////
     
@@ -341,8 +341,8 @@ static void test_max_speed_30000steps() {
     init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000000);
     
     // настройки частоты таймера
-    int timer_period_us = 200;
-    stepper_configure_timer(timer_period_us, TIMER3, TIMER_PRESCALER_1_8, 2000);
+    unsigned long timer_period_us = 200;
+    stepper_configure_timer(timer_period_us, TIMER_DEFAULT, TIMER_PRESCALER_1_8, 2000);
     
     //////////////
     
@@ -415,8 +415,8 @@ static void test_aliquant_speed_tick_by_tick() {
     init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000000);
     
     // настройки частоты таймера
-    int timer_period_us = 200;
-    stepper_configure_timer(timer_period_us, TIMER3, TIMER_PRESCALER_1_8, 2000);
+    unsigned long timer_period_us = 200;
+    stepper_configure_timer(timer_period_us, TIMER_DEFAULT, TIMER_PRESCALER_1_8, 2000);
     
     //////////////
     
@@ -545,8 +545,8 @@ static void test_draw_triangle() {
     
     
     // настройки частоты таймера
-    int timer_period_us = 200;
-    stepper_configure_timer(timer_period_us, TIMER3, TIMER_PRESCALER_1_8, 2000);
+    unsigned long timer_period_us = 200;
+    stepper_configure_timer(timer_period_us, TIMER_DEFAULT, TIMER_PRESCALER_1_8, 2000);
     
     ////////////
     // на всякий случай: цикл не должен быть запущен
@@ -565,18 +565,18 @@ static void test_draw_triangle() {
     // line1: (0,0,0) -> (150000000,50000000,20000000)
     
     // X - длинная координата - ее проходим с максимальной скоростью
-    //int steps_x = 150000000 / 7500;
-    int steps_x = (150000000 - sm_x.current_pos) / 7500;
-    int delay_x = 1000;
-    int time_x = delay_x * abs(steps_x);
+    //long steps_x = 150000000 / 7500;
+    long steps_x = (150000000 - sm_x.current_pos) / 7500;
+    unsigned long delay_x = 1000;
+    unsigned long time_x = delay_x * abs(steps_x);
     
-    //int steps_y = 50000000 / 7500;
-    int steps_y = (50000000 - sm_y.current_pos) / 7500;
-    int delay_y = time_x / abs(steps_y);
+    //long steps_y = 50000000 / 7500;
+    long steps_y = (50000000 - sm_y.current_pos) / 7500;
+    unsigned long delay_y = time_x / abs(steps_y);
     
-    //int steps_z = 20000000 / 7500;
-    int steps_z = (20000000 - sm_z.current_pos) / 7500;
-    int delay_z = time_x / abs(steps_z);
+    //long steps_z = 20000000 / 7500;
+    long steps_z = (20000000 - sm_z.current_pos) / 7500;
+    unsigned long delay_z = time_x / abs(steps_z);
 
     // prepare_steps(stepper *smotor,
     //     long step_count, unsigned long step_delay,
@@ -598,19 +598,19 @@ static void test_draw_triangle() {
     // реально получится:
     // steps_x=-13333, steps_y=13334
     
-    //int steps_y = (150000000 - 50000000) / 7500;
+    //long steps_y = (150000000 - 50000000) / 7500;
     steps_y = (150000000 - sm_y.current_pos) / 7500;
     delay_y = 1000;
-    int time_y = delay_y * abs(steps_y);
+    unsigned long time_y = delay_y * abs(steps_y);
     
-    //int steps_x = (50000000 - 150000000) / 7500;
+    //long steps_x = (50000000 - 150000000) / 7500;
     steps_x = (50000000 - sm_x.current_pos) / 7500;
     delay_x = time_y / abs(steps_y);
     
     // путь по z=0
-    //int steps_z = (20000000 - 20000000) / 7500;
-    //int steps_z = (20000000 - sm_z.current_pos) / 7500;
-    //int delay_z = time_y / abs(steps_z);
+    //long steps_z = (20000000 - 20000000) / 7500;
+    //long steps_z = (20000000 - sm_z.current_pos) / 7500;
+    //long delay_z = time_y / abs(steps_z);
 
     // prepare_steps(stepper *smotor,
     //     long step_count, unsigned long step_delay,
@@ -629,16 +629,16 @@ static void test_draw_triangle() {
     // line3: (50000000,150000000,20000000) -> (0,0,0)
     
     // Y - длинная координата - ее проходим с максимальной скоростью
-    //int steps_y = -150000000 / 7500;
+    //long steps_y = -150000000 / 7500;
     steps_y = (0 - sm_y.current_pos) / 7500;
     delay_y = 1000;
     time_y = delay_y * abs(steps_y);
     
-    //int steps_x = -50000000 / 7500;
+    //long steps_x = -50000000 / 7500;
     steps_x = (0 - sm_x.current_pos) / 7500;
     delay_x = time_y / abs(steps_x);
     
-    //int steps_z = -20000000 / 7500;
+    //long steps_z = -20000000 / 7500;
     steps_z = (0 - sm_z.current_pos) / 7500;
     delay_z = time_y / abs(steps_z);
 
@@ -678,8 +678,8 @@ static void test_small_step_delay_handlers() {
     init_stepper_ends(&sm_y, NO_PIN, NO_PIN, INF, INF, 0, 216000000);
     
     // период таймера 200 микросекунд
-    int timer_period_us = 200;
-    stepper_configure_timer(timer_period_us, TIMER3, TIMER_PRESCALER_1_8, 2000);
+    unsigned long timer_period_us = 200;
+    stepper_configure_timer(timer_period_us, TIMER_DEFAULT, TIMER_PRESCALER_1_8, 2000);
     
     //////
     // Запускаем два мотора:
@@ -840,15 +840,15 @@ static void test_buffered_steps_tick_by_tick() {
     // prepare_buffered_steps
     
     // настройки частоты таймера
-    int timer_period_us = 200;
-    stepper_configure_timer(timer_period_us, TIMER3, TIMER_PRESCALER_1_8, 2000);
+    unsigned long timer_period_us = 200;
+    stepper_configure_timer(timer_period_us, TIMER_DEFAULT, TIMER_PRESCALER_1_8, 2000);
     
     // мотор
     stepper sm_x;
     
     // мотор - минимальная задержка между шагами 1000 мкс,
     // расстояние за шаг - 7.5мкм=7500нм
-    int step_delay_us = 1000;
+    unsigned long step_delay_us = 1000;
     init_stepper(&sm_x, 'x', 8, 9, 10, false, step_delay_us, 7500);
     init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000000);
     
@@ -977,15 +977,15 @@ static void test_buffered_steps() {
     // prepare_buffered_steps
     
     // настройки частоты таймера
-    int timer_period_us = 200;
-    stepper_configure_timer(timer_period_us, TIMER3, TIMER_PRESCALER_1_8, 2000);
+    unsigned long timer_period_us = 200;
+    stepper_configure_timer(timer_period_us, TIMER_DEFAULT, TIMER_PRESCALER_1_8, 2000);
     
     // мотор
     stepper sm_x;
     
     // мотор - минимальная задержка между шагами 1000 мкс,
     // расстояние за шаг - 7.5мкм=7500нм
-    int step_delay_us = 1000;
+    unsigned long step_delay_us = 1000;
     init_stepper(&sm_x, 'x', 8, 9, 10, false, step_delay_us, 7500);
     init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000000);
     
@@ -1086,17 +1086,17 @@ static void test_driver_std_modes() {
     stepper sm_x;
     
     // настройки мотора
-    int _step_delay_us;
-    int _dist_per_step;
+    unsigned long _step_delay_us;
+    unsigned long _dist_per_step;
     
     // шагов в цикле для полного оборота
-    int _step_count;
+    long _step_count;
     
     // настройки таймера
-    int _timer_id = TIMER3;
+    int _timer_id = TIMER_DEFAULT;
     int _timer_prescaler = TIMER_PRESCALER_1_8;
-    int _timer_period;
-    int _timer_period_us;
+    unsigned int _timer_adjustment;
+    unsigned long _timer_period_us;
 
     ///////////
     // #1
@@ -1112,9 +1112,9 @@ static void test_driver_std_modes() {
     
     // настройки таймера
     // для периода 200 микросекунд (5тыс вызовов в секунду == 5КГц)
-    _timer_period = 2000;
+    _timer_adjustment = 2000;
     _timer_period_us = 200;
-    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_period);
+    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_adjustment);
 
     // настройки мотора
     _step_delay_us = 1400;
@@ -1150,9 +1150,9 @@ static void test_driver_std_modes() {
     
     // настройки таймера
     // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
-    _timer_period = 200;
+    _timer_adjustment = 200;
     _timer_period_us = 20;
-    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_period);
+    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_adjustment);
 
     // настройки мотора
     _step_delay_us = 1500;
@@ -1188,9 +1188,9 @@ static void test_driver_std_modes() {
     
     // настройки таймера
     // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
-    _timer_period = 200;
+    _timer_adjustment = 200;
     _timer_period_us = 20;
-    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_period);
+    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_adjustment);
 
     // настройки мотора
     _step_delay_us = 660;
@@ -1226,9 +1226,9 @@ static void test_driver_std_modes() {
     
     // настройки таймера
     // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
-    _timer_period = 200;
+    _timer_adjustment = 200;
     _timer_period_us = 20;
-    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_period);
+    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_adjustment);
 
     // настройки мотора
     _step_delay_us = 340;
@@ -1264,9 +1264,9 @@ static void test_driver_std_modes() {
     
     // настройки таймера
     // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
-    _timer_period = 200;
+    _timer_adjustment = 200;
     _timer_period_us = 20;
-    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_period);
+    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_adjustment);
 
     // настройки мотора
     _step_delay_us = 180;
@@ -1302,9 +1302,9 @@ static void test_driver_std_modes() {
     
     // настройки таймера
     // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
-    _timer_period = 200;
+    _timer_adjustment = 200;
     _timer_period_us = 20;
-    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_period);
+    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_adjustment);
 
     // настройки мотора
     _step_delay_us = 80;
@@ -1340,9 +1340,9 @@ static void test_driver_std_modes() {
     
     // настройки таймера
     // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
-    _timer_period = 100;
+    _timer_adjustment = 100;
     _timer_period_us = 10;
-    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_period);
+    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_adjustment);
 
     // настройки мотора
     _step_delay_us = 40;
@@ -1378,9 +1378,9 @@ static void test_driver_std_modes() {
     
     // настройки таймера
     // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
-    _timer_period = 200;
+    _timer_adjustment = 200;
     _timer_period_us = 20;
-    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_period);
+    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_adjustment);
 
     // настройки мотора
     _step_delay_us = 60;
@@ -1413,21 +1413,21 @@ static void test_driver_std_modes_2motors() {
     stepper sm_x, sm_y;
     
     // настройки мотора
-    int x_step_delay_us;
-    int x_dist_per_step;
+    unsigned long x_step_delay_us;
+    unsigned long x_dist_per_step;
     
-    int y_step_delay_us;
-    int y_dist_per_step;
+    unsigned long y_step_delay_us;
+    unsigned long y_dist_per_step;
     
     // шагов в цикле для полного оборота
-    int x_step_count;
-    int y_step_count;
+    long x_step_count;
+    long y_step_count;
     
     // настройки таймера
-    int _timer_id = TIMER3;
+    int _timer_id = TIMER_DEFAULT;
     int _timer_prescaler = TIMER_PRESCALER_1_8;
-    int _timer_period;
-    int _timer_period_us;
+    unsigned int _timer_adjustment;
+    unsigned long _timer_period_us;
 
     ///////////
     // мотор X
@@ -1455,9 +1455,9 @@ static void test_driver_std_modes_2motors() {
     
     // настройки таймера
     // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
-    _timer_period = 200;
+    _timer_adjustment = 200;
     _timer_period_us = 20;
-    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_period);
+    stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_adjustment);
 
     // настройки моторов
     x_step_delay_us = 60;
@@ -1477,7 +1477,7 @@ static void test_driver_std_modes_2motors() {
     y_step_count = 200;
     prepare_steps(&sm_y, y_step_count, y_step_delay_us);
     
-    // 
+    //
     stepper_set_error_handle_strategy(DONT_CHANGE, DONT_CHANGE, DONT_CHANGE, IGNORE);
     
     // шагаем
@@ -1514,8 +1514,8 @@ static void test_exit_bounds_issue1_whirl() {
     init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000000);
     
     // настройки частоты таймера
-    int timer_period_us = 200;
-    stepper_configure_timer(timer_period_us, TIMER3, TIMER_PRESCALER_1_8, 2000);
+    unsigned long timer_period_us = 200;
+    stepper_configure_timer(timer_period_us, TIMER_DEFAULT, TIMER_PRESCALER_1_8, 2000);
     
     //////////////
     
@@ -1576,13 +1576,13 @@ static void test_exit_bounds_issue1_whirl() {
     
     // проверка границ
     timer_tick(1);
-    // здесь мы должны увидеть, что этот шаг приведет в выходу за виртуальную границу,
+    // здесь мы должны увидеть, что этот шаг приведет к выходу за виртуальную границу,
     // должны быть выставлены коды ошибок, статус мотора обозначен как "остановлен"
     sput_fail_unless(sm_x.status == STEPPER_STATUS_FINISHED, "step1.tick1: status == STEPPER_STATUS_FINISHED");
     sput_fail_unless(sm_x.error&STEPPER_ERROR_SOFT_END_MIN,
-        "step1.tick3: error&STEPPER_ERROR_SOFT_END_MIN == true");
+        "step1.tick1: error&STEPPER_ERROR_SOFT_END_MIN == true");
     sput_fail_unless(!(sm_x.error&STEPPER_ERROR_SOFT_END_MAX),
-        "step1.tick3: error&STEPPER_ERROR_SOFT_END_MAX == false");
+        "step1.tick1: error&STEPPER_ERROR_SOFT_END_MAX == false");
     
     // на всякий случай проверим финальное положение
     sput_fail_unless(sm_x.current_pos == 0, "step1.tick1: current_pos == 0");
@@ -1603,8 +1603,8 @@ static void test_exit_bounds_issue1_steps() {
     init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000000);
     
     // настройки частоты таймера
-    int timer_period_us = 200;
-    stepper_configure_timer(timer_period_us, TIMER3, TIMER_PRESCALER_1_8, 2000);
+    unsigned long timer_period_us = 200;
+    stepper_configure_timer(timer_period_us, TIMER_DEFAULT, TIMER_PRESCALER_1_8, 2000);
     
     //////////////
     
@@ -1691,8 +1691,8 @@ static void test_exit_bounds_issue9_steps() {
     init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000000);
     
     // настройки частоты таймера
-    int timer_period_us = 200;
-    stepper_configure_timer(timer_period_us, TIMER3, TIMER_PRESCALER_1_8, 2000);
+    unsigned long timer_period_us = 200;
+    stepper_configure_timer(timer_period_us, TIMER_DEFAULT, TIMER_PRESCALER_1_8, 2000);
     
     //////////////
     
@@ -1780,8 +1780,8 @@ static void test_square_sig_issue16() {
     init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000000);
     
     // настройки частоты таймера
-    int timer_period_us = 200;
-    stepper_configure_timer(timer_period_us, TIMER3, TIMER_PRESCALER_1_8, 2000);
+    unsigned long timer_period_us = 200;
+    stepper_configure_timer(timer_period_us, TIMER_DEFAULT, TIMER_PRESCALER_1_8, 2000);
     
     //////////////
     

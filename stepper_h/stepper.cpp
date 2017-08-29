@@ -45,8 +45,8 @@
  */
 void init_stepper(stepper* smotor, char name,
         int pin_step, int pin_dir, int pin_en,
-        bool invert_dir, int step_delay,
-        int distance_per_step) {
+        bool invert_dir, unsigned long step_delay,
+        unsigned long distance_per_step) {
     
     smotor->name = name;
     

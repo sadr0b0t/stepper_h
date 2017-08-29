@@ -6,14 +6,14 @@
 // CNC-shield
 // http://blog.protoneer.co.nz/arduino-cnc-shield/
 // X
-//#define STEP_PIN 2
-//#define DIR_PIN 5
-//#define EN_PIN 8
+#define STEP_PIN 2
+#define DIR_PIN 5
+#define EN_PIN 8
 
 // Y
-#define STEP_PIN 3
-#define DIR_PIN 6
-#define EN_PIN 8
+//#define STEP_PIN 3
+//#define DIR_PIN 6
+//#define EN_PIN 8
 
 // Z
 //#define STEP_PIN 4
