@@ -686,6 +686,16 @@ unsigned long stepper_cycle_max_time();
 void stepper_configure_timer(unsigned long target_period_us, int timer, int prescaler, unsigned int adjustment);
 
 /**
+ * Режим отладки: не включать аппаратный таймер при запуске цикла шагов,
+ * шаги можно осуществлять вручную серией вызовов _stepper_handle_interrupts.
+ * Может быть полезно при тестировании.
+ * @param enabled
+ *   false: не включать таймер
+ *   true: таймер работает в обичном режиме
+ */
+void stepper_set_timer_enabled(bool enabled);
+
+/**
  * Стратегия реакции на некоторые исключительные ситуации, которые
  * могут произойти во время вращения моторов.
  *
@@ -709,6 +719,7 @@ void stepper_set_error_handle_strategy(
         error_handle_strategy_t soft_end_handle,
         error_handle_strategy_t small_step_delay_handle,
         error_handle_strategy_t cycle_timing_exceed_handle);
+
 
 #endif // STEPPER_H
 

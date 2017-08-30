@@ -4,14 +4,19 @@ extern "C"{
     #include "timer_setup.h"
 }
 
-#include "stddef.h"
-#include "stdio.h"
-#include <iostream>
+//#include "stddef.h"
+//#include "stdio.h"
+//#include <iostream>
 
 #include "Arduino_debug.h"
 
 // http://www.use-strict.de/sput-unit-testing/tutorial.html
-#include <sput.h>
+
+#if defined( __i386__ ) || defined ( __x86_64__ )
+#include "sput.h"
+#else
+#include "sput-ino.h"
+#endif
 
 using namespace std;
 
@@ -21,8 +26,8 @@ using namespace std;
  * раз.
  * @param count - количество тиков (импульсов) таймера
  */
-void timer_tick(int count) {
-    for(int i = 0; i < count; i++) {
+void timer_tick(unsigned long count) {
+    for(unsigned long i = 0; i < count; i++) {
         _timer_handle_interrupts(3);
     }
 }
@@ -620,7 +625,7 @@ static void test_draw_triangle() {
     //prepare_steps(&sm_z, steps_z, delay_z);
     
     // пошагали
-    cout<<"steps_x="<<steps_x<<", steps_y="<<steps_y<<endl;
+    //cout<<"steps_x="<<steps_x<<", steps_y="<<steps_y<<endl;
     stepper_start_cycle();
     timer_tick(abs(steps_y)*5+1);
     sput_fail_unless(!stepper_cycle_running(), "line2: stepper_cycle_running() == false");
@@ -1840,10 +1845,192 @@ static void test_square_sig_issue16() {
         if(ok) ok = (dbg_pin_val(x_step) == 0);
     }
     sput_fail_unless(ok, "square sig ok");
-    if(!ok) cout<<"square sig failed at "<<i-1<<endl;
+    //if(!ok) cout<<"square sig failed at "<<i-1<<endl;
 }
 
-int main() {
+
+
+/////////////////////////////////////////////////////////
+// test suites
+
+/** Stepper cycle lifecycle */
+int stepper_test_suite_lifecycle() {
+    sput_start_testing();
+
+    sput_enter_suite("Stepper cycle lifecycle");
+    sput_run_test(test_lifecycle);
+
+    sput_finish_testing();
+    return sput_get_return_value();
+}
+
+/** Stepper cycle timer period settings */
+int stepper_test_suite_timer_period() {
+    sput_start_testing();
+
+    sput_enter_suite("Stepper cycle timer period settings");
+    sput_run_test(test_timer_period);
+
+    sput_finish_testing();
+    return sput_get_return_value();
+}
+
+/** Stepper cycle timer period is aliquant part of motor step pulse delay */
+int stepper_test_suite_timer_period_aliquant_step_delay() {
+    sput_start_testing();
+    
+    sput_enter_suite("Stepper cycle timer period is aliquant part of motor step pulse delay");
+    sput_run_test(test_timer_period_aliquant_step_delay);
+
+    sput_finish_testing();
+    return sput_get_return_value();
+}
+
+/** Single motor: 3 steps tick by tick on max speed */
+int stepper_test_suite_max_speed_tick_by_tick() {
+    sput_start_testing();
+    
+    sput_enter_suite("Single motor: 3 steps tick by tick on max speed");
+    sput_run_test(test_max_speed_tick_by_tick);
+
+    sput_finish_testing();
+    return sput_get_return_value();
+}
+
+/** Single motor: 30000 steps on max speed */
+int stepper_test_suite_max_speed_30000steps() {
+    sput_start_testing();
+    
+    sput_enter_suite("Single motor: 30000 steps on max speed");
+    sput_run_test(test_max_speed_30000steps);
+
+    sput_finish_testing();
+    return sput_get_return_value();
+}
+
+/** Single motor: 5 steps tick by tick on aliquant speed */
+int stepper_test_suite_aliquant_speed_tick_by_tick() {
+    sput_start_testing();
+    
+    sput_enter_suite("Single motor: 5 steps tick by tick on aliquant speed");
+    sput_run_test(test_aliquant_speed_tick_by_tick);
+
+    sput_finish_testing();
+    return sput_get_return_value();
+}
+
+/** 3 motors: draw triangle */
+int stepper_test_suite_draw_triangle() {
+    sput_start_testing();
+    
+    sput_enter_suite("3 motors: draw triangle");
+    sput_run_test(test_draw_triangle);
+
+    sput_finish_testing();
+    return sput_get_return_value();
+}
+
+/** Small step delay error handlers */
+int stepper_test_suite_small_step_delay_handlers() {
+    sput_start_testing();
+    
+    sput_enter_suite("Small step delay error handlers");
+    sput_run_test(test_small_step_delay_handlers);
+
+    sput_finish_testing();
+    return sput_get_return_value();
+}
+
+/** Moving with variable speed: buffered steps tick by tick */
+int stepper_test_suite_buffered_steps_tick_by_tick() {
+    sput_start_testing();
+    
+    sput_enter_suite("Moving with variable speed: buffered steps tick by tick");
+    sput_run_test(test_buffered_steps_tick_by_tick);
+
+    sput_finish_testing();
+    return sput_get_return_value();
+}
+
+/** Moving with variable speed: buffered steps */
+int stepper_test_suite_buffered_steps() {
+    sput_start_testing();
+    
+    sput_enter_suite("Moving with variable speed: buffered steps");
+    sput_run_test(test_buffered_steps);
+
+    sput_finish_testing();
+    return sput_get_return_value();
+}
+
+/** Step-dir driver std divider modes: 1/1, 1/18, 1/16, 1/32 */
+int stepper_test_suite_driver_std_modes() {
+    sput_start_testing();
+    
+    sput_enter_suite("Step-dir driver std divider modes: 1/1, 1/18, 1/16, 1/32");
+    sput_run_test(test_driver_std_modes);
+
+    sput_finish_testing();
+    return sput_get_return_value();
+}
+
+/** Step-dir driver std divider modes for 2 motors at a time */
+int stepper_test_suite_driver_std_modes_2motors() {
+    sput_start_testing();
+    
+    sput_enter_suite("Step-dir driver std divider modes for 2 motors at a time");
+    sput_run_test(test_driver_std_modes_2motors);
+
+    sput_finish_testing();
+    return sput_get_return_value();
+}
+
+/** Single motor: exit bounds (issue #1) - whirl */
+int stepper_test_suite_exit_bounds_issue1_whirl() {
+    sput_start_testing();
+    
+    sput_enter_suite("Single motor: exit bounds (issue #1) - whirl");
+    sput_run_test(test_exit_bounds_issue1_whirl);
+
+    sput_finish_testing();
+    return sput_get_return_value();
+}
+
+/** Single motor: exit bounds (issue #1) - steps */
+int stepper_test_suite_exit_bounds_issue1_steps() {
+    sput_start_testing();
+    
+    sput_enter_suite("Single motor: exit bounds (issue #1) - steps");
+    sput_run_test(test_exit_bounds_issue1_steps);
+
+    sput_finish_testing();
+    return sput_get_return_value();
+}
+
+/** Single motor: exit bounds (issue #9) - steps */
+int stepper_test_suite_exit_bounds_issue9_steps() {
+    sput_start_testing();
+    
+    sput_enter_suite("Single motor: exit bounds (issue #9) - steps");
+    sput_run_test(test_exit_bounds_issue9_steps);
+
+    sput_finish_testing();
+    return sput_get_return_value();
+}
+
+/** Single motor: test square signal (issue #16) */
+int stepper_test_suite_square_sig_issue16() {
+    sput_start_testing();
+    
+    sput_enter_suite("Single motor: test square signal (issue #16)");
+    sput_run_test(test_square_sig_issue16);
+    
+    sput_finish_testing();
+    return sput_get_return_value();
+}
+
+/** All tests in one bundle */
+int stepper_test_suite() {
     sput_start_testing();
 
     sput_enter_suite("Stepper cycle lifecycle");

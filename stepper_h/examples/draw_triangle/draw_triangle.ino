@@ -103,6 +103,7 @@ static void prepare_line3() {
 
 void setup() {
     Serial.begin(9600);
+    while(!Serial) // hack to see 1st messages in serial monitor on Arduino Leonardo
     Serial.println("Starting stepper_h test...");
     
     // connected stepper motors

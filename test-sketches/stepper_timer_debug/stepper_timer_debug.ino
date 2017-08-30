@@ -428,8 +428,8 @@ void print_motor_error(stepper &sm) {
 }
 
 void setup() {
-    //delay(5000); // hack to see 1st messages in serial monitor on Arduino Leonardo
     Serial.begin(9600);
+    while(!Serial) // hack to see 1st messages in serial monitor on Arduino Leonardo
     Serial.println("Starting stepper_h test...");
     
     // connected stepper motors

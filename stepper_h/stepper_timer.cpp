@@ -249,6 +249,9 @@ static unsigned int _timer_adjustment = STEPPER_TIMER_DEFAULT_ADJUSTMENT;
 // Период таймера, мкс
 static unsigned long _timer_period_us = STEPPER_TIMER_DEFAULT_PERIOD_US;
 
+// Включить/выключить аппаратный таймер
+//(выключенный таймер может пригодиться для тестов и отладки)
+bool _timer_enabled = true;
 
 ///////////////////////////
 // Текущий статус цикла
@@ -770,6 +773,18 @@ void stepper_configure_timer(unsigned long target_period_us, int timer, int pres
 }
 
 /**
+ * Режим отладки: не включать аппаратный таймер при запуске цикла шагов,
+ * шаги можно осуществлять вручную серией вызовов _stepper_handle_interrupts.
+ * Может быть полезно при тестировании.
+ * @param enabled
+ *   false: не включать таймер
+ *   true: таймер работает в обичном режиме
+ */
+void stepper_set_timer_enabled(bool enabled) {
+    _timer_enabled = enabled;
+}
+
+/**
  * Стратегия реакции на некоторые исключительные ситуации, которые
  * могут произойти во время вращения моторов.
  *
@@ -915,7 +930,7 @@ bool stepper_start_cycle() {
         
         // Запустим таймер с периодом _timer_period_us, для этого
         // должны быть заданы правильные _timer_prescaler и _timer_adjustment
-        _timer_init_ISR(_timer_id, _timer_prescaler, _timer_adjustment-1);
+        if(_timer_enabled) _timer_init_ISR(_timer_id, _timer_prescaler, _timer_adjustment-1);
     }
     return true;
 }
