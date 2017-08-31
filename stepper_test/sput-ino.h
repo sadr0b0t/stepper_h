@@ -125,7 +125,7 @@ extern "C" {
     if (__sput.initialized != SPUT_INITIALIZED)                            \
     {                                                                      \
         sprintf(__sput.out, "sput_start_testing() omitted\n");             \
-        Serial.println(__sput.out);                                        \
+        Serial.print(__sput.out);                                        \
         exit(EXIT_FAILURE);                                                \
     }
 
@@ -134,7 +134,7 @@ extern "C" {
     if (! __sput.suite.name)                                               \
     {                                                                      \
         sprintf(__sput.out, "sput_enter_suite() omitted\n");               \
-        Serial.println(__sput.out);                                        \
+        Serial.print(__sput.out);                                        \
         exit(EXIT_FAILURE);                                                \
     }
 
@@ -143,7 +143,7 @@ extern "C" {
     if (! __sput.test.name)                                                \
     {                                                                      \
         sprintf(__sput.out, "sput_run_test() omitted\n");                  \
-        Serial.println(__sput.out);                                        \
+        Serial.print(__sput.out);                                        \
         exit(EXIT_FAILURE);                                                \
     }
 
@@ -161,7 +161,7 @@ extern "C" {
                 __sput.suite.nr, __sput.suite.checks, __sput.test.name,    \
                 __sput.test.nr, __sput.check.name, __sput.check.type,      \
                 __sput.check.cond, __sput.check.line);                     \
-        Serial.println(__sput.out);                                        \
+        Serial.print(__sput.out);                                        \
     }
 
 
@@ -176,7 +176,7 @@ extern "C" {
                 __sput.test.name,                                          \
                 __sput.test.nr,                                            \
                 __sput.check.name);                                        \
-        Serial.println(__sput.out);                                        \
+        Serial.print(__sput.out);                                        \
     }
 
 
@@ -208,7 +208,7 @@ extern "C" {
         __sput.overall.checks += __sput.suite.checks;                      \
         __sput.overall.ok     += __sput.suite.ok;                          \
         __sput.overall.nok    += __sput.suite.nok;                         \
-        Serial.println(__sput.out);                                        \
+        Serial.print(__sput.out);                                        \
         memset(&__sput.suite, 0, sizeof(__sput.suite));                    \
     } while (0)
 
@@ -229,7 +229,7 @@ extern "C" {
         __sput.suite.nr = ++__sput.overall.suites;                         \
         sprintf(__sput.out, "\n== Entering suite #%lu, \"%s\" ==\n\n",     \
                 __sput.suite.nr, __sput.suite.name);                       \
-        Serial.println(__sput.out);                                        \
+        Serial.print(__sput.out);                                        \
     } while (0)
 
 
@@ -255,7 +255,7 @@ extern "C" {
                 __sput.overall.ok, __sput.overall.nok, failpft,            \
                 (sput_get_return_value() == EXIT_SUCCESS) ?                \
                 "SUCCESS" : "FAILURE");                                    \
-        Serial.println(__sput.out);                                        \
+        Serial.print(__sput.out);                                        \
     } while (0)
 
 
