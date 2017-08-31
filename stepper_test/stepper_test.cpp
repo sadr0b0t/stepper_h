@@ -4,11 +4,11 @@ extern "C"{
     #include "timer_setup.h"
 }
 
+#include "Arduino.h"
+
 //#include "stddef.h"
 //#include "stdio.h"
 //#include <iostream>
-
-#include "Arduino_debug.h"
 
 // http://www.use-strict.de/sput-unit-testing/tutorial.html
 
@@ -281,15 +281,15 @@ static void test_max_speed_tick_by_tick() {
     timer_tick(2);
     // проверка границ
     timer_tick(1);
-    sput_fail_unless(dbg_pin_val(x_step) == 0, "step1.tick1: pin_val == LOW");
+    sput_fail_unless(digitalRead(x_step) == 0, "step1.tick1: pin_val == LOW");
     // взвести step
     timer_tick(1);
-    sput_fail_unless(dbg_pin_val(x_step) == 1, "step1.tick2: pin_val == HIGH");
+    sput_fail_unless(digitalRead(x_step) == 1, "step1.tick2: pin_val == HIGH");
     sput_fail_unless(sm_x.current_pos == 0, "step1.tick2: current_pos == 0");
     //cout<<sm_x.current_pos<<endl;
     // сделать шаг, взвести счетчики на следующий шаг
     timer_tick(1);
-    sput_fail_unless(dbg_pin_val(x_step) == 0, "step1.tick3: pin_val == LOW");
+    sput_fail_unless(digitalRead(x_step) == 0, "step1.tick3: pin_val == LOW");
     sput_fail_unless(sm_x.current_pos == 7500, "step1.tick3: current_pos == 7500");
     //cout<<sm_x.current_pos<<endl;
     
@@ -298,14 +298,14 @@ static void test_max_speed_tick_by_tick() {
     timer_tick(2);
     // проверка границ
     timer_tick(1);
-    sput_fail_unless(dbg_pin_val(x_step) == 0, "step2.tick1: pin_val == LOW");
+    sput_fail_unless(digitalRead(x_step) == 0, "step2.tick1: pin_val == LOW");
     // взвести step
     timer_tick(1);
-    sput_fail_unless(dbg_pin_val(x_step) == 1, "step2.tick2: pin_val == HIGH");
+    sput_fail_unless(digitalRead(x_step) == 1, "step2.tick2: pin_val == HIGH");
     sput_fail_unless(sm_x.current_pos == 7500, "step2.tick2: current_pos == 7500");
     // сделать шаг, взвести счетчики на следующий шаг
     timer_tick(1);
-    sput_fail_unless(dbg_pin_val(x_step) == 0, "step2.tick3: pin_val == LOW");
+    sput_fail_unless(digitalRead(x_step) == 0, "step2.tick3: pin_val == LOW");
     sput_fail_unless(sm_x.current_pos == 15000, "step2.tick3: current_pos == 15000");
     
     // шаг 3
@@ -313,14 +313,14 @@ static void test_max_speed_tick_by_tick() {
     timer_tick(2);
     // проверка границ
     timer_tick(1);
-    sput_fail_unless(dbg_pin_val(x_step) == 0, "step3.tick1: pin_val == LOW");
+    sput_fail_unless(digitalRead(x_step) == 0, "step3.tick1: pin_val == LOW");
     // взвести step
     timer_tick(1);
-    sput_fail_unless(dbg_pin_val(x_step) == 1, "step3.tick2: pin_val == HIGH");
+    sput_fail_unless(digitalRead(x_step) == 1, "step3.tick2: pin_val == HIGH");
     sput_fail_unless(sm_x.current_pos == 15000, "step3.tick2: current_pos == 15000");
     // сделать шаг, взвести счетчики на следующий шаг
     timer_tick(1);
-    sput_fail_unless(dbg_pin_val(x_step) == 0, "step3.tick3: pin_val == LOW");
+    sput_fail_unless(digitalRead(x_step) == 0, "step3.tick3: pin_val == LOW");
     sput_fail_unless(sm_x.current_pos == 22500, "step3.tick3: current_pos == 22500");
     
     // все шаги сделали, но для завершения цикла нужен еще 1 финальный тик
@@ -1833,16 +1833,13 @@ static void test_square_sig_issue16() {
         timer_tick(2);
         // проверка границ
         timer_tick(1);
-        if(ok) ok = (dbg_pin_val(x_step) == 0);
-        //sput_fail_unless(dbg_pin_val(x_step) == 0, "step1.tick1: pin_val == LOW");
+        if(ok) ok = (digitalRead(x_step) == 0);
         // взвести step
         timer_tick(1);
-        //sput_fail_unless(dbg_pin_val(x_step) == 1, "step1.tick2: pin_val == HIGH");
-        if(ok) ok = (dbg_pin_val(x_step) == 1);
+        if(ok) ok = (digitalRead(x_step) == 1);
         // сделать шаг, взвести счетчики на следующий шаг
         timer_tick(1);
-        //sput_fail_unless(dbg_pin_val(x_step) == 0, "step1.tick3: pin_val == LOW");
-        if(ok) ok = (dbg_pin_val(x_step) == 0);
+        if(ok) ok = (digitalRead(x_step) == 0);
     }
     sput_fail_unless(ok, "square sig ok");
     //if(!ok) cout<<"square sig failed at "<<i-1<<endl;

@@ -9,19 +9,18 @@ unsigned long micros() {
 void pinMode(int pin, int mode) {
 }
 
+/**
+ * Сохранить значение пина
+ */
 void digitalWrite(int pin, int val) {
     dbg_pin_values[pin] = val;
-}
-
-int digitalRead(int pin) {
-    return 1;
 }
 
 /**
  * Сохраненное значение пина после digitalWrite
  * (для отладки)
  */
-int dbg_pin_val(int pin) {
+int digitalRead(int pin) {
     return dbg_pin_values[pin];
 }
 

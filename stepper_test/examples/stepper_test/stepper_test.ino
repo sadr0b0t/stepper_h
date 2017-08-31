@@ -1,39 +1,45 @@
 #include "stepper.h"
-#include "stepper_configure_timer.h"
-
 #include "stepper_test.h"
 
 void run_test_suite() {
     // Stepper cycle lifecycle
     // avr: ok
-    //stepper_test_suite_lifecycle();
+    // pic32: ok
+    stepper_test_suite_lifecycle();
     
     // Stepper cycle timer period settings
     // avr: ok
+    // pic32: ok
     //stepper_test_suite_timer_period();
     
     // Stepper cycle timer period is aliquant part of motor step pulse delay
     // avr: ok
+    // pic32: ok
     //stepper_test_suite_timer_period_aliquant_step_delay();
     
     // Single motor: 3 steps tick by tick on max speed
-    // avr: fail (pinval)
+    // avr: ok
+    // pic32: ok
     //stepper_test_suite_max_speed_tick_by_tick();
     
     // Single motor: 30000 steps on max speed
     // avr: ok
+    // pic32: ok
     //stepper_test_suite_max_speed_30000steps();
     
     // Single motor: 5 steps tick by tick on aliquant speed
     // avr: ok
+    // pic32: ok
     //stepper_test_suite_aliquant_speed_tick_by_tick();
     
     // 3 motors: draw triangle
     // avr: ok
+    // pic32: ok
     //stepper_test_suite_draw_triangle();
     
     // Small step delay error handlers
-    // avr: ?(не умещается)
+    // avr/Leonardo: ?(не умещается)
+    // pic32: fail (sm_x.error)
     //stepper_test_suite_small_step_delay_handlers();
     
     // Moving with variable speed: buffered steps tick by tick
@@ -43,6 +49,7 @@ void run_test_suite() {
     
     // Moving with variable speed: buffered steps
     // avr: ok
+    // pic32: ok
     //stepper_test_suite_buffered_steps();
     
     // Step-dir driver std divider modes: 1/1, 1/18, 1/16, 1/32
@@ -53,24 +60,27 @@ void run_test_suite() {
     // Step-dir driver std divider modes for 2 motors at a time
     // avr: fail (curr_pos)
     // pic32: ok
-    stepper_test_suite_driver_std_modes_2motors();
+    //stepper_test_suite_driver_std_modes_2motors();
     
     // Single motor: exit bounds (issue #1) - whirl
     // avr: ok
+    // pic32: ok
     //stepper_test_suite_exit_bounds_issue1_whirl();
     
     // Single motor: exit bounds (issue #1) - steps
     // avr: ok
+    // pic32: ok
     //stepper_test_suite_exit_bounds_issue1_steps();
     
     // Single motor: exit bounds (issue #9) - steps
     // avr: ok
+    // pic32: ok
     //stepper_test_suite_exit_bounds_issue9_steps();
     
     // Single motor: test square signal (issue #16)
-    // avr: fail (pinval), pic32: fail (pinval)
+    // avr: ok
+    // pic32: ok
     //stepper_test_suite_square_sig_issue16();
-
 }
 
 void setup() {
