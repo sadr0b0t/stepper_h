@@ -53,12 +53,12 @@ void run_test_suite() {
     //stepper_test_suite_buffered_steps();
     
     // Step-dir driver std divider modes: 1/1, 1/18, 1/16, 1/32
-    // avr: fail (curr_pos)
+    // avr/Leonardo: ok (целиком не умещается - плата шьется, но виснет; чтобы заработало, нужно закоментить в тестах пару кейсов)
     // pic32: ok
     //stepper_test_suite_driver_std_modes();
     
     // Step-dir driver std divider modes for 2 motors at a time
-    // avr: fail (curr_pos)
+    // avr: ok
     // pic32: ok
     //stepper_test_suite_driver_std_modes_2motors();
     

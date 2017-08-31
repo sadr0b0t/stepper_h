@@ -1102,7 +1102,10 @@ static void test_driver_std_modes() {
     int _timer_prescaler = TIMER_PRESCALER_1_8;
     unsigned int _timer_adjustment;
     unsigned long _timer_period_us;
-
+    
+    // игнорируем ошибку CYCLE_ERROR_HANDLER_TIMING_EXCEEDED
+    stepper_set_error_handle_strategy(DONT_CHANGE, DONT_CHANGE, DONT_CHANGE, IGNORE);
+    
     ///////////
     // #1
     // Шагаем полный оборот с делителем 1/1 (без деления шага)
@@ -1433,6 +1436,9 @@ static void test_driver_std_modes_2motors() {
     int _timer_prescaler = TIMER_PRESCALER_1_8;
     unsigned int _timer_adjustment;
     unsigned long _timer_period_us;
+    
+    // игнорируем ошибку CYCLE_ERROR_HANDLER_TIMING_EXCEEDED
+    stepper_set_error_handle_strategy(DONT_CHANGE, DONT_CHANGE, DONT_CHANGE, IGNORE);
 
     ///////////
     // мотор X
@@ -1481,9 +1487,6 @@ static void test_driver_std_modes_2motors() {
     
     y_step_count = 200;
     prepare_steps(&sm_y, y_step_count, y_step_delay_us);
-    
-    //
-    stepper_set_error_handle_strategy(DONT_CHANGE, DONT_CHANGE, DONT_CHANGE, IGNORE);
     
     // шагаем
     stepper_start_cycle();

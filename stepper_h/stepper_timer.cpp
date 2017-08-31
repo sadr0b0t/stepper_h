@@ -826,7 +826,7 @@ void stepper_set_error_handle_strategy(
     }
     
     // допустимые значения: IGNORE/CANCEL_CYCLE
-    if(cycle_timing_exceed_handle == STOP_MOTOR || cycle_timing_exceed_handle == CANCEL_CYCLE) {
+    if(cycle_timing_exceed_handle == IGNORE || cycle_timing_exceed_handle == CANCEL_CYCLE) {
         _cycle_timing_exceed_handle = cycle_timing_exceed_handle;
     }
 }
