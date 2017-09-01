@@ -915,13 +915,13 @@ static void test_buffered_steps_tick_by_tick() {
     // шаг2.1:
     // новое положение: 30000-7500=22500
     timer_tick(50);
-    sput_fail_unless(sm_x.current_pos == 30000-7500,
+    sput_fail_unless(sm_x.current_pos == 30000l-7500,
         "buffered steps: cycle 2 of 3, step1: sm_x.current_pos == 30000-7500 (=22500)");
     
     // шаг2.2:
     // новое положение: 22500-7500=15000
     timer_tick(50);
-    sput_fail_unless(sm_x.current_pos == 30000-7500*2,
+    sput_fail_unless(sm_x.current_pos == 30000l-7500*2,
         "buffered steps: cycle 2 of 3, step2: sm_x.current_pos == 30000-7500*2 (=15000)");
     
     // цикл завершен, всё еще работаем
@@ -947,25 +947,25 @@ static void test_buffered_steps_tick_by_tick() {
     // шаг3.1:
     // новое положение: 15000+7500=22500
     timer_tick(10);
-    sput_fail_unless(sm_x.current_pos == 15000+7500,
+    sput_fail_unless(sm_x.current_pos == 15000l+7500,
         "buffered steps: cycle 3 of 3, step1: sm_x.current_pos == 15000+7500 (=22500)");
     
     // шаг3.2:
     // новое положение: 22500+7500=30000
     timer_tick(10);
-    sput_fail_unless(sm_x.current_pos == 15000+7500*2,
+    sput_fail_unless(sm_x.current_pos == 15000l+7500*2,
         "buffered steps: cycle 3 of 3, step2: sm_x.current_pos == 15000+7500*2 (=30000)");
     
     // шаг3.3:
     // новое положение: 30000+7500=37500
     timer_tick(10);
-    sput_fail_unless(sm_x.current_pos == 15000+7500*3,
+    sput_fail_unless(sm_x.current_pos == 15000l+7500*3,
         "buffered steps: cycle 3 of 3, step3: sm_x.current_pos == 15000+7500*3 (=37500)");
     
     // шаг3.4:
     // новое положение: 37500+7500=45000
     timer_tick(10);
-    sput_fail_unless(sm_x.current_pos == 15000+7500*4,
+    sput_fail_unless(sm_x.current_pos == 15000l+7500*4,
         "buffered steps: cycle 3 of 3, step4: sm_x.current_pos == 15000+7500*4 (=45000)");
     
     // завершающий тик

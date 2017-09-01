@@ -43,7 +43,7 @@ void run_test_suite() {
     //stepper_test_suite_small_step_delay_handlers();
     
     // Moving with variable speed: buffered steps tick by tick
-    // avr: fail (curr_pos)
+    // avr: ok
     // pic32: ok
     //stepper_test_suite_buffered_steps_tick_by_tick();
     
