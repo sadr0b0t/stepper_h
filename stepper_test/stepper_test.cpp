@@ -566,105 +566,153 @@ static void test_draw_triangle() {
     // uM: (0,0,0) -> (150000,50000,20000) -> (50000,150000,20000) -> (0,0,0)
     // nm: (0,0,0) -> (150000000,50000000,20000000) -> (50000000,150000000,20000000) -> (0,0,0)
     
-    // #1 линия1
-    // line1: (0,0,0) -> (150000000,50000000,20000000)
-    
-    // X - длинная координата - ее проходим с максимальной скоростью
-    //long steps_x = 150000000 / 7500;
-    long steps_x = (150000000 - sm_x.current_pos) / 7500;
-    unsigned long delay_x = 1000;
-    unsigned long time_x = delay_x * abs(steps_x);
-    
-    //long steps_y = 50000000 / 7500;
-    long steps_y = (50000000 - sm_y.current_pos) / 7500;
-    unsigned long delay_y = time_x / abs(steps_y);
-    
-    //long steps_z = 20000000 / 7500;
-    long steps_z = (20000000 - sm_z.current_pos) / 7500;
-    unsigned long delay_z = time_x / abs(steps_z);
+    // сколько раз повторить рисунок
+    int count = 3;
+    for(int i = 0; i < count; i++) {
+        // #1 линия1
+        // line1: (0,0,0) -> (150000000,50000000,20000000)
+        
+        // X - длинная координата - ее проходим с максимальной скоростью
+        //long steps_x = 150000000 / 7500; //=20000
+        long steps_x = (150000000 - sm_x.current_pos) / 7500;
+        unsigned long delay_x = 1000;
+        unsigned long time_x = delay_x * abs(steps_x);
+        
+        //long steps_y = 50000000 / 7500; //=6666.(6)=6666 (на контроллере округление отбрасыванием)
+        long steps_y = (50000000 - sm_y.current_pos) / 7500;
+        unsigned long delay_y = time_x / abs(steps_y);
+        
+        //long steps_z = 20000000 / 7500; //=2666.(6)=2666
+        long steps_z = (20000000 - sm_z.current_pos) / 7500;
+        unsigned long delay_z = time_x / abs(steps_z);
 
-    // prepare_steps(stepper *smotor,
-    //     long step_count, unsigned long step_delay,
-    //     calibrate_mode_t calibrate_mode=NONE);
-    prepare_steps(&sm_x, steps_x, delay_x);
-    prepare_steps(&sm_y, steps_y, delay_y);
-    prepare_steps(&sm_z, steps_z, delay_z);
-    
-    // пошагали
-    stepper_start_cycle();
-    timer_tick(abs(steps_x)*5+1);
-    sput_fail_unless(!stepper_cycle_running(), "line1: stepper_cycle_running() == false");
-    
-    // #2 линия2
-    // line2: (150000000,50000000,20000000) -> (50000000,150000000,20000000)
-    
-    // здесь путь по x и y одинаковый, но точные количества шагов
-    // с учетом погрешностей округления могут отличаться на +/- один шаг:
-    // реально получится:
-    // steps_x=-13333, steps_y=13334
-    
-    //long steps_y = (150000000 - 50000000) / 7500;
-    steps_y = (150000000 - sm_y.current_pos) / 7500;
-    delay_y = 1000;
-    unsigned long time_y = delay_y * abs(steps_y);
-    
-    //long steps_x = (50000000 - 150000000) / 7500;
-    steps_x = (50000000 - sm_x.current_pos) / 7500;
-    delay_x = time_y / abs(steps_y);
-    
-    // путь по z=0
-    //long steps_z = (20000000 - 20000000) / 7500;
-    //long steps_z = (20000000 - sm_z.current_pos) / 7500;
-    //long delay_z = time_y / abs(steps_z);
+        // prepare_steps(stepper *smotor,
+        //     long step_count, unsigned long step_delay,
+        //     calibrate_mode_t calibrate_mode=NONE);
+        prepare_steps(&sm_x, steps_x, delay_x);
+        prepare_steps(&sm_y, steps_y, delay_y);
+        prepare_steps(&sm_z, steps_z, delay_z);
+        
+        // пошагали
+        stepper_start_cycle();
+        timer_tick(abs(steps_x)*5+1);
+        
+        // пришагали
+        sput_fail_unless(!stepper_cycle_running(), "line1: stepper_cycle_running() == false");
+        sput_fail_unless(stepper_cycle_max_time() < timer_period_us, "line1: stepper_cycle_max_time() < 200us");
+        //Serial.print("stepper_cycle_max_time=");
+        //Serial.println(stepper_cycle_max_time());
+        
+        // пункт назначения:
+        // sm_x.current_pos = 0+7500*20000=150000000
+        // sm_y.current_pos = 0+7500*6666=49995000
+        // sm_z.current_pos = 0+7500*2666=19995000
+        sput_fail_unless(sm_x.current_pos == 150000000,
+            "line1.done: sm_x.current_pos == 0+7500*20000=150000000");
+        sput_fail_unless(sm_y.current_pos == 49995000,
+            "line1.done: sm_y.current_pos == 0+7500*6666=49995000");
+        sput_fail_unless(sm_z.current_pos == 19995000,
+            "line1.done: sm_z.current_pos == 0+7500*2666=19995000");
+        
+        // #2 линия2
+        // line2: (150000000,50000000,20000000) -> (50000000,150000000,20000000)
+        
+        // здесь путь по x и y одинаковый, но точные количества шагов
+        // с учетом погрешностей округления могут отличаться на +/- один шаг:
+        // реально получится:
+        // steps_x=-13333, steps_y=13334
+        
+        //long steps_y = (150000000 - 50000000) / 7500; // в идеале
+        //long steps_y = (150000000 - 49995000) / 7500; //=13334 // в реале
+        steps_y = (150000000 - sm_y.current_pos) / 7500;
+        delay_y = 1000;
+        unsigned long time_y = delay_y * abs(steps_y);
+        
+        //long steps_x = (50000000 - 150000000) / 7500; // в идеале
+        //long steps_x = (50000000 - 150000000) / 7500; //=-13333.(3)=-13333 // и в реале
+        steps_x = (50000000 - sm_x.current_pos) / 7500;
+        delay_x = time_y / abs(steps_y);
+        
+        // путь по z=0
+        //long steps_z = (20000000 - 20000000) / 7500; // в идеале
+        //long steps_z = (20000000 - 19995000) / 7500; //=0.(6)=0 // в реале
+        //long steps_z = (20000000 - sm_z.current_pos) / 7500;
+        //long delay_z = time_y / abs(steps_z);
 
-    // prepare_steps(stepper *smotor,
-    //     long step_count, unsigned long step_delay,
-    //     calibrate_mode_t calibrate_mode=NONE);
-    prepare_steps(&sm_x, steps_x, delay_x);
-    prepare_steps(&sm_y, steps_y, delay_y);
-    //prepare_steps(&sm_z, steps_z, delay_z);
-    
-    // пошагали
-    //cout<<"steps_x="<<steps_x<<", steps_y="<<steps_y<<endl;
-    stepper_start_cycle();
-    timer_tick(abs(steps_y)*5+1);
-    sput_fail_unless(!stepper_cycle_running(), "line2: stepper_cycle_running() == false");
-    
-    // #3 линия3
-    // line3: (50000000,150000000,20000000) -> (0,0,0)
-    
-    // Y - длинная координата - ее проходим с максимальной скоростью
-    //long steps_y = -150000000 / 7500;
-    steps_y = (0 - sm_y.current_pos) / 7500;
-    delay_y = 1000;
-    time_y = delay_y * abs(steps_y);
-    
-    //long steps_x = -50000000 / 7500;
-    steps_x = (0 - sm_x.current_pos) / 7500;
-    delay_x = time_y / abs(steps_x);
-    
-    //long steps_z = -20000000 / 7500;
-    steps_z = (0 - sm_z.current_pos) / 7500;
-    delay_z = time_y / abs(steps_z);
+        // prepare_steps(stepper *smotor,
+        //     long step_count, unsigned long step_delay,
+        //     calibrate_mode_t calibrate_mode=NONE);
+        prepare_steps(&sm_x, steps_x, delay_x);
+        prepare_steps(&sm_y, steps_y, delay_y);
+        //prepare_steps(&sm_z, steps_z, delay_z);
+        
+        // пошагали
+        //cout<<"steps_x="<<steps_x<<", steps_y="<<steps_y<<endl;
+        stepper_start_cycle();
+        timer_tick(abs(steps_y)*5+1);
+        // пришагали
+        sput_fail_unless(!stepper_cycle_running(), "line2: stepper_cycle_running() == false");
+        sput_fail_unless(stepper_cycle_max_time() < timer_period_us, "line2: stepper_cycle_max_time() < 200us");
+        //Serial.print("stepper_cycle_max_time=");
+        //Serial.println(stepper_cycle_max_time());
+        
+        // пункт назначения:
+        // sm_x.current_pos = 150000000-7500*13333=50002500
+        // sm_y.current_pos = 49995000+7500*13334=150000000
+        // sm_z.current_pos = 19995000+0=19995000
+        sput_fail_unless(sm_x.current_pos == 50002500,
+            "line2.done: sm_x.current_pos == 150000000-7500*13333=50002500");
+        sput_fail_unless(sm_y.current_pos == 150000000,
+            "line2.done: sm_y.current_pos == 49995000+7500*13334=150000000");
+        sput_fail_unless(sm_z.current_pos == 19995000,
+            "line2.done: sm_z.current_pos == 19995000+0=19995000");
+        
+        // #3 линия3
+        // line3: (50000000,150000000,20000000) -> (0,0,0)
+        
+        // Y - длинная координата - ее проходим с максимальной скоростью
+        //long steps_y = -150000000 / 7500; // в идеале
+        //long steps_y = -150000000 / 7500; //=-20000 // в реале
+        steps_y = (0 - sm_y.current_pos) / 7500;
+        delay_y = 1000;
+        time_y = delay_y * abs(steps_y);
+        
+        //long steps_x = -50000000 / 7500; // в идеале
+        //long steps_x = -50002500 / 7500; //=-6667 // в реале
+        steps_x = (0 - sm_x.current_pos) / 7500;
+        delay_x = time_y / abs(steps_x);
+        
+        //long steps_z = -20000000 / 7500; // в идеале
+        //long steps_z = -19995000 / 7500; //=-2666 // в реале
+        steps_z = (0 - sm_z.current_pos) / 7500;
+        delay_z = time_y / abs(steps_z);
 
-    // prepare_steps(stepper *smotor,
-    //     long step_count, unsigned long step_delay,
-    //     calibrate_mode_t calibrate_mode=NONE);
-    prepare_steps(&sm_x, steps_x, delay_x);
-    prepare_steps(&sm_y, steps_y, delay_y);
-    prepare_steps(&sm_z, steps_z, delay_z);
-    
-    // пошагали
-    stepper_start_cycle();
-    timer_tick(abs(steps_y)*5+1);
-    sput_fail_unless(!stepper_cycle_running(), "line3: stepper_cycle_running() == false");
-    
-    // #4
-    // Проехали весь треугольник, убедимся, что мы в исходной точке (0,0,0)
-    sput_fail_unless(!stepper_cycle_running(), "done: stepper_cycle_running() == false");
-    sput_fail_unless(sm_x.current_pos == 0, "done: sm_x.current_pos == 0");
-    sput_fail_unless(sm_y.current_pos == 0, "done: sm_y.current_pos == 0");
-    sput_fail_unless(sm_z.current_pos == 0, "done: sm_z.current_pos == 0");
+        // prepare_steps(stepper *smotor,
+        //     long step_count, unsigned long step_delay,
+        //     calibrate_mode_t calibrate_mode=NONE);
+        prepare_steps(&sm_x, steps_x, delay_x);
+        prepare_steps(&sm_y, steps_y, delay_y);
+        prepare_steps(&sm_z, steps_z, delay_z);
+        
+        // пошагали
+        stepper_start_cycle();
+        timer_tick(abs(steps_y)*5+1);
+        // пришагали
+        sput_fail_unless(!stepper_cycle_running(), "line3: stepper_cycle_running() == false");
+        sput_fail_unless(stepper_cycle_max_time() < timer_period_us, "line1: stepper_cycle_max_time() < 200us");
+        //Serial.print("stepper_cycle_max_time=");
+        //Serial.println(stepper_cycle_max_time());
+        
+        // #4
+        // Проехали весь треугольник, убедимся, что мы в исходной точке (0,0,0)
+        // пункт назначения:
+        // sm_x.current_pos = 50002500-7500*6667=0
+        // sm_y.current_pos = 150000000-7500*20000=0
+        // sm_z.current_pos = 19995000-7500*2666=0
+        sput_fail_unless(sm_x.current_pos == 0, "line3.done: sm_x.current_pos == 0");
+        sput_fail_unless(sm_y.current_pos == 0, "line3.done: sm_y.current_pos == 0");
+        sput_fail_unless(sm_z.current_pos == 0, "line3.done: sm_z.current_pos == 0");
+    }
 }
 
 static void test_small_step_delay_handlers() {
@@ -1624,7 +1672,7 @@ static void test_exit_bounds_issue1_steps() {
     // в случае, если задать задержку между шагами 0 (должна исправиться на минимальную
     // задержку motor->step_delay, т.е. максимальную скорость).
     // Если указывать задержку значением (motor->step_delay или 1000), то всё ок.
-    // https://github.com/1i7/stepper_h/issues/1
+    // https://github.com/sadr0b0t/stepper_h/issues/1
     
     // попробуем выйти в минус за 0
     
@@ -1687,7 +1735,7 @@ static void test_exit_bounds_issue1_steps() {
 }
 
 static void test_exit_bounds_issue9_steps() {
-    // https://github.com/1i7/stepper_h/issues/9
+    // https://github.com/sadr0b0t/stepper_h/issues/9
 
     // мотор - минимальная задежка между шагами: 1000 микросекунд
     // расстояние за шаг: 7500нм=7.5мкм
@@ -1775,7 +1823,7 @@ static void test_exit_bounds_issue9_steps() {
 }
 
 static void test_square_sig_issue16() {
-    // https://github.com/1i7/stepper_h/issues/16
+    // https://github.com/sadr0b0t/stepper_h/issues/16
 
     // мотор - минимальная задежка между шагами: 1000 микросекунд
     // расстояние за шаг: 7500нм=7.5мкм
@@ -2029,6 +2077,7 @@ int stepper_test_suite_square_sig_issue16() {
     return sput_get_return_value();
 }
 
+
 /** All tests in one bundle */
 int stepper_test_suite() {
     sput_start_testing();
@@ -2082,6 +2131,7 @@ int stepper_test_suite() {
     
     sput_enter_suite("Single motor: test square signal (issue #16)");
     sput_run_test(test_square_sig_issue16);
+    
     
     sput_finish_testing();
     return sput_get_return_value();

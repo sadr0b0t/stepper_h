@@ -1,9 +1,9 @@
 # stepper_h
-Non-blocking stepper motor control library for ChipKIT (Arduino-compatible pic32-based dev board)
+Non-blocking stepper motor control library for ChipKIT (Arduino-compatible pic32-based dev board) and Arduino
 
 Hello,
 
-Here is my library to control multiple stepper motors connected to ChipKIT board via step-dir driver interface
+Here is my library to control multiple stepper motors connected to ChipKIT or Arduino board via step-dir driver interface
 https://github.com/1i7/stepper_h
 
 The major benefit in comparison to Arduino Stepper.h lib https://www.arduino.cc/en/Reference/StepperStep is that my stepper_h calls are non-blocking: you can run simultaneously multiple motors and receive commands via Wify, Serial port and do anything else in the main loop at the same time.
@@ -245,8 +245,8 @@ https://github.com/1i7/stepper_h/blob/master/test-sketches/step_dir_test/step_di
 
 - мотор пищит и не крутится
 - мотор гудит и не крутится
-- мотор крутится, но если остановить его пальцем, сам движение не продолжает
-- мотор крутится и если остановить его пальцем, сам продолжает движение
+- мотор крутится, но, если остановить его пальцем, сам движение не продолжает
+- мотор крутится и, если остановить его пальцем, сам продолжает движение
 
 Чем меньше делитель шага, тем более размыта граница между состояниями. Например, пограничное состояние "если остановить его пальцем, сам движение не продолжает" иногда воспроизводится стабильно, а иногда мотор может взять и продолжить. Если "мотор гудит и не крутится", то можно его немного крутануть пальцем и он начинает крутится. Или в режиме без деления при задержке 600 микросекунд мотор вроде как пищит и даже при попытке крутануть пальцем не начинает вращаться, но если плавно провернуть его 3-4 раза, то все равно начинает вращение.
 

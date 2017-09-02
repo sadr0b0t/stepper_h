@@ -13,18 +13,23 @@ static void prepare_line1() {
     // line1: (0,0,0) -> (150000000,50000000,20000000)
     
     // X - длинная координата - ее проходим с максимальной скоростью
-    //long steps_x = 150000000 / 7500;
-    long steps_x = (150000000 - sm_x.current_pos) / 7500;
+    //long steps_x = 150000000 / 7500; //=20000
+    long steps_x = (150000000l - sm_x.current_pos) / 7500;
     unsigned long delay_x = 1000;
     unsigned long time_x = delay_x * abs(steps_x);
     
-    //long steps_y = 50000000 / 7500;
-    long steps_y = (50000000 - sm_y.current_pos) / 7500;
+    //long steps_y = 50000000 / 7500; //=6666.(6)=6666 (на контроллере округление отбрасыванием)
+    long steps_y = (50000000l - sm_y.current_pos) / 7500;
     unsigned long delay_y = time_x / abs(steps_y);
     
-    //long steps_z = 20000000 / 7500;
-    long steps_z = (20000000 - sm_z.current_pos) / 7500;
+    //long steps_z = 20000000 / 7500; //=2666.(6)=2666
+    long steps_z = (20000000l - sm_z.current_pos) / 7500;
     unsigned long delay_z = time_x / abs(steps_z);
+
+    // пункт назначения:
+    // sm_x.current_pos = 0+7500*20000=150000000
+    // sm_y.current_pos = 0+7500*6666=49995000
+    // sm_z.current_pos = 0+7500*2666=19995000
 
     // prepare_steps(stepper *smotor,
     //     long step_count, unsigned long step_delay,
@@ -48,26 +53,34 @@ static void prepare_line2() {
     // реально получится:
     // steps_x=-13333, steps_y=13334
     
-    //long steps_y = (150000000 - 50000000) / 7500;
-    long steps_y = (150000000 - sm_y.current_pos) / 7500;
+    //long steps_y = (150000000 - 50000000) / 7500; // в идеале
+    //long steps_y = (150000000 - 49995000) / 7500; //=13334 // в реале
+    long steps_y = (150000000l - sm_y.current_pos) / 7500;
     unsigned long delay_y = 1000;
     unsigned long time_y = delay_y * abs(steps_y);
     
-    //long steps_x = (50000000 - 150000000) / 7500;
-    long steps_x = (50000000 - sm_x.current_pos) / 7500;
+    //long steps_x = (50000000 - 150000000) / 7500; // в идеале
+    //long steps_x = (50000000 - 150000000) / 7500; //=-13333.(3)=-13333 // и в реале
+    long steps_x = (50000000l - sm_x.current_pos) / 7500;
     unsigned long delay_x = time_y / abs(steps_y);
     
     // путь по z=0
-    //long steps_z = (20000000 - 20000000) / 7500;
+    //long steps_z = (20000000 - 20000000) / 7500; // в идеале
+    //long steps_z = (20000000 - 19995000) / 7500; //=0.(6)=0 // в реале
     //long steps_z = (20000000 - sm_z.current_pos) / 7500;
     //unsigned long delay_z = time_x / abs(steps_z);
+    
+    // пункт назначения:
+    // sm_x.current_pos = 150000000-7500*13333=50002500
+    // sm_y.current_pos = 49995000+7500*13334=150000000
+    // sm_z.current_pos = 19995000+0=19995000
 
     // prepare_steps(stepper *smotor,
     //     long step_count, unsigned long step_delay,
     //     calibrate_mode_t calibrate_mode=NONE);
     prepare_steps(&sm_x, steps_x, delay_x);
     prepare_steps(&sm_y, steps_y, delay_y);
-    //prepare_steps(&sm_z, steps_z, delay_z);
+    //prepare_steps(&sm_z, steps_z, delay_z); // путь=0, поэтому не шагаем
 }
 
 static void prepare_line3() {
@@ -80,18 +93,26 @@ static void prepare_line3() {
     // line3: (50000000,150000000,20000000) -> (0,0,0)
     
     // Y - длинная координата - ее проходим с максимальной скоростью
-    //long steps_y = -150000000 / 7500;
+    //long steps_y = -150000000 / 7500; // в идеале
+    //long steps_y = -150000000 / 7500; //=-20000 // в реале
     long steps_y = (0 - sm_y.current_pos) / 7500;
     unsigned long delay_y = 1000;
     unsigned long time_y = delay_y * abs(steps_y);
     
-    //long steps_x = -50000000 / 7500;
+    //long steps_x = -50000000 / 7500; // в идеале
+    //long steps_x = -50002500 / 7500; //=-6667 // в реале
     long steps_x = (0 - sm_x.current_pos) / 7500;
     unsigned long delay_x = time_y / abs(steps_x);
     
-    //long steps_z = -20000000 / 7500;
+    //long steps_z = -20000000 / 7500; // в идеале
+    //long steps_z = -19995000 / 7500; //=-2666 // в реале
     long steps_z = (0 - sm_z.current_pos) / 7500;
     unsigned long delay_z = time_y / abs(steps_z);
+    
+    // пункт назначения:
+    // sm_x.current_pos = 50002500-7500*6667=0
+    // sm_y.current_pos = 150000000-7500*20000=0
+    // sm_z.current_pos = 19995000-7500*2666=0
 
     // prepare_steps(stepper *smotor,
     //     long step_count, unsigned long step_delay,
@@ -127,8 +148,6 @@ void setup() {
     init_stepper(&sm_z, 'z', 4, 7, 8, false, 1000, 7500);
     init_stepper_ends(&sm_z, NO_PIN, NO_PIN, CONST, CONST, 0, 100000000);
 }
-
-
 
 void loop() {
     // (see https://github.com/1i7/stepper_h/blob/master/3pty/arduino/README
