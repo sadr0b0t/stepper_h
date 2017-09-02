@@ -238,12 +238,12 @@ void _timer_init_ISR(int timer, int prescaler, unsigned int adjustment) {
         OCR1A = adjustment;     // compare match register
         TCNT1 = 0;              // clear the timer count
 #if defined(__AVR_ATmega8__)|| defined(__AVR_ATmega128__)
-        TIFR |= _BV(OCF1A);      // clear any pending interrupts;
-        TIMSK |=  _BV(OCIE1A) ;  // enable the output compare interrupt
+        TIFR |= _BV(OCF1A);      // clear any pending interrupts
+        TIMSK |= _BV(OCIE1A);    // enable the output compare interrupt
 #else
         // here if not ATmega8 or ATmega128
-        TIFR1 |= _BV(OCF1A);     // clear any pending interrupts;
-        TIMSK1 |=  _BV(OCIE1A) ; // enable the output compare interrupt
+        TIFR1 |= _BV(OCF1A);     // clear any pending interrupts
+        TIMSK1 |= _BV(OCIE1A);   // enable the output compare interrupt
 #endif
 #if defined(WIRING)
         timerAttach(TIMER1OUTCOMPAREA_INT, Timer1Service);
@@ -282,11 +282,11 @@ void _timer_init_ISR(int timer, int prescaler, unsigned int adjustment) {
         OCR3A = adjustment;     // compare match register
         TCNT3 = 0;              // clear the timer count
 #if defined(__AVR_ATmega128__)
-        TIFR |= _BV(OCF3A);     // clear any pending interrupts;
+        TIFR |= _BV(OCF3A);     // clear any pending interrupts
         ETIMSK |= _BV(OCIE3A);  // enable the output compare interrupt
 #else
-        TIFR3 = _BV(OCF3A);     // clear any pending interrupts;
-        TIMSK3 =  _BV(OCIE3A) ; // enable the output compare interrupt
+        TIFR3 |= _BV(OCF3A);    // clear any pending interrupts
+        TIMSK3 |= _BV(OCIE3A);  // enable the output compare interrupt
 #endif
 #if defined(WIRING)
         timerAttach(TIMER3OUTCOMPAREA_INT, Timer3Service);  // for Wiring platform only
@@ -324,8 +324,8 @@ void _timer_init_ISR(int timer, int prescaler, unsigned int adjustment) {
         TCCR4B |= prescalerBits;// set prescaler
         OCR4A = adjustment;     // compare match register
         TCNT4 = 0;              // clear the timer count
-        TIFR4 = _BV(OCF4A);     // clear any pending interrupts;
-        TIMSK4 =  _BV(OCIE4A) ; // enable the output compare interrupt
+        TIFR4 |= _BV(OCF4A);    // clear any pending interrupts
+        TIMSK4 |= _BV(OCIE4A);  // enable the output compare interrupt
     }
 #endif
 
@@ -359,8 +359,8 @@ void _timer_init_ISR(int timer, int prescaler, unsigned int adjustment) {
         TCCR5B |= prescalerBits;// set prescaler
         OCR5A = adjustment;     // compare match register
         TCNT5 = 0;              // clear the timer count
-        TIFR5 = _BV(OCF5A);     // clear any pending interrupts;
-        TIMSK5 =  _BV(OCIE5A) ; // enable the output compare interrupt
+        TIFR5 |= _BV(OCF5A);    // clear any pending interrupts
+        TIMSK5 |= _BV(OCIE5A);  // enable the output compare interrupt
     }
 #endif
 }
@@ -376,9 +376,9 @@ void _timer_stop_ISR(int timer) {
 #if defined WIRING   // Wiring
     if(timer == _timer1) {
         #if defined(__AVR_ATmega1281__)||defined(__AVR_ATmega2561__)
-        TIMSK1 &= ~_BV(OCIE1A) ;  // disable timer 1 output compare interrupt
+        TIMSK1 &= ~_BV(OCIE1A);  // disable timer 1 output compare interrupt
         #else
-        TIMSK &= ~_BV(OCIE1A) ;  // disable timer 1 output compare interrupt
+        TIMSK &= ~_BV(OCIE1A);  // disable timer 1 output compare interrupt
         #endif
         timerDetach(TIMER1OUTCOMPAREA_INT);
     } else if(timer == _timer3) {
@@ -390,7 +390,42 @@ void _timer_stop_ISR(int timer) {
         timerDetach(TIMER3OUTCOMPAREA_INT);
     }
 #else
-    //For arduino - in future: call here to a currently undefined function to reset the timer
+    // Tested only on Arduino Leonardo
+    // post comments on other plaforms:
+    // https://github.com/sadr0b0t/arduino-timer-api/issues/6
+    
+#if defined (_useTimer1)
+    if(timer == _timer1) {
+#if defined(__AVR_ATmega8__)|| defined(__AVR_ATmega128__)
+        TIMSK &= ~_BV(OCIE1A); // disable output compare interrupt
+#else
+        // here if not ATmega8 or ATmega128
+        TIMSK1 &= ~_BV(OCIE1A); // disable output compare interrupt
+#endif
+    }
+#endif
+
+#if defined (_useTimer3)
+    if(timer == _timer3) {
+#if defined(__AVR_ATmega128__)
+        ETIMSK &= ~_BV(OCIE3A); // disable output compare interrupt
+#else
+        TIMSK3 &= ~_BV(OCIE3A); // disable output compare interrupt
+#endif
+    }
+#endif
+
+#if defined (_useTimer4)
+    if(timer == _timer4) {
+        TIMSK4 &= ~_BV(OCIE4A); // disable output compare interrupt
+    }
+#endif
+
+#if defined (_useTimer5)
+    if(timer == _timer5) {
+        TIMSK5 &= ~_BV(OCIE5A); // disable output compare interrupt
+    }
+#endif
 #endif
 }
 
