@@ -13,17 +13,21 @@ It uses PIC32 timer interrupts to generate step signals in background (basic cod
 UPDT: also works on AVR/Arduino
 https://github.com/sadr0b0t/stepper_h/issues/4
 
-to install, just take stepper_h dir from https://github.com/1i7/stepper_h git repo and put it to $HOME/Arduino/libraries (for the new ChipKIT IDE)
+to install, just clone https://github.com/sadr0b0t/stepper_h git repo to $HOME/Arduino/libraries
 
-```bash
+~~~bash
+cd ~/Arduino/libraries/
 git clone https://github.com/sadr0b0t/stepper_h.git
-cp -r ./stepper_h/stepper_h ~/Arduino/libraries/
-```
+~~~
 
-basic example should appear in Arduino examples menu: File/Examples/stepper_h/stepper_h
+and restart IDE.
+
+Or on github page click Clone or download > Download ZIP, then install stepper_h-master.zip ZIP via Arduino library installation menu.
+
+Basic example should appear in Arduino examples menu: File/Examples/stepper_h/stepper_h
 
 This one runs 3 stepper motors with different speed at the same time. Motors start to run after calling stepper_start_cycle(). Note, that loop can contain any code (or have no code at all) - the motors would work in background.
-```c++
+~~~c++
 #include "stepper.h"
 
 // Stepper motors
@@ -98,11 +102,11 @@ void loop() {
     
     // put any code here, it would run while the motors are rotating
 }
-```
+~~~
 
 even if you don't have stepper motor with step-dir driver, you can check out output in the serial monitor window (this one goes from my ChipKIT Uno32)
 
-```
+~~~
 Starting stepper_h test...
 X.pos=6937500, Y.pos=3525000, Z.pos=352500
 X.pos=14437500, Y.pos=7275000, Z.pos=727500
@@ -125,7 +129,7 @@ X.pos=134377500, Y.pos=67252500, Z.pos=6727500
 X.pos=141870000, Y.pos=71002500, Z.pos=7102500
 X.pos=149370000, Y.pos=74745000, Z.pos=7477500
 X.pos=150000000, Y.pos=75000000, Z.pos=7500000
-```
+~~~
 
 Actually, this lib has some more features like counting steps for each motor, tracking working tool virtual position, making steps with dynamic step delay (to draw curves) etc. Some of them are far from being finished, but some already work mostly fine. Will provide more examples if someone is interested here.
 
