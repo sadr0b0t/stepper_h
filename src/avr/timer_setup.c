@@ -114,13 +114,6 @@ const int TIMER_DEFAULT = _timer1; //TIMER1;
 
 #endif
 
-// no Timer2 at all
-const int _TIMER2 = -1;
-
-// no 32-bit timers at all
-const int _TIMER2_32BIT = -1;
-const int _TIMER4_32BIT = -1;
-
 // Define timer prescaler options:
 // CS12 CS11 CS10
 const int TIMER_PRESCALER_1_1    = 1; // 001
@@ -128,12 +121,6 @@ const int TIMER_PRESCALER_1_8    = 2; // 010
 const int TIMER_PRESCALER_1_64   = 3; // 011
 const int TIMER_PRESCALER_1_256  = 4; // 100
 const int TIMER_PRESCALER_1_1024 = 5; // 101
-
-// set missing prescalers to 1 (no prescaling)
-const int TIMER_PRESCALER_1_2    = 1; // 001
-const int TIMER_PRESCALER_1_4    = 1; // 001
-const int TIMER_PRESCALER_1_16   = 1; // 001
-const int TIMER_PRESCALER_1_32   = 1; // 001
 
 
 #ifndef WIRING // Wiring pre-defines signal handlers so don't define any if compiling for the Wiring platform
