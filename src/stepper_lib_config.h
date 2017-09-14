@@ -24,23 +24,39 @@
 // для периода 200 микросекунд (5тыс вызовов в секунду == 5КГц)
 // На AVR/Arduino наименьший вариант для движения по линии 3 моторов
 // to set timer clock period to 200us (5000 operations per second == 5KHz) on 16MHz CPU
-// use prescaler 1:8 (TIMER_PRESCALER_1_8) and adjustment=400:
-// 16000000/8/5000 = 2000000/5000 = 400
+// use prescaler 1:8 (TIMER_PRESCALER_1_8) and adjustment=400-1:
+// 16000000/8/5000 = 2000000/5000 = 400,
+// minus 1 cause count from zero.
 #define STEPPER_TIMER_DEFAULT_PRESCALER TIMER_PRESCALER_1_8
-#define STEPPER_TIMER_DEFAULT_ADJUSTMENT 400
+#define STEPPER_TIMER_DEFAULT_ADJUSTMENT 400-1
 #define STEPPER_TIMER_DEFAULT_PERIOD_US 200
 
 //#endif // ARDUINO_ARCH_AVR
+#elif defined( ARDUINO_ARCH_SAM )
+// SAM 84МГц
+
+// для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
+// На SAM/Arduino Due наименьший вариант для движения по линии 3 моторов
+// to set timer clock period to 20us (50000 operations per second == 50KHz) on 84MHz CPU
+// use prescaler 1:8 (TIMER_PRESCALER_1_8) and adjustment=210-1:
+// 84000000/8/50000 = 10500000/50000 = 210,
+// minus 1 cause count from zero.
+#define STEPPER_TIMER_DEFAULT_PRESCALER TIMER_PRESCALER_1_8
+#define STEPPER_TIMER_DEFAULT_ADJUSTMENT 210-1
+#define STEPPER_TIMER_DEFAULT_PERIOD_US 20
+
+//#endif // ARDUINO_ARCH_SAM
 #elif defined( __PIC32__ )
 // PIC32MX 80МГц
 
 // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
 // На PIC32MX/ChipKIT наименьший вариант для движения по линии 3 моторов
 // to set timer clock period to 20us (50000 operations per second == 50KHz) on 80MHz CPU
-// use prescaler 1:8 (TIMER_PRESCALER_1_8) and adjustment=200:
-// 80000000/8/50000 = 10000000/50000 = 200
+// use prescaler 1:8 (TIMER_PRESCALER_1_8) and adjustment=200-1:
+// 80000000/8/50000 = 10000000/50000 = 200,
+// minus 1 cause count from zero.
 #define STEPPER_TIMER_DEFAULT_PRESCALER TIMER_PRESCALER_1_8
-#define STEPPER_TIMER_DEFAULT_ADJUSTMENT 200
+#define STEPPER_TIMER_DEFAULT_ADJUSTMENT 200-1
 #define STEPPER_TIMER_DEFAULT_PERIOD_US 20
 
 //#endif // __PIC32__

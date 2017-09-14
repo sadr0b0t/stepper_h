@@ -149,11 +149,11 @@ void __attribute__((interrupt(),nomips16)) T45_IntHandler (void) {
  * Init ISR (Interrupt service routine) for the timer and start timer.
  * 
  * Example: to set timer clock period to 20ms (50 operations per second == 50Hz) on 80MHz CPU
- * use prescaler 1:64 (TIMER_PRESCALER_1_64) and adjustment=25000:
- * 80000000/64/50=25000
+ * use prescaler 1:64 (TIMER_PRESCALER_1_64) and adjustment=25000-1:
+ * 80000000/64/50=25000, minus 1 cause count from zero.
  * 
- * Timer interrupt handler timer_handle_interrupts would be called every 20ms (50 times per second)
- * in this case.
+ * Timer interrupt handler timer_handle_interrupts would be called every 20ms
+ * (50 times per second) in this case.
  * 
  * @param timer
  *   system timer id: use TIMER_DEFAULT for default timer

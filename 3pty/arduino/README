@@ -1,8 +1,10 @@
 For Serial.println(int64_t, DEC)
 copy patched Print.cpp and Print.h to:
 
-for Arduino platform
+for Arduino/AVR platform
 ~/.arduino15/packages/arduino/hardware/avr/1.6.19/cores/arduino/
+for Arduino/SAM (Arduino Due) platform
+~/.arduino15/packages/arduino/hardware/sam/1.6.11/cores/arduino/
 for ChipKIT platform
 ~/.arduino15/packages/chipKIT/hardware/pic32/1.4.3/cores/pic32/
 

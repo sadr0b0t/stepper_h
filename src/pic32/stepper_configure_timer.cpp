@@ -2,8 +2,7 @@
 #ifdef __PIC32__
 
 #include "stepper.h"
-
-extern "C"{
+extern "C" {
     #include "timer_setup.h"
 }
 
@@ -23,8 +22,9 @@ unsigned long stepper_configure_timer_1MHz(int timer) {
 #else
     // 80MHz
     // to set timer clock period to 1us (1000000 operations per second == 1MHz) on 80MHz CPU
-    // use prescaler 1:8 (TIMER_PRESCALER_1_8) and adjustment=10:
-    // 80000000/8/1000000 = 10000000/1000000 = 10
+    // use prescaler 1:8 (TIMER_PRESCALER_1_8) and adjustment=10-1:
+    // 80000000/8/1000000 = 10000000/1000000 = 10,
+    // minus 1 cause count from zero.
     stepper_configure_timer(1, timer, TIMER_PRESCALER_1_8, 10-1);
 #endif
     return 1;
@@ -44,8 +44,9 @@ unsigned long stepper_configure_timer_500KHz(int timer) {
 #else
     // 80MHz
     // to set timer clock period to 2us (500000 operations per second == 500KHz) on 80MHz CPU
-    // use prescaler 1:8 (TIMER_PRESCALER_1_8) and adjustment=20:
-    // 80000000/8/500000 = 10000000/500000 = 20
+    // use prescaler 1:8 (TIMER_PRESCALER_1_8) and adjustment=20-1:
+    // 80000000/8/500000 = 10000000/500000 = 20,
+    // minus 1 cause count from zero.
     stepper_configure_timer(2, timer, TIMER_PRESCALER_1_8, 20-1);
 #endif
     return 2;
@@ -65,8 +66,9 @@ unsigned long stepper_configure_timer_200KHz(int timer) {
 #else
     // 80MHz
     // to set timer clock period to 5us (200000 operations per second == 200KHz) on 80MHz CPU
-    // use prescaler 1:8 (TIMER_PRESCALER_1_8) and adjustment=50:
-    // 80000000/8/200000 = 10000000/200000 = 50
+    // use prescaler 1:8 (TIMER_PRESCALER_1_8) and adjustment=50-1:
+    // 80000000/8/200000 = 10000000/200000 = 50,
+    // minus 1 cause count from zero.
     stepper_configure_timer(5, timer, TIMER_PRESCALER_1_8, 50-1);
 #endif
     return 5;
@@ -86,8 +88,9 @@ unsigned long stepper_configure_timer_100KHz(int timer) {
 #else
     // 80MHz
     // to set timer clock period to 10us (100000 operations per second == 100KHz) on 80MHz CPU
-    // use prescaler 1:8 (TIMER_PRESCALER_1_8) and adjustment=100:
-    // 80000000/8/100000 = 10000000/100000 = 100
+    // use prescaler 1:8 (TIMER_PRESCALER_1_8) and adjustment=100-1:
+    // 80000000/8/100000 = 10000000/100000 = 100,
+    // minus 1 cause count from zero.
     stepper_configure_timer(10, timer, TIMER_PRESCALER_1_8, 100-1);
 #endif
     return 10;
@@ -107,8 +110,9 @@ unsigned long stepper_configure_timer_50KHz(int timer) {
 #else
     // 80MHz
     // to set timer clock period to 20us (50000 operations per second == 50KHz) on 80MHz CPU
-    // use prescaler 1:8 (TIMER_PRESCALER_1_8) and adjustment=200:
-    // 80000000/8/50000 = 10000000/50000 = 200
+    // use prescaler 1:8 (TIMER_PRESCALER_1_8) and adjustment=200-1:
+    // 80000000/8/50000 = 10000000/50000 = 200,
+    // minus 1 cause count from zero.
     stepper_configure_timer(20, timer, TIMER_PRESCALER_1_8, 200-1);
 #endif
     return 20;
@@ -128,8 +132,9 @@ unsigned long stepper_configure_timer_20KHz(int timer) {
 #else
     // 80MHz
     // to set timer clock period to 50us (20000 operations per second == 20KHz) on 80MHz CPU
-    // use prescaler 1:8 (TIMER_PRESCALER_1_8) and adjustment=500:
-    // 80000000/8/20000 = 10000000/20000 = 500
+    // use prescaler 1:8 (TIMER_PRESCALER_1_8) and adjustment=500-1:
+    // 80000000/8/20000 = 10000000/20000 = 500,
+    // minus 1 cause count from zero.
     stepper_configure_timer(50, timer, TIMER_PRESCALER_1_8, 500-1);
 #endif
     return 50;
@@ -149,8 +154,9 @@ unsigned long stepper_configure_timer_10KHz(int timer) {
 #else
     // 80MHz
     // to set timer clock period to 100us (10000 operations per second == 10KHz) on 80MHz CPU
-    // use prescaler 1:64 (TIMER_PRESCALER_1_64) and adjustment=125:
-    // 80000000/64/10000 = 1250000/10000 = 125
+    // use prescaler 1:64 (TIMER_PRESCALER_1_64) and adjustment=125-1:
+    // 80000000/64/10000 = 1250000/10000 = 125,
+    // minus 1 cause count from zero.
     stepper_configure_timer(100, timer, TIMER_PRESCALER_1_64, 125-1);
 #endif
     return 100;
@@ -170,8 +176,9 @@ unsigned long stepper_configure_timer_5KHz(int timer) {
 #else
     // 80MHz
     // to set timer clock period to 200us (5000 operations per second == 5KHz) on 80MHz CPU
-    // use prescaler 1:64 (TIMER_PRESCALER_1_64) and adjustment=250:
-    // 80000000/64/5000 = 1250000/5000 = 250
+    // use prescaler 1:64 (TIMER_PRESCALER_1_64) and adjustment=250-1:
+    // 80000000/64/5000 = 1250000/5000 = 250,
+    // minus 1 cause count from zero.
     stepper_configure_timer(200, timer, TIMER_PRESCALER_1_64, 250-1);
 #endif
     return 200;
@@ -191,8 +198,9 @@ unsigned long stepper_configure_timer_2KHz(int timer) {
 #else
     // 80MHz
     // to set timer clock period to 500us (2000 operations per second == 2KHz) on 80MHz CPU
-    // use prescaler 1:64 (TIMER_PRESCALER_1_64) and adjustment=625:
-    // 80000000/64/2000 = 1250000/2000 = 625
+    // use prescaler 1:64 (TIMER_PRESCALER_1_64) and adjustment=625-1:
+    // 80000000/64/2000 = 1250000/2000 = 625,
+    // minus 1 cause count from zero.
     stepper_configure_timer(500, timer, TIMER_PRESCALER_1_64, 625-1);
 #endif
     return 500;
@@ -212,8 +220,9 @@ unsigned long stepper_configure_timer_1KHz(int timer) {
 #else
     // 80MHz
     // to set timer clock period to 1ms (1000 operations per second == 1KHz) on 80MHz CPU
-    // use prescaler 1:64 (TIMER_PRESCALER_1_64) and adjustment=1250:
-    // 80000000/64/1000 = 1250000/1000 = 1250
+    // use prescaler 1:64 (TIMER_PRESCALER_1_64) and adjustment=1250-1:
+    // 80000000/64/1000 = 1250000/1000 = 1250,
+    // minus 1 cause count from zero.
     stepper_configure_timer(1000, timer, TIMER_PRESCALER_1_64, 1250-1);
 #endif
     return 1000;
@@ -233,8 +242,9 @@ unsigned long stepper_configure_timer_500Hz(int timer) {
 #else
     // 80MHz
     // to set timer clock period to 2ms (500 operations per second == 500Hz) on 80MHz CPU
-    // use prescaler 1:64 (TIMER_PRESCALER_1_64) and adjustment=2500:
-    // 80000000/64/500 = 1250000/500 = 2500
+    // use prescaler 1:64 (TIMER_PRESCALER_1_64) and adjustment=2500-1:
+    // 80000000/64/500 = 1250000/500 = 2500,
+    // minus 1 cause count from zero.
     stepper_configure_timer(2000, timer, TIMER_PRESCALER_1_64, 2500-1);
 #endif
     return 2000;
@@ -254,8 +264,9 @@ unsigned long stepper_configure_timer_200Hz(int timer) {
 #else
     // 80MHz
     // to set timer clock period to 5ms (200 operations per second == 200Hz) on 80MHz CPU
-    // use prescaler 1:64 (TIMER_PRESCALER_1_64) and adjustment=6250:
-    // 80000000/64/200 = 1250000/200 = 6250
+    // use prescaler 1:64 (TIMER_PRESCALER_1_64) and adjustment=6250-1:
+    // 80000000/64/200 = 1250000/200 = 6250,
+    // minus 1 cause count from zero.
     stepper_configure_timer(5000, timer, TIMER_PRESCALER_1_64, 6250-1);
 #endif
     return 5000;
@@ -275,8 +286,9 @@ unsigned long stepper_configure_timer_100Hz(int timer) {
 #else
     // 80MHz
     // to set timer clock period to 10ms (100 operations per second == 100Hz) on 80MHz CPU
-    // use prescaler 1:64 (TIMER_PRESCALER_1_64) and adjustment=12500:
-    // 80000000/64/100 = 1250000/100 = 12500
+    // use prescaler 1:64 (TIMER_PRESCALER_1_64) and adjustment=12500-1:
+    // 80000000/64/100 = 1250000/100 = 12500,
+    // minus 1 cause count from zero.
     stepper_configure_timer(10000, timer, TIMER_PRESCALER_1_64, 12500-1);
 #endif
     return 10000;
@@ -304,8 +316,9 @@ unsigned long stepper_configure_timer_50Hz(int timer) {
 #else
     // 80MHz
     // to set timer clock period to 20ms (50 operations per second == 50Hz) on 80MHz CPU
-    // use prescaler 1:64 (TIMER_PRESCALER_1_64) and adjustment=25000:
-    // 80000000/64/50 = 1250000/50 = 25000
+    // use prescaler 1:64 (TIMER_PRESCALER_1_64) and adjustment=25000-1:
+    // 80000000/64/50 = 1250000/50 = 25000,
+    // minus 1 cause count from zero.
     stepper_configure_timer(20000, timer, TIMER_PRESCALER_1_64, 25000-1);
 #endif
     return 20000;
@@ -325,8 +338,9 @@ unsigned long stepper_configure_timer_20Hz(int timer) {
 #else
     // 80MHz
     // to set timer clock period to 50ms (20 operations per second == 20Hz) on 80MHz CPU
-    // use prescaler 1:256 (TIMER_PRESCALER_1_256) and adjustment=15625:
-    // 80000000/256/20 = 312500/20 = 15625
+    // use prescaler 1:256 (TIMER_PRESCALER_1_256) and adjustment=15625-1:
+    // 80000000/256/20 = 312500/20 = 15625,
+    // minus 1 cause count from zero.
     stepper_configure_timer(50000, timer, TIMER_PRESCALER_1_256, 15625-1);
 #endif
     return 50000;
@@ -346,8 +360,9 @@ unsigned long stepper_configure_timer_10Hz(int timer) {
 #else
     // 80MHz
     // to set timer clock period to 100ms (10 operations per second == 10Hz) on 80MHz CPU
-    // use prescaler 1:256 (TIMER_PRESCALER_1_256) and adjustment=31250:
-    // 80000000/256/10 = 312500/10 = 31250
+    // use prescaler 1:256 (TIMER_PRESCALER_1_256) and adjustment=31250-1:
+    // 80000000/256/10 = 312500/10 = 31250,
+    // minus 1 cause count from zero.
     stepper_configure_timer(100000, timer, TIMER_PRESCALER_1_256, 31250-1);
 #endif
     return 100000;
@@ -367,8 +382,9 @@ unsigned long stepper_configure_timer_5Hz(int timer) {
 #else
     // 80MHz
     // to set timer clock period to 200ms (5 operations per second == 5Hz) on 80MHz CPU
-    // use prescaler 1:256 (TIMER_PRESCALER_1_256) and adjustment=156250:
-    // 80000000/256/5 = 312500/5 = 62500
+    // use prescaler 1:256 (TIMER_PRESCALER_1_256) and adjustment=156250-1:
+    // 80000000/256/5 = 312500/5 = 62500,
+    // minus 1 cause count from zero.
     stepper_configure_timer(200000, timer, TIMER_PRESCALER_1_256, 62500-1);
 #endif
     return 200000;
@@ -388,9 +404,10 @@ unsigned long stepper_configure_timer_2Hz(int timer) {
 #else
     // 80MHz
     // to set timer clock period to 500ms (2 operations per second == 2Hz) on 80MHz CPU
-    // use prescaler 1:256 (TIMER_PRESCALER_1_256) and adjustment=156250:
+    // use prescaler 1:256 (TIMER_PRESCALER_1_256) and adjustment=156250-1:
     // 80000000/256/2 = 312500/2 = 156250 > 2^16 > 2^16 = 65536
-    // (will only work with 32-bit timer, won't work with 16-bit timer)
+    // (will only work with 32-bit timer, won't work with 16-bit timer),
+    // minus 1 cause count from zero.
     stepper_configure_timer(500000, timer, TIMER_PRESCALER_1_256, 156250-1);
 #endif
     return 500000;
@@ -418,9 +435,10 @@ unsigned long stepper_configure_timer_1Hz(int timer) {
 #else
     // 80MHz
     // to set timer clock period to 1s (1 operation per second == 1Hz) on 80MHz CPU
-    // use prescaler 1:256 (TIMER_PRESCALER_1_256) and adjustment=312500:
+    // use prescaler 1:256 (TIMER_PRESCALER_1_256) and adjustment=312500-1:
     // 80000000/256/1 = 312500/1 = 312500 > 2^16 = 65536
-    // (will only work with 32-bit timer, won't work with 16-bit timer)
+    // (will only work with 32-bit timer, won't work with 16-bit timer),
+    // minus 1 cause count from zero.
     stepper_configure_timer(1000000, timer, TIMER_PRESCALER_1_256, 312500-1);
 #endif
     return 1000000;

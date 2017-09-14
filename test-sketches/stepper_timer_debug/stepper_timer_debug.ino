@@ -19,11 +19,11 @@ void configure_timer() {
     // 
     // - PIC32MX/ChipKIT (вообще не ок)
     // 1 мотор:
-    //   timer handler takes longer than timer period: cycle time=3us, timer period=1us
+    //   ***ERROR: timer handler takes longer than timer period: cycle time=3us, timer period=1us
     // 
     // - AVR/Arduino (вообще не ок):
     // 1 мотор (не ок: снос крыши):
-    //   timer handler takes longer than timer period: cycle time=4294966284us, timer period=1us
+    //   ***ERROR: timer handler takes longer than timer period: cycle time=4294966284us, timer period=1us
     
     //_timer_period_us = stepper_configure_timer_1MHz(TIMER_DEFAULT);
     
@@ -33,13 +33,13 @@ void configure_timer() {
     // 
     // - PIC32MX/ChipKIT (вообще не ок)
     // 1 мотор:
-    //   timer handler takes longer than timer period: cycle time=5us, timer period=5us
+    //   ***ERROR: timer handler takes longer than timer period: cycle time=5us, timer period=5us
     // 2 мотора:
-    //   timer handler takes longer than timer period: cycle time=5us, timer period=5us
+    //   ***ERROR: timer handler takes longer than timer period: cycle time=5us, timer period=5us
     // 
     // - AVR/Arduino (вообще не ок):
     // 1 мотор (не ок: снос крыши):
-    //   timer handler takes longer than timer period: cycle time=4294966284us, timer period=5us
+    //   ***ERROR: timer handler takes longer than timer period: cycle time=4294966284us, timer period=5us
     
     //_timer_period_us = stepper_configure_timer_200KHz(TIMER_DEFAULT);
     
@@ -47,19 +47,27 @@ void configure_timer() {
     // 
     // для периода 10 микросекунд (100тыс вызовов в секунду == 100КГц):
     // 
-    // - PIC32MX/ChipKIT (наименьший период для 3х моторов)
+    // - PIC32MX/ChipKIT (наименьший период для 2х моторов)
     // 1 мотор (ок):
     //   Finished cycle, max time=4
     // 2 мотора (ок):
     //   Finished cycle, max time=7
     // 3 мотора (не ок):
-    //   timer handler takes longer than timer period: cycle time=10us, timer period=10us
-    //
+    //   ***ERROR: timer handler takes longer than timer period: cycle time=10us, timer period=10us
+    // 
+    // - SAM/Arduino Due (вообще не ок)
+    // 1 мотор (не ок: шагает норм, но слетает, похоже, на последнем шаге):
+    //   ***ERROR: timer handler takes longer than timer period: cycle time=10us, timer period=10us
+    // 2 мотора (не ок):
+    //   ***ERROR: timer handler takes longer than timer period: cycle time=11us, timer period=10us
+    // 3 мотора (не ок):
+    //   ***ERROR: timer handler takes longer than timer period: cycle time=12us, timer period=10us
+    // 
     // - AVR/Arduino (вообще не ок):
     // 1 мотор (не ок: снос крыши):
-    //   timer handler takes longer than timer period: cycle time=4294966284us, timer period=10us
+    //   ***ERROR: timer handler takes longer than timer period: cycle time=4294966284us, timer period=10us
     // 2 мотора (не ок: снос крыши):
-    //   timer handler takes longer than timer period: cycle time=4294966284us, timer period=10us
+    //   ***ERROR: timer handler takes longer than timer period: cycle time=4294966284us, timer period=10us
     
     //_timer_period_us = stepper_configure_timer_100KHz(TIMER_DEFAULT);
 
@@ -75,11 +83,19 @@ void configure_timer() {
     // дуга-2 мотора (не ок)
     //   совсем не ок для движения по дуге (по 90мкс на acos/asin)
     //
+    // - SAM/Arduino Due (наименьший период для 1, 2х и 3х моторов)
+    // 1 мотор (ок):
+    //   Finished cycle, max time=9
+    // 2 мотора (ок):
+    //   Finished cycle, max time=13
+    // 3 мотора (ок):
+    //   Finished cycle, max time=16
+    // 
     // - AVR/Arduino (вообще не ок):
     // 1 мотор (не ок: снос крыши)
-    //   timer handler takes longer than timer period: cycle time=4294966284us, timer period=20us
+    //   ***ERROR: timer handler takes longer than timer period: cycle time=4294966284us, timer period=20us
     // 2 мотора (не ок: снос крыши):
-    //   timer handler takes longer than timer period: cycle time=4294966284us, timer period=20us
+    //   ***ERROR: timer handler takes longer than timer period: cycle time=4294966284us, timer period=20us
     //   cycle time=4294966284us - это почти 2^32(=4294967296-4294966284=1012 - разница 1 миллисекунда).
     // Довольно странное значение (по времени это 72 минуты), в stepper_timer.cpp это переменная _cycle_max_time,
     // по коду не очень понятно, как в нее могло попасть это число.
@@ -100,7 +116,7 @@ void configure_timer() {
     // даже больше, чем финиш, в _cycle_max_time появляется отрицательное значение,
     // которое из-за unsigned, превращается в большое положительное.
     
-    //_timer_period_us = stepper_configure_timer_50KHz(TIMER_DEFAULT);
+    _timer_period_us = stepper_configure_timer_50KHz(TIMER_DEFAULT);
 
 
     // 
@@ -110,7 +126,7 @@ void configure_timer() {
     // 1 мотор (ок):
     //   Finished cycle, max time=40
     // 2 мотора (не ок):
-    //   timer handler takes longer than timer period: cycle time=60us, timer period=50us
+    //   ***ERROR: timer handler takes longer than timer period: cycle time=60us, timer period=50us
     //   (хотя в цикл не умещается, но уже по крайней мере значение корректно)
     
     //_timer_period_us = stepper_configure_timer_20KHz(TIMER_DEFAULT);
@@ -123,7 +139,7 @@ void configure_timer() {
     // 2 мотора (ок)
     //   Finished cycle, max time=72
     // 3 мотора (не ок)
-    //   timer handler takes longer than timer period: cycle time=100us, timer period=100us
+    //   ***ERROR: timer handler takes longer than timer period: cycle time=100us, timer period=100us
     
     //_timer_period_us = stepper_configure_timer_10KHz(TIMER_DEFAULT);
 
@@ -139,7 +155,7 @@ void configure_timer() {
     // 3 мотора (ок)
     //   Finished cycle, max time=104
     
-    _timer_period_us = stepper_configure_timer_5KHz(TIMER_DEFAULT);
+    //_timer_period_us = stepper_configure_timer_5KHz(TIMER_DEFAULT);
     
 
     ////////////////
@@ -194,6 +210,23 @@ unsigned long _step_delay_1_8_avr = 600;
 unsigned long _step_delay_1_16_avr = 600;
 unsigned long _step_delay_1_32_avr = 600;
 
+// SAM/Arduino Due
+// для частоты 50КГц (период=20мкс - наименьший вариант для вращения одновременно 1, 2х и 3х моторов)
+// step_delay >= period*3, step_delay делится на period без остатка
+//    1/1: 1500 -> 1500 мкс/шаг (макс скорость)
+//    1/2: 650 -> 660 мкс/шаг (макс скорость)
+//    1/4: 330 -> 340 мкс/шаг (макс скорость)
+//    1/8: 180 -> 180 мкс/шаг (макс скорость)
+//    1/16: 80 -> 80 мкс/шаг (макс скорость)
+//    1/32: 30/40 -> 60 мкс/шаг (1/2 макс скорости)
+
+unsigned long _step_delay_1_1_sam = 1500;
+unsigned long _step_delay_1_2_sam = 660;
+unsigned long _step_delay_1_4_sam = 340;
+unsigned long _step_delay_1_8_sam = 180;
+unsigned long _step_delay_1_16_sam = 80;
+unsigned long _step_delay_1_32_sam = 60;
+
 //
 // расстояние за шаг
 // Возьмем шкив Берем шкив GT2 (20 зубов, шаг зуба 2мм)
@@ -217,17 +250,20 @@ unsigned long _dist_per_step_1_32 = 6250;
 
 // 1/1
 //unsigned long x_step_delay_us = _step_delay_1_1_pic32mx;
-unsigned long x_step_delay_us = _step_delay_1_1_avr;
+//unsigned long x_step_delay_us = _step_delay_1_1_avr;
+unsigned long x_step_delay_us = _step_delay_1_1_sam;
 unsigned long x_dist_per_step = _dist_per_step_1_1;
 
 // 1/2
 //unsigned long x_step_delay_us = _step_delay_1_2_pic32mx;
 //unsigned long x_step_delay_us = _step_delay_1_2_avr;
+//unsigned long x_step_delay_us = _step_delay_1_2_sam;
 //unsigned long x_dist_per_step = _dist_per_step_1_2;
 
 // 1/4
 //unsigned long x_step_delay_us = _step_delay_1_4_pic32mx;
 //unsigned long x_step_delay_us = _step_delay_1_4_avr;
+//unsigned long x_step_delay_us = _step_delay_1_4_sam;
 //unsigned long x_dist_per_step = _dist_per_step_1_4;
 
 // 1/8
@@ -243,70 +279,83 @@ unsigned long x_dist_per_step = _dist_per_step_1_1;
 // 1/32
 //unsigned long x_step_delay_us = _step_delay_1_32_pic32mx;
 //unsigned long x_step_delay_us = _step_delay_1_32_avr;
+//unsigned long x_step_delay_us = _step_delay_1_32_sam;
 //unsigned long x_dist_per_step = _dist_per_step_1_32;
 
 // Y
 
 // 1/1
 //unsigned long y_step_delay_us = _step_delay_1_1_pic32mx;
-unsigned long y_step_delay_us = _step_delay_1_1_avr;
+//unsigned long y_step_delay_us = _step_delay_1_1_avr;
+unsigned long y_step_delay_us = _step_delay_1_1_sam;
 unsigned long y_dist_per_step = _dist_per_step_1_1;
 
 // 1/2
 //unsigned long y_step_delay_us = _step_delay_1_2_pic32mx;
 //unsigned long y_step_delay_us = _step_delay_1_2_avr;
+//unsigned long y_step_delay_us = _step_delay_1_2_sam;
 //unsigned long y_dist_per_step = _dist_per_step_1_2;
 
 // 1/4
 //unsigned long y_step_delay_us = _step_delay_1_4_pic32mx;
 //unsigned long y_step_delay_us = _step_delay_1_4_avr;
+//unsigned long y_step_delay_us = _step_delay_1_4_sam;
 //unsigned long y_dist_per_step = _dist_per_step_1_4;
 
 // 1/8
 //unsigned long y_step_delay_us = _step_delay_1_8_pic32mx;
 //unsigned long y_step_delay_us = _step_delay_1_8_avr;
+//unsigned long y_step_delay_us = _step_delay_1_8_sam;
 //unsigned long y_dist_per_step = _dist_per_step_1_8;
 
 // 1/16
 //unsigned long y_step_delay_us = _step_delay_1_16_pic32mx;
 //unsigned long y_step_delay_us = _step_delay_1_16_avr;
+//unsigned long y_step_delay_us = _step_delay_1_16_sam;
 //unsigned long y_dist_per_step = _dist_per_step_1_16;
 
 // 1/32
 //unsigned long y_step_delay_us = _step_delay_1_32_pic32mx;
 //unsigned long y_step_delay_us = _step_delay_1_32_avr;
+//unsigned long y_step_delay_us = _step_delay_1_32_sam;
 //unsigned long y_dist_per_step = _dist_per_step_1_32;
 
 // Z
 
 // 1/1
 //unsigned long z_step_delay_us = _step_delay_1_1_pic32mx;
-unsigned long z_step_delay_us = _step_delay_1_1_avr;
+//unsigned long z_step_delay_us = _step_delay_1_1_avr;
+unsigned long z_step_delay_us = _step_delay_1_1_sam;
 unsigned long z_dist_per_step = _dist_per_step_1_1;
 
 // 1/2
 //unsigned long z_step_delay_us = _step_delay_1_2_pic32mx;
 //unsigned long z_step_delay_us = _step_delay_1_2_avr;
+//unsigned long z_step_delay_us = _step_delay_1_2_sam;
 //unsigned long z_dist_per_step = _dist_per_step_1_2;
 
 // 1/4
 //unsigned long z_step_delay_us = _step_delay_1_4_pic32mx;
 //unsigned long z_step_delay_us = _step_delay_1_4_avr;
+//unsigned long z_step_delay_us = _step_delay_1_4_sam;
 //unsigned long z_dist_per_step = _dist_per_step_1_4;
 
 // 1/8
 //unsigned long z_step_delay_us = _step_delay_1_8_pic32mx;
 //unsigned long z_step_delay_us = _step_delay_1_8_avr;
+//unsigned long z_step_delay_us = _step_delay_1_8_sam;
 //unsigned long z_dist_per_step = _dist_per_step_1_8;
 
 // 1/16
 //unsigned long z_step_delay_us = _step_delay_1_16_pic32mx;
 //unsigned long z_step_delay_us = _step_delay_1_16_avr;
+//unsigned long z_step_delay_us = _step_delay_1_16_sam;
 //unsigned long z_dist_per_step = _dist_per_step_1_16;
 
 // 1/32
 //unsigned long z_step_delay_us = _step_delay_1_32_pic32mx;
 //unsigned long z_step_delay_us = _step_delay_1_32_avr;
+//unsigned long z_step_delay_us = _step_delay_1_32_sam;
 //unsigned long z_dist_per_step = _dist_per_step_1_32;
 
 // 1 мотор с максимальной скоростью
@@ -537,4 +586,5 @@ void loop() {
     
     // put any code here, it would run while the motors are rotating
 }
+
 

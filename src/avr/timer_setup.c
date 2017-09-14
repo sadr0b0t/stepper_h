@@ -177,11 +177,11 @@ void Timer3Service() {
  *    If fail, choose bigger prescaler.
  * 
  * Example: to set timer clock period to 20ms (50 operations per second == 50Hz) on 16MHz CPU
- * use prescaler 1:8 (TIMER_PRESCALER_1_8) and adjustment=40000:
- * 16000000/8/50=40000
+ * use prescaler 1:8 (TIMER_PRESCALER_1_8) and adjustment=40000-1:
+ * 16000000/8/50=40000, minus 1 cause count from zero.
  * 
- * Timer interrupt handler timer_handle_interrupts would be called every 20ms (50 times per second)
- * in this case.
+ * Timer interrupt handler timer_handle_interrupts would be called every 20ms
+ * (50 times per second) in this case.
  * 
  * @param timer
  *   system timer id: use TIMER_DEFAULT for default timer
