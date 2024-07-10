@@ -179,9 +179,9 @@ typedef struct {
 #define MAX_STEPPERS 6
 #endif
 
-static int _stepper_count = 0;
-static stepper* _smotors[MAX_STEPPERS];
-static motor_cycle_info_t _cstatuses[MAX_STEPPERS];
+volatile static int _stepper_count = 0;
+volatile static stepper* _smotors[MAX_STEPPERS];
+volatile static motor_cycle_info_t _cstatuses[MAX_STEPPERS];
 
 ///////////////////////////
 // Настройки таймера
@@ -266,44 +266,44 @@ static motor_cycle_info_t _cstatuses[MAX_STEPPERS];
 #endif
 
 // Настройки таймера
-static int _timer_id = TIMER_DEFAULT;
-static int _timer_prescaler = STEPPER_TIMER_DEFAULT_PRESCALER;
-static unsigned int _timer_adjustment = STEPPER_TIMER_DEFAULT_ADJUSTMENT;
+volatile static int _timer_id = TIMER_DEFAULT;
+volatile static int _timer_prescaler = STEPPER_TIMER_DEFAULT_PRESCALER;
+volatile static unsigned int _timer_adjustment = STEPPER_TIMER_DEFAULT_ADJUSTMENT;
 
 // Период таймера, мкс
-static unsigned long _timer_period_us = STEPPER_TIMER_DEFAULT_PERIOD_US;
+volatile static unsigned long _timer_period_us = STEPPER_TIMER_DEFAULT_PERIOD_US;
 
 // Включить/выключить аппаратный таймер
 //(выключенный таймер может пригодиться для тестов и отладки)
-bool _timer_enabled = true;
+volatile bool _timer_enabled = true;
 
 ///////////////////////////
 // Текущий статус цикла
-static bool _cycle_running = false;
+volatile static bool _cycle_running = false;
 // Цикл на паузе (типа работаем, но шаги не делаем)
-static bool _cycle_paused = false;
+volatile static bool _cycle_paused = false;
 // Информация об ошибке цикла
-static stepper_cycle_error_t _cycle_error = CYCLE_ERROR_NONE;
+volatile static stepper_cycle_error_t _cycle_error = CYCLE_ERROR_NONE;
 // Максимальное время выполнения обработчика прерывания
 // таймера в текущем цикле
-static unsigned long _cycle_max_time = 0;
+volatile static unsigned long _cycle_max_time = 0;
 
 // Стратегия реакции на ошибки
 // STOP_MOTOR/CANCEL_CYCLE
 //static error_handle_strategy_t _hard_end_handle = STOP_MOTOR;
-static error_handle_strategy_t _hard_end_handle = CANCEL_CYCLE;
+volatile static error_handle_strategy_t _hard_end_handle = CANCEL_CYCLE;
 
 // STOP_MOTOR/CANCEL_CYCLE
 //static error_handle_strategy_t _soft_end_handle = STOP_MOTOR;
-static error_handle_strategy_t _soft_end_handle = CANCEL_CYCLE;
+volatile static error_handle_strategy_t _soft_end_handle = CANCEL_CYCLE;
 
 // FIX/STOP_MOTOR/CANCEL_CYCLE
 //static error_handle_strategy_t _small_step_delay_handle = FIX;
 //static error_handle_strategy_t _small_step_delay_handle = STOP_MOTOR;
-static error_handle_strategy_t _small_step_delay_handle = CANCEL_CYCLE;
+volatile static error_handle_strategy_t _small_step_delay_handle = CANCEL_CYCLE;
 
 // IGNORE/CANCEL_CYCLE
-static error_handle_strategy_t _cycle_timing_exceed_handle = CANCEL_CYCLE;
+volatile static error_handle_strategy_t _cycle_timing_exceed_handle = CANCEL_CYCLE;
 
 
 /**
