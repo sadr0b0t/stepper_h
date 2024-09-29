@@ -151,7 +151,7 @@ void setup() {
 
 void loop() {
     // (see https://github.com/1i7/stepper_h/blob/master/3pty/arduino/README
-    // to fix compile proplem)
+    // to fix compile problem)
     
     static int next_line = 1;
     if(!stepper_cycle_running()) {

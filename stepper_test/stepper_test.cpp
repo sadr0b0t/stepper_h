@@ -1,3 +1,15 @@
+/**
+ * stepper_test.cpp
+ *
+ * Библиотека управления шаговыми моторами, подключенными через интерфейс
+ * драйвера "step-dir".
+ *
+ * LGPLv3, 2014-2024
+ *
+ * @author Антон Моисеев 1i7.livejournal.com
+ */
+
+
 #include "stepper.h"
 
 extern "C"{
@@ -221,7 +233,7 @@ static void test_timer_period_aliquant_step_delay() {
     //////////////
     
     // готовим какие-то шаги
-    prepare_steps(&sm_x, 500, 1000);
+    prepare_steps(&sm_x, 500, 1, 1000);
     
     // минимальная задержка между шагами мотора: 1000 мкс
     // период таймера: 300 мкс
@@ -253,7 +265,7 @@ static void test_max_speed_tick_by_tick() {
     sput_fail_unless(!stepper_cycle_running(), "stepper_cycle_running() == false");
     
     // проедем 3 шага с максимальной скоростью
-    prepare_steps(&sm_x, 3, 1000);
+    prepare_steps(&sm_x, 3, 1, 1000);
     
     // разберем шаги по косточкам
     
@@ -358,7 +370,7 @@ static void test_max_speed_30000steps() {
     // пройдем 30000 шагов с максимальной скоростью
     // это займет 30000*1000=30000000 микросекунд = 30 секунд
     // расстояние будет=7500*30000=225000000нм = 225000мкм = 225мм
-    prepare_steps(&sm_x, 30000, 1000);
+    prepare_steps(&sm_x, 30000, 1, 1000);
     
     // разберем шаги по косточкам
     
@@ -431,7 +443,7 @@ static void test_aliquant_speed_tick_by_tick() {
     
     // проедем 5 шагов со скоростью, некратной частоте таймера:
     // пусть будет 1105 микросекунд между шагами
-    prepare_steps(&sm_x, 5, 1105);
+    prepare_steps(&sm_x, 5, 1, 1105);
     
     // разберем шаги по косточкам
     
@@ -587,11 +599,11 @@ static void test_draw_triangle() {
         unsigned long delay_z = time_x / abs(steps_z);
 
         // prepare_steps(stepper *smotor,
-        //     long step_count, unsigned long step_delay,
+        //     unsigned long step_count, int dir, unsigned long step_delay,
         //     calibrate_mode_t calibrate_mode=NONE);
-        prepare_steps(&sm_x, steps_x, delay_x);
-        prepare_steps(&sm_y, steps_y, delay_y);
-        prepare_steps(&sm_z, steps_z, delay_z);
+        prepare_steps(&sm_x, steps_x > 0 ? steps_x : -steps_x, steps_x > 0 ? 1 : -1, delay_x);
+        prepare_steps(&sm_y, steps_y > 0 ? steps_y : -steps_y, steps_y > 0 ? 1 : -1, delay_y);
+        prepare_steps(&sm_z, steps_z > 0 ? steps_z : -steps_z, steps_z > 0 ? 1 : -1, delay_z);
         
         // пошагали
         stepper_start_cycle();
@@ -640,10 +652,10 @@ static void test_draw_triangle() {
         //long delay_z = time_y / abs(steps_z);
 
         // prepare_steps(stepper *smotor,
-        //     long step_count, unsigned long step_delay,
+        //     unsigned long step_count, int dir, unsigned long step_delay,
         //     calibrate_mode_t calibrate_mode=NONE);
-        prepare_steps(&sm_x, steps_x, delay_x);
-        prepare_steps(&sm_y, steps_y, delay_y);
+        prepare_steps(&sm_x, steps_x > 0 ? steps_x : -steps_x, steps_x > 0 ? 1 : -1, delay_x);
+        prepare_steps(&sm_y, steps_y > 0 ? steps_y : -steps_y, steps_y > 0 ? 1 : -1, delay_y);
         //prepare_steps(&sm_z, steps_z, delay_z);
         
         // пошагали
@@ -688,11 +700,11 @@ static void test_draw_triangle() {
         delay_z = time_y / abs(steps_z);
 
         // prepare_steps(stepper *smotor,
-        //     long step_count, unsigned long step_delay,
+        //     unsigned long step_count, int dir, unsigned long step_delay,
         //     calibrate_mode_t calibrate_mode=NONE);
-        prepare_steps(&sm_x, steps_x, delay_x);
-        prepare_steps(&sm_y, steps_y, delay_y);
-        prepare_steps(&sm_z, steps_z, delay_z);
+        prepare_steps(&sm_x, steps_x > 0 ? steps_x : -steps_x, steps_x > 0 ? 1 : -1, delay_x);
+        prepare_steps(&sm_y, steps_y > 0 ? steps_y : -steps_y, steps_y > 0 ? 1 : -1, delay_y);
+        prepare_steps(&sm_z, steps_z > 0 ? steps_z : -steps_z, steps_z > 0 ? 1 : -1, delay_z);
         
         // пошагали
         stepper_start_cycle();
@@ -759,7 +771,7 @@ static void test_small_step_delay_handlers() {
     // исправиться на 1000мкс
     stepper_set_error_handle_strategy(DONT_CHANGE, DONT_CHANGE, FIX, DONT_CHANGE);
     
-    prepare_simple_buffered_steps(&sm_x, buf_size, delay_buffer, 1);
+    prepare_simple_buffered_steps(&sm_x, buf_size, delay_buffer, 1, 1);
     prepare_whirl(&sm_y, 1, 1000, NONE);
     
     stepper_start_cycle();
@@ -799,7 +811,7 @@ static void test_small_step_delay_handlers() {
     sm_x.current_pos = 0;
     sm_y.current_pos = 0;
     // и готовим те же шаги
-    prepare_simple_buffered_steps(&sm_x, buf_size, delay_buffer, 1);
+    prepare_simple_buffered_steps(&sm_x, buf_size, delay_buffer, 1, 1);
     prepare_whirl(&sm_y, 1, 1000, NONE);
     
     stepper_start_cycle();
@@ -845,7 +857,7 @@ static void test_small_step_delay_handlers() {
     sm_x.current_pos = 0;
     sm_y.current_pos = 0;
     // и готовим те же шаги
-    prepare_simple_buffered_steps(&sm_x, buf_size, delay_buffer, 1);
+    prepare_simple_buffered_steps(&sm_x, buf_size, delay_buffer, 1, 1);
     prepare_whirl(&sm_y, 1, 1000, NONE);
     
     stepper_start_cycle();
@@ -907,20 +919,25 @@ static void test_buffered_steps_tick_by_tick() {
     
     // готовим шаги с переменной скоростью
     // void prepare_buffered_steps(stepper *smotor,
-    //    int buf_size, unsigned long* delay_buffer, long* step_buffer)
+    //    int buf_size, unsigned long* step_buffer, int* dir_buffer, unsigned long* delay_buffer)
     const int buf_size = 3;
+    static unsigned long step_buffer[buf_size];
+    static int dir_buffer[buf_size];
     static unsigned long delay_buffer[buf_size];
-    static long step_buffer[buf_size];
+
+    step_buffer[0] = 4; // 4 шага (туда)
+    step_buffer[1] = 2; // 2 шага (обратно)
+    step_buffer[2] = 4; // 4 шага (туда)
+    
+    dir_buffer[0] = 1; // туда
+    dir_buffer[1] = -1; // обратно
+    dir_buffer[2] = 1; // туда
 
     delay_buffer[0] = step_delay_us; // максимальная скорость
     delay_buffer[1] = step_delay_us*10; // в 10 раз медленнее
     delay_buffer[2] = step_delay_us*2; // в 2 раза медленнее
-
-    step_buffer[0] = 4; // 4 шага туда
-    step_buffer[1] = -2; // 2 шага обратно
-    step_buffer[2] = 4; // 4 шага туда
     
-    prepare_buffered_steps(&sm_x, buf_size, delay_buffer, step_buffer);
+    prepare_buffered_steps(&sm_x, buf_size, step_buffer, dir_buffer, delay_buffer);
     
     // шагаем
     stepper_start_cycle();
@@ -1044,20 +1061,25 @@ static void test_buffered_steps() {
     
     // готовим шаги с переменной скоростью
     // void prepare_buffered_steps(stepper *smotor,
-    //    int buf_size, unsigned long* delay_buffer, long* step_buffer)
+    //    int buf_size, unsigned long* step_buffer, int* dir_buffer, unsigned long* delay_buffer)
     const int buf_size = 3;
+    static unsigned long step_buffer[buf_size];
+    static int dir_buffer[buf_size];
     static unsigned long delay_buffer[buf_size];
-    static long step_buffer[buf_size];
+
+    step_buffer[0] = 400*10; // 10 кругов (туда)
+    step_buffer[1] = 400*5; // 5 кругов (обратно)
+    step_buffer[2] = 400*2; // 2 круга (туда)
+    
+    dir_buffer[0] = 1; // туда
+    dir_buffer[1] = -1; // обратно
+    dir_buffer[2] = 1; // туда
 
     delay_buffer[0] = step_delay_us; // максимальная скорость
     delay_buffer[1] = step_delay_us*10; // в 10 раз медленнее
     delay_buffer[2] = step_delay_us*2; // в 2 раза медленнее
-
-    step_buffer[0] = 400*10; // 10 кругов туда
-    step_buffer[1] = -400*5; // 5 кругов обратно
-    step_buffer[2] = 400*2; // 2 круга туда
     
-    prepare_buffered_steps(&sm_x, buf_size, delay_buffer, step_buffer);
+    prepare_buffered_steps(&sm_x, buf_size, step_buffer, dir_buffer, delay_buffer);
     
     // шагаем
     stepper_start_cycle();
@@ -1143,7 +1165,7 @@ static void test_driver_std_modes() {
     unsigned long _dist_per_step;
     
     // шагов в цикле для полного оборота
-    long _step_count;
+    unsigned long _step_count;
     
     // настройки таймера
     int _timer_id = TIMER_DEFAULT;
@@ -1180,7 +1202,7 @@ static void test_driver_std_modes() {
     
     // готовим шаги на полный круг (шагаем с максимальной скоростью)
     _step_count = 200;
-    prepare_steps(&sm_x, _step_count, _step_delay_us);
+    prepare_steps(&sm_x, _step_count, 1, _step_delay_us);
     
     // шагаем
     stepper_start_cycle();
@@ -1218,7 +1240,7 @@ static void test_driver_std_modes() {
     
     // готовим шаги на полный круг (шагаем с максимальной скоростью)
     _step_count = 200;
-    prepare_steps(&sm_x, _step_count, _step_delay_us);
+    prepare_steps(&sm_x, _step_count, 1, _step_delay_us);
     
     // шагаем
     stepper_start_cycle();
@@ -1256,7 +1278,7 @@ static void test_driver_std_modes() {
     
     // готовим шаги на полный круг (шагаем с максимальной скоростью)
     _step_count = 400;
-    prepare_steps(&sm_x, _step_count, _step_delay_us);
+    prepare_steps(&sm_x, _step_count, 1, _step_delay_us);
     
     // шагаем
     stepper_start_cycle();
@@ -1294,7 +1316,7 @@ static void test_driver_std_modes() {
     
     // готовим шаги на полный круг (шагаем с максимальной скоростью)
     _step_count = 800;
-    prepare_steps(&sm_x, _step_count, _step_delay_us);
+    prepare_steps(&sm_x, _step_count, 1, _step_delay_us);
     
     // шагаем
     stepper_start_cycle();
@@ -1332,7 +1354,7 @@ static void test_driver_std_modes() {
     
     // готовим шаги на полный круг (шагаем с максимальной скоростью)
     _step_count = 1600;
-    prepare_steps(&sm_x, _step_count, _step_delay_us);
+    prepare_steps(&sm_x, _step_count, 1, _step_delay_us);
     
     // шагаем
     stepper_start_cycle();
@@ -1370,7 +1392,7 @@ static void test_driver_std_modes() {
     
     // готовим шаги на полный круг (шагаем с максимальной скоростью)
     _step_count = 3200;
-    prepare_steps(&sm_x, _step_count, _step_delay_us);
+    prepare_steps(&sm_x, _step_count, 1, _step_delay_us);
     
     // шагаем
     stepper_start_cycle();
@@ -1408,7 +1430,7 @@ static void test_driver_std_modes() {
     
     // готовим шаги на полный круг (шагаем с максимальной скоростью)
     _step_count = 6400;
-    prepare_steps(&sm_x, _step_count, _step_delay_us);
+    prepare_steps(&sm_x, _step_count, 1, _step_delay_us);
     
     // шагаем
     stepper_start_cycle();
@@ -1446,7 +1468,7 @@ static void test_driver_std_modes() {
     
     // готовим шаги на полный круг (шагаем с максимальной скоростью)
     _step_count = 6400;
-    prepare_steps(&sm_x, _step_count, _step_delay_us);
+    prepare_steps(&sm_x, _step_count, 1, _step_delay_us);
     
     // шагаем
     stepper_start_cycle();
@@ -1476,8 +1498,8 @@ static void test_driver_std_modes_2motors() {
     unsigned long y_dist_per_step;
     
     // шагов в цикле для полного оборота
-    long x_step_count;
-    long y_step_count;
+    unsigned long x_step_count;
+    unsigned long y_step_count;
     
     // настройки таймера
     int _timer_id = TIMER_DEFAULT;
@@ -1531,10 +1553,10 @@ static void test_driver_std_modes_2motors() {
     
     // готовим шаги на полный круг (шагаем с максимальной скоростью)
     x_step_count = 6400;
-    prepare_steps(&sm_x, x_step_count, x_step_delay_us);
+    prepare_steps(&sm_x, x_step_count, 1, x_step_delay_us);
     
     y_step_count = 200;
-    prepare_steps(&sm_y, y_step_count, y_step_delay_us);
+    prepare_steps(&sm_y, y_step_count, 1, y_step_delay_us);
     
     // шагаем
     stepper_start_cycle();
@@ -1681,9 +1703,9 @@ static void test_exit_bounds_issue1_steps() {
     // задержку между шагами задаём как 0 (должна исправиться автоматом на
     // sm_x->step_delay, т.е. на 1000)
     // void prepare_steps(stepper *smotor,
-    //     long step_count, unsigned long step_delay,
+    //     unsigned long step_count, int dir, unsigned long step_delay,
     //     calibrate_mode_t calibrate_mode=NONE) {
-    prepare_steps(&sm_x, -300, 0, NONE);
+    prepare_steps(&sm_x, 300, -1, 0, NONE);
     
     // "идеальные" шаги - каждые 1000 микросекунд:
     // 1000, 2000, 3000
@@ -1777,9 +1799,9 @@ static void test_exit_bounds_issue9_steps() {
     // ставим задержку между шагами меньше, чем 3 периода таймера:
     // 400 < 200*3=600
     // void prepare_steps(stepper *smotor,
-    //     long step_count, unsigned long step_delay,
+    //     unsigned long step_count, int dir, unsigned long step_delay,
     //     calibrate_mode_t calibrate_mode=NONE)
-    prepare_steps(&sm_x, -300, 400);
+    prepare_steps(&sm_x, 300, -1, 400);
     
     // поехали
     stepper_start_cycle();
@@ -1805,9 +1827,9 @@ static void test_exit_bounds_issue9_steps() {
     // ставим задержку между шагами меньше, чем 3 периода таймера:
     // 400 < 200*3=600
     // void prepare_steps(stepper *smotor,
-    //     long step_count, unsigned long step_delay,
+    //     unsigned long step_count, int dir, unsigned long step_delay,
     //     calibrate_mode_t calibrate_mode=NONE)
-    prepare_steps(&sm_x, -300, 400);
+    prepare_steps(&sm_x, 300, -1, 400);
     
     // поехали
     // цикл должен запуститься
@@ -1849,7 +1871,7 @@ static void test_square_sig_issue16() {
     // прямоугольный на каждом шаге
     
     // проедем 30000 шагов с максимальной скоростью
-    prepare_steps(&sm_x, 30000, 1000);
+    prepare_steps(&sm_x, 30000, 1, 1000);
     
     // разберем шаги по косточкам
     
