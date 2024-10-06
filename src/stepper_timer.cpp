@@ -847,7 +847,7 @@ void stepper_set_timer_enabled(bool enabled) {
  * @param small_step_delay_handle - задержка между шагами меньше
  *       минимально допустимой для мотора.
  *     допустимые значения: FIX/STOP_MOTOR/CANCEL_CYCLE
- *     по умолчанию: FIX
+ *     по умолчанию: CANCEL_CYCLE
  * @param cycle_timing_exceed_handle - обработчик прерывания выполняется дольше,
  *       чем период таймера.
  *     допустимые значения: IGNORE/CANCEL_CYCLE
@@ -952,9 +952,7 @@ bool stepper_start_cycle() {
                 _smotors[i]->status = STEPPER_STATUS_FINISHED;
             } else { //if(_small_step_delay_handle == CANCEL_CYCLE) {
                 // по умолчанию: завершаем весь цикл
-                
                 _cycle_error = CYCLE_ERROR_MOTOR_ERROR;
-                
                 canceled = true;
             }
         }
@@ -1148,6 +1146,7 @@ void _timer_handle_interrupts(int timer) {
                     // сразу завершить весь цикл
                     if(_hard_end_handle == CANCEL_CYCLE) {
                         // завершаем весь цикл
+                        _cycle_error = CYCLE_ERROR_MOTOR_ERROR;
                         canceled = true;
                     } // иначе STOP_MOTOR - останавливается только этот мотор
                     
@@ -1168,6 +1167,7 @@ void _timer_handle_interrupts(int timer) {
                     // сразу завершить весь цикл
                     if(_hard_end_handle == CANCEL_CYCLE) {
                         // завершаем весь цикл
+                        _cycle_error = CYCLE_ERROR_MOTOR_ERROR;
                         canceled = true;
                     } // иначе STOP_MOTOR - останавливается только этот мотор
                     
@@ -1197,6 +1197,7 @@ void _timer_handle_interrupts(int timer) {
                     // сразу завершить весь цикл
                     if(_soft_end_handle == CANCEL_CYCLE) {
                         // завершаем весь цикл
+                        _cycle_error = CYCLE_ERROR_MOTOR_ERROR;
                         canceled = true;
                     } // иначе STOP_MOTOR - останавливается только этот мотор
                     
@@ -1218,6 +1219,7 @@ void _timer_handle_interrupts(int timer) {
                     // сразу завершить весь цикл
                     if(_soft_end_handle == CANCEL_CYCLE) {
                         // завершаем весь цикл
+                        _cycle_error = CYCLE_ERROR_MOTOR_ERROR;
                         canceled = true;
                     } // иначе STOP_MOTOR - останавливается только этот мотор
                 }
@@ -1334,6 +1336,7 @@ void _timer_handle_interrupts(int timer) {
                         _smotors[i]->status = STEPPER_STATUS_FINISHED;
                     } else { //if(_small_step_delay_handle == CANCEL_CYCLE) {
                         // по умолчанию: завершаем весь цикл
+                        _cycle_error = CYCLE_ERROR_MOTOR_ERROR;
                         canceled = true;
                     }
                     

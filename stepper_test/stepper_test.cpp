@@ -245,6 +245,98 @@ static void test_timer_period_aliquant_step_delay() {
         "period=300uS (aliquant): stepper_cycle_error() == CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_STEP_DELAY");
 }
 
+
+static void test_exit_bounds() {
+    // проверим ситуации выхода моторов за границы
+    // (ниже есть похожие тесты с issue1, но их трогать не буду, т.к. они связаны
+    // с конкретным тикетом, а здесь - тест общего назначания)
+    
+    // завершаем цикл на случай, если он остался запущен другими тестами
+    stepper_finish_cycle();
+    
+    // мотор - минимальная задежка между шагами: 1000 микросекунд
+    // расстояние за шаг: 7500нм=7.5мкм
+    // рабочая область: 300000000нм=300000мкм=300мм=30см
+    // нижняя граница координаты: ограничена=0
+    // верхняя граница координаты: ограничена=300000000
+    stepper sm_x;
+    init_stepper(&sm_x, 'x', 8, 9, 10, false, 1000, 7500);
+    init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 300000000);
+    
+    // настройки частоты таймера
+    unsigned long timer_period_us = 200;
+    stepper_configure_timer(timer_period_us, TIMER_DEFAULT, TIMER_PRESCALER_1_8, 2000);
+    
+    //////////////
+    
+    // на всякий случай: цикл не должен быть запущен
+    // (если запущен, то косяк в предыдущем тесте)
+    sput_fail_unless(!stepper_cycle_running(), "stepper_cycle_running() == false");
+    
+    // попробуем выйти в минус за 0
+    
+    // 
+    // готовим мотор на несколько шагов в сторону нуля
+    // void prepare_steps(stepper *smotor,
+    //     unsigned long step_count, int dir, unsigned long step_delay,
+    //     calibrate_mode_t calibrate_mode=NONE) {
+    prepare_steps(&sm_x, 300, -1, 1000, NONE);
+    
+    // поехали
+    stepper_start_cycle();
+    sput_fail_unless(stepper_cycle_running(), "go left: stepper_cycle_running() == true");
+    sput_fail_unless(sm_x.current_pos == 0, "go left: current_pos == 0");
+    
+    // холостой ход (тики ничего не делают)
+    timer_tick(2);
+    
+    // начинаем из нуля
+    sput_fail_unless(sm_x.current_pos == 0, "go left: current_pos == 0");
+    // проверка границ
+    timer_tick(1);
+    // здесь мы должны увидеть, что этот шаг приведет в выходу за виртуальную границу,
+    // должны быть выставлены коды ошибок, статус мотора обозначен как "остановлен"
+    sput_fail_unless(sm_x.status == STEPPER_STATUS_FINISHED, "go left: status == STEPPER_STATUS_FINISHED");
+    sput_fail_unless(sm_x.error&STEPPER_ERROR_SOFT_END_MIN, "go left: error&STEPPER_ERROR_SOFT_END_MIN == true");
+    sput_fail_unless(!(sm_x.error&STEPPER_ERROR_SOFT_END_MAX), "go left: error&STEPPER_ERROR_SOFT_END_MAX == false");
+    
+    // цикл должен остановиться на этом же тике с ошибкой
+    sput_fail_unless(!stepper_cycle_running(), "go left: stepper_cycle_running() == false");
+    sput_fail_unless(stepper_cycle_error() == CYCLE_ERROR_MOTOR_ERROR, "go left: stepper_cycle_error() == CYCLE_ERROR_MOTOR_ERROR");
+    
+    // на всякий случай проверим финальное положение
+    sput_fail_unless(sm_x.current_pos == 0, "go left: current_pos == 0");
+    
+    
+    // Теперь за правую границу
+    // 300000000/7500=40000 шагов до правой границы
+    // тиков будет (2+3)=5 на шаг, значит до правой границы
+    // 40000*5=200000 тиков
+    stepper_finish_cycle();
+    prepare_steps(&sm_x, 40000+1, 1, 1000, NONE);
+    
+    // поехали
+    stepper_start_cycle();
+    sput_fail_unless(stepper_cycle_running(), "go right: stepper_cycle_running() == true");
+    sput_fail_unless(sm_x.current_pos == 0, "go right: current_pos == 0");
+    
+    // подходим ровно к правой границе + еще один шаг
+    timer_tick(200000+5);
+    
+    // здесь мы должны увидеть, что этот шаг приведет в выходу за виртуальную границу,
+    // должны быть выставлены коды ошибок, статус мотора обозначен как "остановлен"
+    sput_fail_unless(sm_x.status == STEPPER_STATUS_FINISHED, "go right: status == STEPPER_STATUS_FINISHED");
+    sput_fail_unless(!(sm_x.error&STEPPER_ERROR_SOFT_END_MIN), "go right: error&STEPPER_ERROR_SOFT_END_MIN == false");
+    sput_fail_unless(sm_x.error&STEPPER_ERROR_SOFT_END_MAX, "go right: error&STEPPER_ERROR_SOFT_END_MAX == true");
+    
+    // цикл должен остановиться на этом же тике с ошибкой
+    sput_fail_unless(!stepper_cycle_running(), "go right: stepper_cycle_running() == false");
+    sput_fail_unless(stepper_cycle_error() == CYCLE_ERROR_MOTOR_ERROR, "go right: stepper_cycle_error() == CYCLE_ERROR_MOTOR_ERROR");
+    
+    // на всякий случай проверим финальное положение
+    sput_fail_unless(sm_x.current_pos == 300000000, "go right: current_pos == 300000000");
+}
+
 static void test_max_speed_tick_by_tick() {
 
     // мотор - минимальная задержка между шагами 1000 мкс,
@@ -843,7 +935,7 @@ static void test_small_step_delay_handlers() {
     timer_tick(5);
     sput_fail_unless(sm_x.current_pos == 7500, "handler=STOP_MOTOR.tick5+5: sm_x.current_pos == 7500");
     sput_fail_unless(sm_y.current_pos == 15000, "handler=STOP_MOTOR.tick5+5: sm_y.current_pos == 15000");
-    sput_fail_unless(stepper_cycle_running(), "handler=STOP_MOTOR.tick5+5: tepper_cycle_running() == true");
+    sput_fail_unless(stepper_cycle_running(), "handler=STOP_MOTOR.tick5+5: stepper_cycle_running() == true");
     
     // ну и достаточно - останавливаемся
     stepper_finish_cycle();
@@ -880,7 +972,7 @@ static void test_small_step_delay_handlers() {
     //sput_fail_unless(sm_y.current_pos == 7500, "handler=CANCEL_CYCLE.tick5: sm_y.current_pos == 7500");
     //cout<<sm_y.current_pos<<endl;
     
-    // флаг ошибки
+    // флаг ошибки для мотора
     sput_fail_unless(sm_x.error&STEPPER_ERROR_STEP_DELAY_SMALL,
         "handler=CANCEL_CYCLE.tick5: sm_x.error&STEPPER_ERROR_STEP_DELAY_SMALL == true");
     
@@ -890,14 +982,16 @@ static void test_small_step_delay_handlers() {
     sput_fail_unless(sm_y.status == STEPPER_STATUS_FINISHED,
         "handler=CANCEL_CYCLE.tick5: sm_y.status == STEPPER_STATUS_FINISHED");
     
-    // и цикл тоже здесь закончился
-    sput_fail_unless(!stepper_cycle_running(), "handler=CANCEL_CYCLE.tick5: tepper_cycle_running() == false");
+    // и цикл тоже здесь закончился с ошибкой
+    sput_fail_unless(!stepper_cycle_running(), "handler=CANCEL_CYCLE.tick5: stepper_cycle_running() == false");
+    sput_fail_unless(stepper_cycle_error() == CYCLE_ERROR_MOTOR_ERROR,
+        "handler=CANCEL_CYCLE.tick5: stepper_cycle_error() == CYCLE_ERROR_MOTOR_ERROR");
     
     // шаг2 - не будет совершен
     timer_tick(5);
     sput_fail_unless(sm_x.current_pos == 7500, "handler=CANCEL_CYCLE.tick5+5: sm_x.current_pos == 7500");
     sput_fail_unless(sm_y.current_pos == 0, "handler=CANCEL_CYCLE.tick5+5: sm_y.current_pos == 0");
-    sput_fail_unless(!stepper_cycle_running(), "handler=CANCEL_CYCLE.tick5+5: tepper_cycle_running() == false");
+    sput_fail_unless(!stepper_cycle_running(), "handler=CANCEL_CYCLE.tick5+5: stepper_cycle_running() == false");
 }
 
 static void test_buffered_steps_tick_by_tick() {
@@ -1746,8 +1840,8 @@ static void test_exit_bounds_issue1_steps() {
     // здесь мы должны увидеть, что этот шаг приведет в выходу за виртуальную границу,
     // должны быть выставлены коды ошибок, статус мотора обозначен как "остановлен"
     sput_fail_unless(sm_x.status == STEPPER_STATUS_FINISHED, "step1.tick1: status == STEPPER_STATUS_FINISHED");
-    sput_fail_unless(sm_x.error&STEPPER_ERROR_SOFT_END_MIN, "step1.tick3: error&STEPPER_ERROR_SOFT_END_MIN == true");
-    sput_fail_unless(!(sm_x.error&STEPPER_ERROR_SOFT_END_MAX), "step1.tick3: error&STEPPER_ERROR_SOFT_END_MAX == false");
+    sput_fail_unless(sm_x.error&STEPPER_ERROR_SOFT_END_MIN, "step1.tick1: error&STEPPER_ERROR_SOFT_END_MIN == true");
+    sput_fail_unless(!(sm_x.error&STEPPER_ERROR_SOFT_END_MAX), "step1.tick1: error&STEPPER_ERROR_SOFT_END_MAX == false");
     
     // на всякий случай проверим финальное положение
     sput_fail_unless(sm_x.current_pos == 0, "step1.tick1: current_pos == 0");
@@ -1956,6 +2050,17 @@ int stepper_test_suite_timer_period_aliquant_step_delay() {
     return sput_get_return_value();
 }
 
+/** Exit bounds */
+int stepper_test_suite_exit_bounds() {
+    sput_start_testing();
+    
+    sput_enter_suite("Exit bounds");
+    sput_run_test(test_exit_bounds);
+
+    sput_finish_testing();
+    return sput_get_return_value();
+}
+
 /** Single motor: 3 steps tick by tick on max speed */
 int stepper_test_suite_max_speed_tick_by_tick() {
     sput_start_testing();
@@ -2112,6 +2217,9 @@ int stepper_test_suite() {
     
     sput_enter_suite("Stepper cycle timer period is aliquant part of motor step pulse delay");
     sput_run_test(test_timer_period_aliquant_step_delay);
+    
+    sput_enter_suite("Exit bounds");
+    sput_run_test(test_exit_bounds);
     
     sput_enter_suite("Single motor: 3 steps tick by tick on max speed");
     sput_run_test(test_max_speed_tick_by_tick);
