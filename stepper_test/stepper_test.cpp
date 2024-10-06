@@ -1674,7 +1674,7 @@ static void test_driver_std_modes_2motors() {
         "x+y, tick 19200+1: sm_x.current_pos == 40000000");
 }
 
-static void test_exit_bounds_issue1_whirl() {
+static void test_issue1_exit_bounds_whirl() {
 
     // мотор - минимальная задежка между шагами: 1000 микросекунд
     // расстояние за шаг: 7500нм=7.5мкм
@@ -1763,7 +1763,7 @@ static void test_exit_bounds_issue1_whirl() {
     sput_fail_unless(!stepper_cycle_running(), "stepper_cycle_running() == false");
 }
 
-static void test_exit_bounds_issue1_steps() {
+static void test_issue1_exit_bounds_steps() {
 
     // мотор - минимальная задежка между шагами: 1000 микросекунд
     // расстояние за шаг: 7500нм=7.5мкм
@@ -1850,7 +1850,7 @@ static void test_exit_bounds_issue1_steps() {
     sput_fail_unless(!stepper_cycle_running(), "stepper_cycle_running() == false");
 }
 
-static void test_exit_bounds_issue9_steps() {
+static void test_issue9_exit_bounds_steps() {
     // https://github.com/sadr0b0t/stepper_h/issues/9
 
     // мотор - минимальная задежка между шагами: 1000 микросекунд
@@ -1938,7 +1938,7 @@ static void test_exit_bounds_issue9_steps() {
     sput_fail_unless(sm_x.current_pos == 0, "autofix: current_pos == 0");
 }
 
-static void test_square_sig_issue16() {
+static void test_issue16_square_sig() {
     // https://github.com/sadr0b0t/stepper_h/issues/16
 
     // мотор - минимальная задежка между шагами: 1000 микросекунд
@@ -2161,44 +2161,44 @@ int stepper_test_suite_driver_std_modes_2motors() {
 }
 
 /** Single motor: exit bounds (issue #1) - whirl */
-int stepper_test_suite_exit_bounds_issue1_whirl() {
+int stepper_test_suite_issue1_exit_bounds_whirl() {
     sput_start_testing();
     
     sput_enter_suite("Single motor: exit bounds (issue #1) - whirl");
-    sput_run_test(test_exit_bounds_issue1_whirl);
+    sput_run_test(test_issue1_exit_bounds_whirl);
 
     sput_finish_testing();
     return sput_get_return_value();
 }
 
 /** Single motor: exit bounds (issue #1) - steps */
-int stepper_test_suite_exit_bounds_issue1_steps() {
+int stepper_test_suite_issue1_exit_bounds_steps() {
     sput_start_testing();
     
     sput_enter_suite("Single motor: exit bounds (issue #1) - steps");
-    sput_run_test(test_exit_bounds_issue1_steps);
+    sput_run_test(test_issue1_exit_bounds_steps);
 
     sput_finish_testing();
     return sput_get_return_value();
 }
 
 /** Single motor: exit bounds (issue #9) - steps */
-int stepper_test_suite_exit_bounds_issue9_steps() {
+int stepper_test_suite_issue9_exit_bounds_steps() {
     sput_start_testing();
     
     sput_enter_suite("Single motor: exit bounds (issue #9) - steps");
-    sput_run_test(test_exit_bounds_issue9_steps);
+    sput_run_test(test_issue9_exit_bounds_steps);
 
     sput_finish_testing();
     return sput_get_return_value();
 }
 
 /** Single motor: test square signal (issue #16) */
-int stepper_test_suite_square_sig_issue16() {
+int stepper_test_suite_issue16_square_sig() {
     sput_start_testing();
     
     sput_enter_suite("Single motor: test square signal (issue #16)");
-    sput_run_test(test_square_sig_issue16);
+    sput_run_test(test_issue16_square_sig);
     
     sput_finish_testing();
     return sput_get_return_value();
@@ -2251,16 +2251,16 @@ int stepper_test_suite() {
     
     
     sput_enter_suite("Single motor: exit bounds (issue #1) - whirl");
-    sput_run_test(test_exit_bounds_issue1_whirl);
+    sput_run_test(test_issue1_exit_bounds_whirl);
     
     sput_enter_suite("Single motor: exit bounds (issue #1) - steps");
-    sput_run_test(test_exit_bounds_issue1_steps);
+    sput_run_test(test_issue1_exit_bounds_steps);
     
     sput_enter_suite("Single motor: exit bounds (issue #9) - steps");
-    sput_run_test(test_exit_bounds_issue9_steps);
+    sput_run_test(test_issue9_exit_bounds_steps);
     
     sput_enter_suite("Single motor: test square signal (issue #16)");
-    sput_run_test(test_square_sig_issue16);
+    sput_run_test(test_issue16_square_sig);
     
     
     sput_finish_testing();
