@@ -55,7 +55,7 @@ typedef enum {
 
 /**
  * Побитовые флаги ошибок мотора в цикле вращения (для мотора может быть
- * одновременно установлено несколько флогов).
+ * одновременно установлено несколько флагов).
  */
 typedef enum {
     /** С мотором всё ок */
@@ -166,7 +166,7 @@ typedef struct {
      * 
      * итого: нам нужны 32 бит, для всех платформ (PIC32/ChipKIT, AVR/Arduino) это long.
      */
-    unsigned long step_delay;
+    unsigned long min_step_delay;
     
     /**
      * Расстояние, проходимое координатой за один шаг мотора,
@@ -372,7 +372,7 @@ typedef enum {
  * @param invert_dir - Инверсия направления вращения
  *     true: инвертировать направление вращения
  *     false: не инвертировать
- * @param step_delay - Минимальная задержка между импульсами, микросекунды
+ * @param min_step_delay - Минимальная задержка между импульсами, микросекунды
  *     (для движения с максимальной скоростью)
  * @param distance_per_step - Расстояние, проходимое координатой за шаг,
  *     базовая единица измерения мотора.
@@ -385,7 +385,7 @@ typedef enum {
  */
 void init_stepper(stepper* smotor, char name,
         int pin_step, int pin_dir, int pin_en,
-        bool invert_dir, unsigned long step_delay,
+        bool invert_dir, unsigned long min_step_delay,
         unsigned long distance_per_step);
 
 /**

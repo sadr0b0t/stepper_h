@@ -32,7 +32,7 @@ static void prepare_test_1_1(int turns) {
     // connected stepper motors
     // init_stepper(stepper* smotor, char name,
     //     int pin_step, int pin_dir, int pin_en,
-    //     bool invert_dir, unsigned long step_delay,
+    //     bool invert_dir, unsigned long min_step_delay,
     //     unsigned long distance_per_step)
     // init_stepper_ends(stepper* smotor,
     //     end_strategy min_end_strategy, end_strategy max_end_strategy,
@@ -58,14 +58,14 @@ static void prepare_test_1_1(int turns) {
     stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_adjustment);
 
     // настройки мотора
-    unsigned long _step_delay_us = 1500; // us
+    unsigned long _min_step_delay_us = 1500; // us
     unsigned long _dist_per_step = 200000; // nm
-    init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _step_delay_us, _dist_per_step);
+    init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _min_step_delay_us, _dist_per_step);
     init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000000);
     
     // готовим шаги на полный круг (шагаем с максимальной скоростью)
     long _step_count = 200;
-    prepare_steps(&sm_x, _step_count*turns, _step_delay_us);
+    prepare_steps(&sm_x, _step_count*turns, _min_step_delay_us);
     //prepare_steps(&sm_x, _step_count*turns, 10000000/200); // весь цикл за 10 секунд
 }
 
@@ -74,7 +74,7 @@ static void prepare_test_1_2(int turns) {
     // connected stepper motors
     // init_stepper(stepper* smotor, char name,
     //     int pin_step, int pin_dir, int pin_en,
-    //     bool invert_dir, unsigned long step_delay,
+    //     bool invert_dir, unsigned long min_step_delay,
     //     unsigned long distance_per_step)
     // init_stepper_ends(stepper* smotor,
     //     end_strategy min_end_strategy, end_strategy max_end_strategy,
@@ -100,14 +100,14 @@ static void prepare_test_1_2(int turns) {
     stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_adjustment);
 
     // настройки мотора
-    unsigned long _step_delay_us = 660; // us
+    unsigned long _min_step_delay_us = 660; // us
     unsigned long _dist_per_step = 100000; // nm
-    init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _step_delay_us, _dist_per_step);
+    init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _min_step_delay_us, _dist_per_step);
     init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000000);
     
     // готовим шаги на полный круг (шагаем с максимальной скоростью)
     long _step_count = 400;
-    prepare_steps(&sm_x, _step_count*turns, _step_delay_us);
+    prepare_steps(&sm_x, _step_count*turns, _min_step_delay_us);
 }
 
 // полный оборот с делителем шага 1/4
@@ -115,7 +115,7 @@ static void prepare_test_1_4(int turns) {
     // connected stepper motors
     // init_stepper(stepper* smotor, char name,
     //     int pin_step, int pin_dir, int pin_en,
-    //     bool invert_dir, unsigned long step_delay,
+    //     bool invert_dir, unsigned long min_step_delay,
     //     unsigned long distance_per_step)
     // init_stepper_ends(stepper* smotor,
     //     end_strategy min_end_strategy, end_strategy max_end_strategy,
@@ -141,14 +141,14 @@ static void prepare_test_1_4(int turns) {
     stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_adjustment);
 
     // настройки мотора
-    unsigned long _step_delay_us = 340; // us
+    unsigned long _min_step_delay_us = 340; // us
     unsigned long _dist_per_step = 50000; // nm
-    init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _step_delay_us, _dist_per_step);
+    init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _min_step_delay_us, _dist_per_step);
     init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000000);
     
     // готовим шаги на полный круг (шагаем с максимальной скоростью)
     long _step_count = 800;
-    prepare_steps(&sm_x, _step_count*turns, _step_delay_us);
+    prepare_steps(&sm_x, _step_count*turns, _min_step_delay_us);
 }
 
 // полный оборот с делителем шага 1/8
@@ -156,7 +156,7 @@ static void prepare_test_1_8(int turns) {
     // connected stepper motors
     // init_stepper(stepper* smotor, char name,
     //     int pin_step, int pin_dir, int pin_en,
-    //     bool invert_dir, unsigned long step_delay,
+    //     bool invert_dir, unsigned long min_step_delay,
     //     unsigned long distance_per_step)
     // init_stepper_ends(stepper* smotor,
     //     end_strategy min_end_strategy, end_strategy max_end_strategy,
@@ -182,14 +182,14 @@ static void prepare_test_1_8(int turns) {
     stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_adjustment);
 
     // настройки мотора
-    unsigned long _step_delay_us = 180; // us
+    unsigned long _min_step_delay_us = 180; // us
     unsigned long _dist_per_step = 25000; // nm
-    init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _step_delay_us, _dist_per_step);
+    init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _min_step_delay_us, _dist_per_step);
     init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000000);
     
     // готовим шаги на полный круг (шагаем с максимальной скоростью)
     long _step_count = 1600;
-    prepare_steps(&sm_x, _step_count*turns, _step_delay_us);
+    prepare_steps(&sm_x, _step_count*turns, _min_step_delay_us);
 }
 
 // полный оборот с делителем шага 1/16
@@ -197,7 +197,7 @@ static void prepare_test_1_16(int turns) {
     // connected stepper motors
     // init_stepper(stepper* smotor, char name,
     //     int pin_step, int pin_dir, int pin_en,
-    //     bool invert_dir, unsigned long step_delay,
+    //     bool invert_dir, unsigned long min_step_delay,
     //     unsigned long distance_per_step)
     // init_stepper_ends(stepper* smotor,
     //     end_strategy min_end_strategy, end_strategy max_end_strategy,
@@ -223,14 +223,14 @@ static void prepare_test_1_16(int turns) {
     stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_adjustment);
 
     // настройки мотора
-    unsigned long _step_delay_us = 80; // us
+    unsigned long _min_step_delay_us = 80; // us
     unsigned long _dist_per_step = 12500; // nm
-    init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _step_delay_us, _dist_per_step);
+    init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _min_step_delay_us, _dist_per_step);
     init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000000);
     
     // готовим шаги на полный круг (шагаем с максимальной скоростью)
     long _step_count = 3200;
-    prepare_steps(&sm_x, _step_count*turns, _step_delay_us);
+    prepare_steps(&sm_x, _step_count*turns, _min_step_delay_us);
 }
 
 // полный оборот с делителем шага 1/32
@@ -238,7 +238,7 @@ static void prepare_test_1_32(int turns) {
     // connected stepper motors
     // init_stepper(stepper* smotor, char name,
     //     int pin_step, int pin_dir, int pin_en,
-    //     bool invert_dir, unsigned long step_delay,
+    //     bool invert_dir, unsigned long min_step_delay,
     //     unsigned long distance_per_step)
     // init_stepper_ends(stepper* smotor,
     //     end_strategy min_end_strategy, end_strategy max_end_strategy,
@@ -264,14 +264,14 @@ static void prepare_test_1_32(int turns) {
     stepper_configure_timer(_timer_period_us, _timer_id, _timer_prescaler, _timer_adjustment);
 
     // настройки мотора
-    unsigned long _step_delay_us = 60; // us
+    unsigned long _min_step_delay_us = 60; // us
     unsigned long _dist_per_step = 6250; // nm
-    init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _step_delay_us, _dist_per_step);
+    init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _min_step_delay_us, _dist_per_step);
     init_stepper_ends(&sm_x, NO_PIN, NO_PIN, INF, INF, 0, 300000000);
     
     // готовим шаги на полный круг (шагаем с максимальной скоростью)
     long _step_count = 6400;
-    prepare_steps(&sm_x, _step_count*turns, _step_delay_us);
+    prepare_steps(&sm_x, _step_count*turns, _min_step_delay_us);
 }
 
 

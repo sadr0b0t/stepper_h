@@ -130,7 +130,7 @@ void setup() {
     // connected stepper motors
     // init_stepper(stepper* smotor, char name,
     //     int pin_step, int pin_dir, int pin_en,
-    //     bool invert_dir, unsigned long step_delay,
+    //     bool invert_dir, unsigned long min_step_delay,
     //     unsigned long distance_per_step)
     // init_stepper_ends(stepper* smotor,
     //     end_strategy min_end_strategy, end_strategy max_end_strategy,

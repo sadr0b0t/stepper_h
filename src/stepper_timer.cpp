@@ -358,7 +358,7 @@ void prepare_steps(stepper *smotor, unsigned long step_count, int dir, unsigned 
     _cstatuses[sm_i].delay_source = CONSTANT;
     if(step_delay == 0) {
         // 0 - движение с максимальной скоростью
-        _cstatuses[sm_i].step_delay = smotor->step_delay;
+        _cstatuses[sm_i].step_delay = smotor->min_step_delay;
     } else {
         _cstatuses[sm_i].step_delay = step_delay;
     }
@@ -420,7 +420,7 @@ void prepare_whirl(stepper *smotor, int dir, unsigned long step_delay, calibrate
     _cstatuses[sm_i].delay_source = CONSTANT;
     if(step_delay == 0 ) {
         // 0 - движение с максимальной скоростью
-        _cstatuses[sm_i].step_delay = smotor->step_delay;
+        _cstatuses[sm_i].step_delay = smotor->min_step_delay;
     } else {
         _cstatuses[sm_i].step_delay = step_delay;
     }
@@ -614,7 +614,7 @@ void prepare_buffered_steps(stepper *smotor, int buf_size, unsigned long* step_b
     unsigned long step_delay = _cstatuses[sm_i].delay_buffer[0];
     if(step_delay == 0) {
         // движение с максимальной скоростью
-        _cstatuses[sm_i].step_delay = _smotors[sm_i]->step_delay;
+        _cstatuses[sm_i].step_delay = _smotors[sm_i]->min_step_delay;
     } else {
         _cstatuses[sm_i].step_delay = step_delay;
     }
@@ -913,20 +913,20 @@ bool stepper_start_cycle() {
     // при некоторых комбинациях значений периода таймера
     // и минимальной задержки между шагами мотора
     for(int i = 0; i < _stepper_count && !canceled; i++) {
-        if(_smotors[i]->step_delay < _timer_period_us*3) {
+        if(_smotors[i]->min_step_delay < _timer_period_us*3) {
             // не запускать цикл, если хотябы у одного из моторов
             // минимальная задержка между шагами не вмещает минимум 3
             // периода таймера
             _cycle_error = CYCLE_ERROR_TIMER_PERIOD_TOO_LONG;
             
             canceled = true;
-        } else if(_smotors[i]->step_delay % _timer_period_us != 0) {
+        } else if(_smotors[i]->min_step_delay % _timer_period_us != 0) {
             // не запускать цикл, если период таймера не кратен
             // минимальной задержке между шагами хотябы одного из моторов
             _cycle_error = CYCLE_ERROR_TIMER_PERIOD_ALIQUANT_STEP_DELAY;
             
             canceled = true;
-        } else if(_cstatuses[i].step_delay < _smotors[i]->step_delay) {
+        } else if(_cstatuses[i].step_delay < _smotors[i]->min_step_delay) {
             // проверим, корректна ли задержка перед первым шагом,
             // заданная во время prepare_steps/whirl/xxx:
             
@@ -941,7 +941,7 @@ bool stepper_start_cycle() {
                 // попробуем исправить:
                 // не будем делать шаги чаще, чем может мотор
                 // (следует понимать, что корректность вращения уже нарушена)
-                _cstatuses[i].step_delay = _smotors[i]->step_delay;
+                _cstatuses[i].step_delay = _smotors[i]->min_step_delay;
                 
                 // задержка перед первым шагом
                 _cstatuses[i].step_timer = _cstatuses[i].step_delay;
@@ -1319,7 +1319,7 @@ void _timer_handle_interrupts(int timer) {
                 }
                 
                 // проверим, корректна ли задержка
-                if(step_delay < _smotors[i]->step_delay) {
+                if(step_delay < _smotors[i]->min_step_delay) {
                     // вычисленная задержка перед очередным шагом меньше,
                     // чем минимально допустимая для этого мотора
                     
@@ -1328,7 +1328,7 @@ void _timer_handle_interrupts(int timer) {
                         // попробуем исправить:
                         // не будем делать шаги чаще, чем может мотор
                         // (следует понимать, что корректность вращения уже нарушена)
-                        step_delay = _smotors[i]->step_delay;
+                        step_delay = _smotors[i]->min_step_delay;
                     } else if(_small_step_delay_handle == STOP_MOTOR) {
                         // останавливаем мотор
                         _cstatuses[i].stopped = true;

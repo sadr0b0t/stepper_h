@@ -249,113 +249,113 @@ unsigned long _dist_per_step_1_32 = 6250;
 // X
 
 // 1/1
-//unsigned long x_step_delay_us = _step_delay_1_1_pic32mx;
-//unsigned long x_step_delay_us = _step_delay_1_1_avr;
-unsigned long x_step_delay_us = _step_delay_1_1_sam;
+//unsigned long x_min_step_delay_us = _step_delay_1_1_pic32mx;
+//unsigned long x_min_step_delay_us = _step_delay_1_1_avr;
+unsigned long x_min_step_delay_us = _step_delay_1_1_sam;
 unsigned long x_dist_per_step = _dist_per_step_1_1;
 
 // 1/2
-//unsigned long x_step_delay_us = _step_delay_1_2_pic32mx;
-//unsigned long x_step_delay_us = _step_delay_1_2_avr;
-//unsigned long x_step_delay_us = _step_delay_1_2_sam;
+//unsigned long x_min_step_delay_us = _step_delay_1_2_pic32mx;
+//unsigned long x_min_step_delay_us = _step_delay_1_2_avr;
+//unsigned long x_min_step_delay_us = _step_delay_1_2_sam;
 //unsigned long x_dist_per_step = _dist_per_step_1_2;
 
 // 1/4
-//unsigned long x_step_delay_us = _step_delay_1_4_pic32mx;
-//unsigned long x_step_delay_us = _step_delay_1_4_avr;
-//unsigned long x_step_delay_us = _step_delay_1_4_sam;
+//unsigned long x_min_step_delay_us = _step_delay_1_4_pic32mx;
+//unsigned long x_min_step_delay_us = _step_delay_1_4_avr;
+//unsigned long x_min_step_delay_us = _step_delay_1_4_sam;
 //unsigned long x_dist_per_step = _dist_per_step_1_4;
 
 // 1/8
-//unsigned long x_step_delay_us = _step_delay_1_8_pic32mx;
-//unsigned long x_step_delay_us = _step_delay_1_8_avr;
+//unsigned long x_min_step_delay_us = _step_delay_1_8_pic32mx;
+//unsigned long x_min_step_delay_us = _step_delay_1_8_avr;
 //unsigned long x_dist_per_step = _dist_per_step_1_8;
 
 // 1/16
-//unsigned long x_step_delay_us = _step_delay_1_16_pic32mx;
-//unsigned long x_step_delay_us = _step_delay_1_16_avr;
+//unsigned long x_min_step_delay_us = _step_delay_1_16_pic32mx;
+//unsigned long x_min_step_delay_us = _step_delay_1_16_avr;
 //unsigned long x_dist_per_step = _dist_per_step_1_16;
 
 // 1/32
-//unsigned long x_step_delay_us = _step_delay_1_32_pic32mx;
-//unsigned long x_step_delay_us = _step_delay_1_32_avr;
-//unsigned long x_step_delay_us = _step_delay_1_32_sam;
+//unsigned long x_min_step_delay_us = _step_delay_1_32_pic32mx;
+//unsigned long x_min_step_delay_us = _step_delay_1_32_avr;
+//unsigned long x_min_step_delay_us = _step_delay_1_32_sam;
 //unsigned long x_dist_per_step = _dist_per_step_1_32;
 
 // Y
 
 // 1/1
-//unsigned long y_step_delay_us = _step_delay_1_1_pic32mx;
-//unsigned long y_step_delay_us = _step_delay_1_1_avr;
-unsigned long y_step_delay_us = _step_delay_1_1_sam;
+//unsigned long y_min_step_delay_us = _step_delay_1_1_pic32mx;
+//unsigned long y_min_step_delay_us = _step_delay_1_1_avr;
+unsigned long y_min_step_delay_us = _step_delay_1_1_sam;
 unsigned long y_dist_per_step = _dist_per_step_1_1;
 
 // 1/2
-//unsigned long y_step_delay_us = _step_delay_1_2_pic32mx;
-//unsigned long y_step_delay_us = _step_delay_1_2_avr;
-//unsigned long y_step_delay_us = _step_delay_1_2_sam;
+//unsigned long y_min_step_delay_us = _step_delay_1_2_pic32mx;
+//unsigned long y_min_step_delay_us = _step_delay_1_2_avr;
+//unsigned long y_min_step_delay_us = _step_delay_1_2_sam;
 //unsigned long y_dist_per_step = _dist_per_step_1_2;
 
 // 1/4
-//unsigned long y_step_delay_us = _step_delay_1_4_pic32mx;
-//unsigned long y_step_delay_us = _step_delay_1_4_avr;
-//unsigned long y_step_delay_us = _step_delay_1_4_sam;
+//unsigned long y_min_step_delay_us = _step_delay_1_4_pic32mx;
+//unsigned long y_min_step_delay_us = _step_delay_1_4_avr;
+//unsigned long y_min_step_delay_us = _step_delay_1_4_sam;
 //unsigned long y_dist_per_step = _dist_per_step_1_4;
 
 // 1/8
-//unsigned long y_step_delay_us = _step_delay_1_8_pic32mx;
-//unsigned long y_step_delay_us = _step_delay_1_8_avr;
-//unsigned long y_step_delay_us = _step_delay_1_8_sam;
+//unsigned long y_min_step_delay_us = _step_delay_1_8_pic32mx;
+//unsigned long y_min_step_delay_us = _step_delay_1_8_avr;
+//unsigned long y_min_step_delay_us = _step_delay_1_8_sam;
 //unsigned long y_dist_per_step = _dist_per_step_1_8;
 
 // 1/16
-//unsigned long y_step_delay_us = _step_delay_1_16_pic32mx;
-//unsigned long y_step_delay_us = _step_delay_1_16_avr;
-//unsigned long y_step_delay_us = _step_delay_1_16_sam;
+//unsigned long y_min_step_delay_us = _step_delay_1_16_pic32mx;
+//unsigned long y_min_step_delay_us = _step_delay_1_16_avr;
+//unsigned long y_min_step_delay_us = _step_delay_1_16_sam;
 //unsigned long y_dist_per_step = _dist_per_step_1_16;
 
 // 1/32
-//unsigned long y_step_delay_us = _step_delay_1_32_pic32mx;
-//unsigned long y_step_delay_us = _step_delay_1_32_avr;
-//unsigned long y_step_delay_us = _step_delay_1_32_sam;
+//unsigned long y_min_step_delay_us = _step_delay_1_32_pic32mx;
+//unsigned long y_min_step_delay_us = _step_delay_1_32_avr;
+//unsigned long y_min_step_delay_us = _step_delay_1_32_sam;
 //unsigned long y_dist_per_step = _dist_per_step_1_32;
 
 // Z
 
 // 1/1
-//unsigned long z_step_delay_us = _step_delay_1_1_pic32mx;
-//unsigned long z_step_delay_us = _step_delay_1_1_avr;
-unsigned long z_step_delay_us = _step_delay_1_1_sam;
+//unsigned long z_min_step_delay_us = _step_delay_1_1_pic32mx;
+//unsigned long z_min_step_delay_us = _step_delay_1_1_avr;
+unsigned long z_min_step_delay_us = _step_delay_1_1_sam;
 unsigned long z_dist_per_step = _dist_per_step_1_1;
 
 // 1/2
-//unsigned long z_step_delay_us = _step_delay_1_2_pic32mx;
-//unsigned long z_step_delay_us = _step_delay_1_2_avr;
-//unsigned long z_step_delay_us = _step_delay_1_2_sam;
+//unsigned long z_min_step_delay_us = _step_delay_1_2_pic32mx;
+//unsigned long z_min_step_delay_us = _step_delay_1_2_avr;
+//unsigned long z_min_step_delay_us = _step_delay_1_2_sam;
 //unsigned long z_dist_per_step = _dist_per_step_1_2;
 
 // 1/4
-//unsigned long z_step_delay_us = _step_delay_1_4_pic32mx;
-//unsigned long z_step_delay_us = _step_delay_1_4_avr;
-//unsigned long z_step_delay_us = _step_delay_1_4_sam;
+//unsigned long z_min_step_delay_us = _step_delay_1_4_pic32mx;
+//unsigned long z_min_step_delay_us = _step_delay_1_4_avr;
+//unsigned long z_min_step_delay_us = _step_delay_1_4_sam;
 //unsigned long z_dist_per_step = _dist_per_step_1_4;
 
 // 1/8
-//unsigned long z_step_delay_us = _step_delay_1_8_pic32mx;
-//unsigned long z_step_delay_us = _step_delay_1_8_avr;
-//unsigned long z_step_delay_us = _step_delay_1_8_sam;
+//unsigned long z_min_step_delay_us = _step_delay_1_8_pic32mx;
+//unsigned long z_min_step_delay_us = _step_delay_1_8_avr;
+//unsigned long z_min_step_delay_us = _step_delay_1_8_sam;
 //unsigned long z_dist_per_step = _dist_per_step_1_8;
 
 // 1/16
-//unsigned long z_step_delay_us = _step_delay_1_16_pic32mx;
-//unsigned long z_step_delay_us = _step_delay_1_16_avr;
-//unsigned long z_step_delay_us = _step_delay_1_16_sam;
+//unsigned long z_min_step_delay_us = _step_delay_1_16_pic32mx;
+//unsigned long z_min_step_delay_us = _step_delay_1_16_avr;
+//unsigned long z_min_step_delay_us = _step_delay_1_16_sam;
 //unsigned long z_dist_per_step = _dist_per_step_1_16;
 
 // 1/32
-//unsigned long z_step_delay_us = _step_delay_1_32_pic32mx;
-//unsigned long z_step_delay_us = _step_delay_1_32_avr;
-//unsigned long z_step_delay_us = _step_delay_1_32_sam;
+//unsigned long z_min_step_delay_us = _step_delay_1_32_pic32mx;
+//unsigned long z_min_step_delay_us = _step_delay_1_32_avr;
+//unsigned long z_min_step_delay_us = _step_delay_1_32_sam;
 //unsigned long z_dist_per_step = _dist_per_step_1_32;
 
 // 1 мотор с максимальной скоростью
@@ -365,7 +365,7 @@ static void prepare_line1() {
     //     calibrate_mode_t calibrate_mode=NONE);
     
     // шагаем с максимальной скоростью
-    prepare_steps(&sm_x, 10000, x_step_delay_us);
+    prepare_steps(&sm_x, 10000, x_min_step_delay_us);
 }
 
 // 2 мотора с максимальной скоростью
@@ -375,8 +375,8 @@ static void prepare_line2() {
     //     calibrate_mode_t calibrate_mode=NONE);
     
     // шагаем с максимальной скоростью
-    prepare_steps(&sm_x, 10000, x_step_delay_us);
-    prepare_steps(&sm_y, 10000, y_step_delay_us);
+    prepare_steps(&sm_x, 10000, x_min_step_delay_us);
+    prepare_steps(&sm_y, 10000, y_min_step_delay_us);
 }
 
 // 3 мотора с максимальной скоростью
@@ -386,11 +386,11 @@ static void prepare_line3() {
     //     calibrate_mode_t calibrate_mode=NONE);
     
     // шагаем с максимальной скоростью
-    prepare_steps(&sm_x, 10000, x_step_delay_us);
+    prepare_steps(&sm_x, 10000, x_min_step_delay_us);
     // вызвать CYCLE_ERROR_MOTOR_ERROR
     //prepare_steps(&sm_x, 200000, x_step_delay_us-1);
-    prepare_steps(&sm_y, 10000, y_step_delay_us);
-    prepare_steps(&sm_z, 10000, z_step_delay_us);
+    prepare_steps(&sm_y, 10000, y_min_step_delay_us);
+    prepare_steps(&sm_z, 10000, z_min_step_delay_us);
 }
 
 // 2 мотора с максимальной скоростью
@@ -400,8 +400,8 @@ static void prepare_whirl2() {
     //     calibrate_mode_t calibrate_mode=NONE);
     
     // шагаем с максимальной скоростью
-    prepare_whirl(&sm_x, 1, x_step_delay_us);
-    prepare_whirl(&sm_y, 1, y_step_delay_us);
+    prepare_whirl(&sm_x, 1, x_min_step_delay_us);
+    prepare_whirl(&sm_y, 1, y_min_step_delay_us);
 }
 
 // 2 мотора: y с переменной скоростью из буфера, x с постоянной скоростью
@@ -412,9 +412,9 @@ static void prepare_buffered2() {
     static unsigned long delay_buffer[3];
     static long step_buffer[3];
 
-    delay_buffer[0] = y_step_delay_us;
-    delay_buffer[1] = y_step_delay_us*10;
-    delay_buffer[2] = y_step_delay_us*2;
+    delay_buffer[0] = y_min_step_delay_us;
+    delay_buffer[1] = y_min_step_delay_us*10;
+    delay_buffer[2] = y_min_step_delay_us*2;
 
     step_buffer[0] = 200*10;
     step_buffer[1] = -200*5;
@@ -423,7 +423,7 @@ static void prepare_buffered2() {
     prepare_buffered_steps(&sm_y, 3, delay_buffer, step_buffer);
 
     // для икса просто шаги
-    prepare_steps(&sm_x, 200000, x_step_delay_us);
+    prepare_steps(&sm_x, 200000, x_min_step_delay_us);
 }
 
 /**
@@ -484,7 +484,7 @@ void setup() {
     // connected stepper motors
     // init_stepper(stepper* smotor, char name,
     //     int pin_step, int pin_dir, int pin_en,
-    //     bool invert_dir, unsigned long step_delay,
+    //     bool invert_dir, unsigned long min_step_delay,
     //     unsigned long distance_per_step)
     // init_stepper_ends(stepper* smotor,
     //     end_strategy min_end_strategy, end_strategy max_end_strategy,
@@ -500,17 +500,17 @@ void setup() {
     
     // X
     
-    init_stepper(&sm_x, 'x', 2, 5, 8, false, x_step_delay_us, x_dist_per_step);
-    //init_stepper(&sm_x, 'x', 2, 5, 8, false, _step_delay_us, 750);
+    init_stepper(&sm_x, 'x', 2, 5, 8, false, x_min_step_delay_us, x_dist_per_step);
+    //init_stepper(&sm_x, 'x', 2, 5, 8, false, x_min_step_delay_us, 750);
     init_stepper_ends(&sm_x, NO_PIN, NO_PIN, CONST, CONST, 0, 30000000000);
     
     // Y
-    init_stepper(&sm_y, 'y', 3, 6, 8, false, y_step_delay_us, y_dist_per_step);
-    //init_stepper(&sm_y, 'y', 3, 6, 8, false, _step_delay_us, 750);
+    init_stepper(&sm_y, 'y', 3, 6, 8, false, y_min_step_delay_us, y_dist_per_step);
+    //init_stepper(&sm_y, 'y', 3, 6, 8, false, y_step_delay_us, 750);
     init_stepper_ends(&sm_y, NO_PIN, NO_PIN, CONST, CONST, 0, 21600000000);
     
     // Z
-    init_stepper(&sm_z, 'z', 4, 7, 8, false, z_step_delay_us, z_dist_per_step);
+    init_stepper(&sm_z, 'z', 4, 7, 8, false, z_min_step_delay_us, z_dist_per_step);
     init_stepper_ends(&sm_z, NO_PIN, NO_PIN, CONST, CONST, 0, 10000000000);
 
     // настройки таймера

@@ -32,7 +32,7 @@
  * @param invert_dir - Инверсия направления вращения
  *     true: инвертировать направление вращения
  *     false: не инвертировать
- * @param step_delay - Минимальная задержка между импульсами, микросекунды
+ * @param min_step_delay - Минимальная задержка между импульсами, микросекунды
  *     (для движения с максимальной скоростью)
  * @param distance_per_step - Расстояние, проходимое координатой за шаг,
  *     базовая единица измерения мотора.
@@ -45,7 +45,7 @@
  */
 void init_stepper(stepper* smotor, char name,
         int pin_step, int pin_dir, int pin_en,
-        bool invert_dir, unsigned long step_delay,
+        bool invert_dir, unsigned long min_step_delay,
         unsigned long distance_per_step) {
     
     smotor->name = name;
@@ -55,7 +55,7 @@ void init_stepper(stepper* smotor, char name,
     smotor->pin_en = pin_en;
     
     smotor->dir_inv = invert_dir ? -1 : 1;
-    smotor->step_delay = step_delay;
+    smotor->min_step_delay = min_step_delay;
     
     smotor->distance_per_step = distance_per_step;
     
