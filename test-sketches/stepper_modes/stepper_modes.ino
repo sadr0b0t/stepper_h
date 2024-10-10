@@ -51,7 +51,7 @@ static void prepare_test_1_1(int turns) {
     
     // настройки таймера
     // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
-    int _timer_id = TIMER3;
+    int _timer_id = TIMER_DEFAULT;
     int _timer_prescaler = TIMER_PRESCALER_1_8;
     unsigned int _timer_adjustment = 200;
     _timer_period_us = 20;
@@ -65,7 +65,7 @@ static void prepare_test_1_1(int turns) {
     
     // готовим шаги на полный круг (шагаем с максимальной скоростью)
     long _step_count = 200;
-    prepare_steps(&sm_x, _step_count*turns, _min_step_delay_us);
+    prepare_steps(&sm_x, _step_count*turns, 1, _min_step_delay_us);
     //prepare_steps(&sm_x, _step_count*turns, 10000000/200); // весь цикл за 10 секунд
 }
 
@@ -93,7 +93,7 @@ static void prepare_test_1_2(int turns) {
     
     // настройки таймера
     // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
-    int _timer_id = TIMER3;
+    int _timer_id = TIMER_DEFAULT;
     int _timer_prescaler = TIMER_PRESCALER_1_8;
     unsigned int _timer_adjustment = 200;
     _timer_period_us = 20;
@@ -107,7 +107,7 @@ static void prepare_test_1_2(int turns) {
     
     // готовим шаги на полный круг (шагаем с максимальной скоростью)
     long _step_count = 400;
-    prepare_steps(&sm_x, _step_count*turns, _min_step_delay_us);
+    prepare_steps(&sm_x, _step_count*turns, 1, _min_step_delay_us);
 }
 
 // полный оборот с делителем шага 1/4
@@ -134,7 +134,7 @@ static void prepare_test_1_4(int turns) {
     
     // настройки таймера
     // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
-    int _timer_id = TIMER3;
+    int _timer_id = TIMER_DEFAULT;
     int _timer_prescaler = TIMER_PRESCALER_1_8;
     unsigned int _timer_adjustment = 200;
     _timer_period_us = 20;
@@ -148,7 +148,7 @@ static void prepare_test_1_4(int turns) {
     
     // готовим шаги на полный круг (шагаем с максимальной скоростью)
     long _step_count = 800;
-    prepare_steps(&sm_x, _step_count*turns, _min_step_delay_us);
+    prepare_steps(&sm_x, _step_count*turns, 1, _min_step_delay_us);
 }
 
 // полный оборот с делителем шага 1/8
@@ -175,7 +175,7 @@ static void prepare_test_1_8(int turns) {
     
     // настройки таймера
     // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
-    int _timer_id = TIMER3;
+    int _timer_id = TIMER_DEFAULT;
     int _timer_prescaler = TIMER_PRESCALER_1_8;
     unsigned int _timer_adjustment = 200;
     _timer_period_us = 20;
@@ -189,7 +189,7 @@ static void prepare_test_1_8(int turns) {
     
     // готовим шаги на полный круг (шагаем с максимальной скоростью)
     long _step_count = 1600;
-    prepare_steps(&sm_x, _step_count*turns, _min_step_delay_us);
+    prepare_steps(&sm_x, _step_count*turns, 1, _min_step_delay_us);
 }
 
 // полный оборот с делителем шага 1/16
@@ -216,7 +216,7 @@ static void prepare_test_1_16(int turns) {
     
     // настройки таймера
     // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
-    int _timer_id = TIMER3;
+    int _timer_id = TIMER_DEFAULT;
     int _timer_prescaler = TIMER_PRESCALER_1_8;
     unsigned int _timer_adjustment = 200;
     _timer_period_us = 20;
@@ -230,7 +230,7 @@ static void prepare_test_1_16(int turns) {
     
     // готовим шаги на полный круг (шагаем с максимальной скоростью)
     long _step_count = 3200;
-    prepare_steps(&sm_x, _step_count*turns, _min_step_delay_us);
+    prepare_steps(&sm_x, _step_count*turns, 1, _min_step_delay_us);
 }
 
 // полный оборот с делителем шага 1/32
@@ -257,7 +257,7 @@ static void prepare_test_1_32(int turns) {
     
     // настройки таймера
     // для периода 20 микросекунд (50тыс вызовов в секунду == 50КГц):
-    int _timer_id = TIMER3;
+    int _timer_id = TIMER_DEFAULT;
     int _timer_prescaler = TIMER_PRESCALER_1_8;
     unsigned int _timer_adjustment = 200;
     _timer_period_us = 20;
@@ -271,7 +271,7 @@ static void prepare_test_1_32(int turns) {
     
     // готовим шаги на полный круг (шагаем с максимальной скоростью)
     long _step_count = 6400;
-    prepare_steps(&sm_x, _step_count*turns, _min_step_delay_us);
+    prepare_steps(&sm_x, _step_count*turns, 1, _min_step_delay_us);
 }
 
 

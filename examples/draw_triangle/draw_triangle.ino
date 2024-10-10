@@ -32,11 +32,11 @@ static void prepare_line1() {
     // sm_z.current_pos = 0+7500*2666=19995000
 
     // prepare_steps(stepper *smotor,
-    //     long step_count, unsigned long step_delay,
+    //     unsigned long step_count, int dir, unsigned long step_delay,
     //     calibrate_mode_t calibrate_mode=NONE);
-    prepare_steps(&sm_x, steps_x, delay_x);
-    prepare_steps(&sm_y, steps_y, delay_y);
-    prepare_steps(&sm_z, steps_z, delay_z);
+    prepare_steps(&sm_x, steps_x > 0 ? steps_x : -steps_x, steps_x > 0 ? 1 : -1, delay_x);
+    prepare_steps(&sm_y, steps_y > 0 ? steps_y : -steps_y, steps_y > 0 ? 1 : -1, delay_y);
+    prepare_steps(&sm_z, steps_z > 0 ? steps_z : -steps_z, steps_z > 0 ? 1 : -1, delay_z);
 }
 
 static void prepare_line2() {
@@ -76,11 +76,11 @@ static void prepare_line2() {
     // sm_z.current_pos = 19995000+0=19995000
 
     // prepare_steps(stepper *smotor,
-    //     long step_count, unsigned long step_delay,
+    //     unsigned long step_count, int dir, unsigned long step_delay,
     //     calibrate_mode_t calibrate_mode=NONE);
-    prepare_steps(&sm_x, steps_x, delay_x);
-    prepare_steps(&sm_y, steps_y, delay_y);
-    //prepare_steps(&sm_z, steps_z, delay_z); // путь=0, поэтому не шагаем
+    prepare_steps(&sm_x, steps_x > 0 ? steps_x : -steps_x, steps_x > 0 ? 1 : -1, delay_x);
+    prepare_steps(&sm_y, steps_y > 0 ? steps_y : -steps_y, steps_y > 0 ? 1 : -1, delay_y);
+    //prepare_steps(&sm_z, steps_z > 0 ? steps_z : -steps_z, steps_z > 0 ? 1 : -1, delay_z); // путь=0, поэтому не шагаем
 }
 
 static void prepare_line3() {
@@ -115,11 +115,11 @@ static void prepare_line3() {
     // sm_z.current_pos = 19995000-7500*2666=0
 
     // prepare_steps(stepper *smotor,
-    //     long step_count, unsigned long step_delay,
+    //     unsigned long step_count, int dir, unsigned long step_delay,
     //     calibrate_mode_t calibrate_mode=NONE);
-    prepare_steps(&sm_x, steps_x, delay_x);
-    prepare_steps(&sm_y, steps_y, delay_y);
-    prepare_steps(&sm_z, steps_z, delay_z);
+    prepare_steps(&sm_x, steps_x > 0 ? steps_x : -steps_x, steps_x > 0 ? 1 : -1, delay_x);
+    prepare_steps(&sm_y, steps_y > 0 ? steps_y : -steps_y, steps_y > 0 ? 1 : -1, delay_y);
+    prepare_steps(&sm_z, steps_z > 0 ? steps_z : -steps_z, steps_z > 0 ? 1 : -1, delay_z);
 }
 
 void setup() {

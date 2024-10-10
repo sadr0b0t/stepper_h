@@ -361,43 +361,43 @@ unsigned long z_dist_per_step = _dist_per_step_1_1;
 // 1 мотор с максимальной скоростью
 static void prepare_line1() {
     // prepare_steps(stepper *smotor,
-    //     long step_count, unsigned long step_delay,
+    //     unsigned long step_count, int dir, unsigned long step_delay,
     //     calibrate_mode_t calibrate_mode=NONE);
     
     // шагаем с максимальной скоростью
-    prepare_steps(&sm_x, 10000, x_min_step_delay_us);
+    prepare_steps(&sm_x, 10000, 1, x_min_step_delay_us);
 }
 
 // 2 мотора с максимальной скоростью
 static void prepare_line2() {
     // prepare_steps(stepper *smotor,
-    //     long step_count, unsigned long step_delay,
+    //     unsigned long step_count, int dir, unsigned long step_delay,
     //     calibrate_mode_t calibrate_mode=NONE);
     
     // шагаем с максимальной скоростью
-    prepare_steps(&sm_x, 10000, x_min_step_delay_us);
-    prepare_steps(&sm_y, 10000, y_min_step_delay_us);
+    prepare_steps(&sm_x, 10000, 1, x_min_step_delay_us);
+    prepare_steps(&sm_y, 10000, 1, y_min_step_delay_us);
 }
 
 // 3 мотора с максимальной скоростью
 static void prepare_line3() {
     // prepare_steps(stepper *smotor,
-    //     long step_count, unsigned long step_delay,
+    //     unsigned long step_count, int dir, unsigned long step_delay,
     //     calibrate_mode_t calibrate_mode=NONE);
     
     // шагаем с максимальной скоростью
-    prepare_steps(&sm_x, 10000, x_min_step_delay_us);
+    prepare_steps(&sm_x, 10000, 1, x_min_step_delay_us);
     // вызвать CYCLE_ERROR_MOTOR_ERROR
-    //prepare_steps(&sm_x, 200000, x_step_delay_us-1);
-    prepare_steps(&sm_y, 10000, y_min_step_delay_us);
-    prepare_steps(&sm_z, 10000, z_min_step_delay_us);
+    //prepare_steps(&sm_x, 200000, 1, x_step_delay_us-1);
+    prepare_steps(&sm_y, 10000, 1, y_min_step_delay_us);
+    prepare_steps(&sm_z, 10000, 1, z_min_step_delay_us);
 }
 
 // 2 мотора с максимальной скоростью
 static void prepare_whirl2() {
-    // prepare_steps(stepper *smotor,
-    //     long step_count, unsigned long step_delay,
-    //     calibrate_mode_t calibrate_mode=NONE);
+    // prepare_whirl(stepper *smotor,
+    //     int dir, unsigned long step_delay,
+    //     calibrate_mode_t calibrate_mode=NONE)
     
     // шагаем с максимальной скоростью
     prepare_whirl(&sm_x, 1, x_min_step_delay_us);
@@ -407,23 +407,28 @@ static void prepare_whirl2() {
 // 2 мотора: y с переменной скоростью из буфера, x с постоянной скоростью
 static void prepare_buffered2() {
     // void prepare_buffered_steps(stepper *smotor,
-    //    int buf_size, unsigned long* delay_buffer, long* step_buffer)
+    //     int buf_size, unsigned long* step_buffer, int* dir_buffer, unsigned long* delay_buffer)
  
+    static unsigned long step_buffer[3];
+    static int dir_buffer[3];
     static unsigned long delay_buffer[3];
-    static long step_buffer[3];
-
+    
+    step_buffer[0] = 200*10;
+    step_buffer[1] = 200*5;
+    step_buffer[2] = 200*2;
+    
+    dir_buffer[0] = 1;
+    dir_buffer[1] = -1;
+    dir_buffer[2] = 1;
+    
     delay_buffer[0] = y_min_step_delay_us;
     delay_buffer[1] = y_min_step_delay_us*10;
     delay_buffer[2] = y_min_step_delay_us*2;
-
-    step_buffer[0] = 200*10;
-    step_buffer[1] = -200*5;
-    step_buffer[2] = 200*2;
     
-    prepare_buffered_steps(&sm_y, 3, delay_buffer, step_buffer);
+    prepare_buffered_steps(&sm_y, 3, step_buffer, dir_buffer, delay_buffer);
 
     // для икса просто шаги
-    prepare_steps(&sm_x, 200000, x_min_step_delay_us);
+    prepare_steps(&sm_x, 200000, 1, x_min_step_delay_us);
 }
 
 /**
