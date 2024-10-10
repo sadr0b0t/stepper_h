@@ -37,24 +37,24 @@ static stepper sm_x, sm_y, sm_z;
 
 static void prepare_line1() {
     // prepare_steps(stepper *smotor,
-    //     long step_count, unsigned long step_delay,
+    //     unsigned long step_count, int dir, unsigned long step_delay,
     //     calibrate_mode_t calibrate_mode=NONE);
 
     // make 20000 steps with 1000 microseconds delay
     // X.pos would go from 0 to
     // 7500*20000=150000000 nanometers = 150000 micrometers = 150 millimeters
     // during 1000*20000=20000000microseconds=20seconds
-    prepare_steps(&sm_x, 20000, 1000);
+    prepare_steps(&sm_x, 20000, 1, 1000);
     // make 10000 steps with 2000 microseconds delay
     // Y.pos would go from 0 to
     // 7500*10000=75000000 nanometers = 75000 micrometers = 75 millimeters
     // during 2000*10000=20000000microseconds=20seconds
-    prepare_steps(&sm_y, 10000, 2000);
+    prepare_steps(&sm_y, 10000, 1, 2000);
     // make 1000 steps with 20000 microseconds delay
     // Z.pos would go from 0 to
     // 7500*1000=7500000 nanometers = 7500 micrometers  = 7.5 millimeters
     // during 20000*1000=20000000microseconds=20seconds
-    prepare_steps(&sm_z, 1000, 20000);
+    prepare_steps(&sm_z, 1000, 1, 20000);
 }
 
 void setup() {
@@ -64,7 +64,7 @@ void setup() {
     // connected stepper motors
     // init_stepper(stepper* smotor, char name,
     //     int pin_step, int pin_dir, int pin_en,
-    //     bool invert_dir, unsigned long step_delay,
+    //     bool invert_dir, unsigned long min_step_delay,
     //     unsigned long distance_per_step)
     // init_stepper_ends(stepper* smotor,
     //     end_strategy min_end_strategy, end_strategy max_end_strategy,
@@ -176,8 +176,24 @@ patched version of Print by
 Rob Tillaart https://github.com/RobTillaart
 
 Code to print int64_t and uint64_t for UNO (and maybe DUE)  
-http://forum.arduino.cc/index.php/topic,143584.0.html  
-https://github.com/arduino/Arduino/issues/1236
+https://forum.arduino.cc/t/serial-print-of-a-64-bit-double/140151  
+https://github.com/arduino/Arduino/issues/1236  
+https://github.com/arduino/Arduino/pull/6608
+
+updt-2024: в новых версиях ардуины файлы с приведенными правками не компиляюцца.
+Пул-реквест https://github.com/arduino/Arduino/pull/6608 приняли в основную ветку
+
+Изменения в проекте ArduinoCore-API, в релизе 1.5.1 точно есть.
+
+https://github.com/arduino/ArduinoCore-API/  
+https://github.com/arduino/ArduinoCore-API/blob/master/api/Print.h  
+https://github.com/arduino/ArduinoCore-API/blob/master/api/Print.cpp
+
+Проблема в том, что из ArduinoCore-API в ArduinoCore-avr оно так и не попало (в ChipKIT тоже) и хз, когда попадет (по состоянию на октябрь 2024).
+
+https://github.com/arduino/ArduinoCore-avr  
+https://github.com/arduino/ArduinoCore-avr/blob/master/cores/arduino/Print.h  
+https://github.com/arduino/ArduinoCore-avr/blob/master/cores/arduino/Print.cpp
 
 ---
 # Подключение моторов
@@ -383,39 +399,39 @@ L=2мм*20зубов=40мм
 
 ~~~cpp
 // 1/1, 132 mm/s
-int _step_delay_us = 1500; // us
+int _min_step_delay_us = 1500; // us
 int _dist_per_step = 200000; // nm
-init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _step_delay_us, _dist_per_step);
+init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _min_step_delay_us, _dist_per_step);
 
 // 1/2, 152 mm/s
-int _step_delay_us = 650; // us
+int _min_step_delay_us = 650; // us
 int _dist_per_step = 100000; // nm
-init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _step_delay_us, _dist_per_step);
+init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _min_step_delay_us, _dist_per_step);
 
 // 1/4, 152 mm/s
-int _step_delay_us = 330; // us
+int _min_step_delay_us = 330; // us
 int _dist_per_step = 50000; // nm
-init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _step_delay_us, _dist_per_step);
+init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _min_step_delay_us, _dist_per_step);
 
 // 1/8, 152 mm/s
-int step_delay_us = 180; // us
-int dist_per_step = 25000; // nm
-init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _step_delay_us, _dist_per_step);
+int _min_step_delay_us = 180; // us
+int _dist_per_step = 25000; // nm
+init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _min_step_delay_us, _dist_per_step);
 
 // 1/16, 156 mm/s
-int step_delay_us = 80; // us
-int dist_per_step = 12500; // nm
-init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _step_delay_us, _dist_per_step);
+int _min_step_delay_us = 80; // us
+int _dist_per_step = 12500; // nm
+init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _min_step_delay_us, _dist_per_step);
 
 // 1/32, 104 mm/s
-int step_delay_us = 60; // us
-int dist_per_step = 6250; // nm
-init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _step_delay_us, _dist_per_step);
+int _min_step_delay_us = 60; // us
+int _dist_per_step = 6250; // nm
+init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _min_step_delay_us, _dist_per_step);
 
 // 1/32, 156 mm/s
-int step_delay_us = 40; // us
-int dist_per_step = 6250; // nm
-init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _step_delay_us, _dist_per_step);
+int _min_step_delay_us = 40; // us
+int _dist_per_step = 6250; // nm
+init_stepper(&sm_x, 'x', STEP_PIN, DIR_PIN, EN_PIN, false, _min_step_delay_us, _dist_per_step);
 ~~~
 
 ---
@@ -462,7 +478,7 @@ https://github.com/sadr0b0t/stepper_h/issues/25
 - 1/32: 40мкс/шаг (стабильный вариант)
 - 1/32: 30 мкс/шаг (чуть менее стабильный, чем 40 - самый быстрый из рабочих)
 
-один шаг мотора должен включать минимум 3 цикла таймера, поэтому минимальная задержка между шагами мотора step_delay будет:
+один шаг мотора должен включать минимум 3 цикла таймера, поэтому минимальная задержка между шагами мотора min_step_delay будет:
 
 - 1 мотор: 10мкс*3 = **30мкс** (макс скорость на 1/32)
 - 2 мотора: 10мкс*3 = **30мкс** (макс скорость на 1/32)
@@ -470,7 +486,7 @@ https://github.com/sadr0b0t/stepper_h/issues/25
 
 Видим, что критическую роль частота таймера начитает играть только при делителе шага 1/32: 1 и 2 мотора можно вращать с максимальной скоростью на пределе рабочей частоты, 3 мотора можно вращать только в половину скорости. Для остальных делителей частота таймера оставляет запас на понижение с сохранением максимальной скорости вращения.
 
-Сделаем частоту 50КГц (период=20мкс - достаточно для вращения одновременно 3х моторов) частотой по умолчанию на платформе PIC32MX/ChipKIT. Рекомендуемые значения минимальной задержки step_delay для разных делителей в таком случае с учетом кратности будут:
+Сделаем частоту 50КГц (период=20мкс - достаточно для вращения одновременно 3х моторов) частотой по умолчанию на платформе PIC32MX/ChipKIT. Рекомендуемые значения минимальной задержки min_step_delay для разных делителей в таком случае с учетом кратности будут:
 
 - 1/1: 1500 -> 1500 мкс/шаг (макс скорость)
 - 1/2: 650 -> 660 мкс/шаг (макс скорость)
@@ -495,7 +511,7 @@ https://github.com/sadr0b0t/stepper_h/issues/25
 - 1/32: 40мкс/шаг (стабильный вариант)
 - 1/32: 30 мкс/шаг (чуть менее стабильный, чем 40 - самый быстрый из рабочих)
 
-один шаг мотора должен включать минимум 3 цикла таймера, поэтому минимальная задержка между шагами мотора step_delay будет:
+один шаг мотора должен включать минимум 3 цикла таймера, поэтому минимальная задержка между шагами мотора min_step_delay будет:
 
 - 1 мотор: 20мкс*3 = **60мкс** (половина максимальной скорости на 1/32)
 - 2 мотора: 20мкс*3 = **60мкс** (половина максимальной скорости на 1/32)
@@ -503,7 +519,7 @@ https://github.com/sadr0b0t/stepper_h/issues/25
 
 Видим, что критическую роль частота таймера начитает играть только при делителе шага 1/32: 1, 2 или 3 мотора одновременно можно вращать только в половину скорости. Для остальных делителей частота таймера оставляет запас на понижение с сохранением максимальной скорости вращения.
 
-Сделаем частоту 50КГц (период=20мкс - достаточно для вращения одновременно 3х моторов) частотой по умолчанию на платформе SAM/Arduino Due. Рекомендуемые значения минимальной задержки step_delay для разных делителей в таком случае с учетом кратности будут:
+Сделаем частоту 50КГц (период=20мкс - достаточно для вращения одновременно 3х моторов) частотой по умолчанию на платформе SAM/Arduino Due. Рекомендуемые значения минимальной задержки min_step_delay для разных делителей в таком случае с учетом кратности будут:
 
 - 1/1: 1500 -> 1500 мкс/шаг (макс скорость)
 - 1/2: 650 -> 660 мкс/шаг (макс скорость)
@@ -529,7 +545,7 @@ https://github.com/sadr0b0t/stepper_h/issues/25
 - 1/32: 40мкс/шаг (стабильный вариант)
 - 1/32: 30 мкс/шаг (чуть менее стабильный, чем 40 - самый быстрый из рабочих)
 
-один шаг мотора должен включать минимум 3 цикла таймера, поэтому минимальная задержка между шагами мотора step_delay будет:
+один шаг мотора должен включать минимум 3 цикла таймера, поэтому минимальная задержка между шагами мотора min_step_delay будет:
 
 - 1 мотор: 50мкс*3 = **150мкс** (чуть меньше макс скорости на 1/8, в 5 раз медленнее на 1/32)
 - 2 мотора: 100мкс*3 = **300мкс** (макс скорость на 1/4, в 10 раз медленнее на 1/32)
@@ -539,7 +555,7 @@ _замечание: для выполнения условия кратност
 
 Видим, что на чипах AVR+Arduino частота таймера уже начинает накладывать существенные ограничения на скорость вращения моторов, особенно, при больших делителях шага. Относительно комфортно с минимальными потерями скорости можно работать с делителями 1/4, 1/2. На больших делителях работоспособноть, конечно, сохранится, но придется жертвовать максимальной скоростью.
 
-Сделаем частоту 5КГц (период=200мкс - достаточно для вращения одновременно 3х моторов) частотой по умолчанию на платформе AVR/Arduino. Рекомендуемые значения минимальной задержки step_delay для разных делителей в таком случае с учетом кратности будут:
+Сделаем частоту 5КГц (период=200мкс - достаточно для вращения одновременно 3х моторов) частотой по умолчанию на платформе AVR/Arduino. Рекомендуемые значения минимальной задержки min_step_delay для разных делителей в таком случае с учетом кратности будут:
 
 - 1/1: 1500 -> 1600 мкс/шаг (~макс скорость)
 - 1/2: 650 -> 800 мкс/шаг (~макс скорость)
@@ -623,8 +639,8 @@ _замечание: для выполнения условия кратност
 
 итого: нам нужны 32 бит, для всех платформ (PIC32/ChipKIT, AVR/Arduino) это long.
 
-## Максимальная задержка между шагами step_delay
-Значение step_delay - минимальная (для выбранного мотора с текущими настройками) задержка между импульсами step, микросекунды (для движения с максимальной скоростью).
+## Минимальная задержка между шагами min_step_delay
+Значение min_step_delay - минимальная (для выбранного мотора с текущими настройками) задержка между импульсами step, микросекунды (для движения с максимальной скоростью).
 
 для 32-битного беззнакового целого:  
   макс задержка=2^32=4294967296 микросекунд=4294967 миллисекунд=4294 секунды=71 минута=~1 час
@@ -643,7 +659,7 @@ _замечание: для выполнения условия кратност
 
 ## Максимальное количество шагов за один цикл prepare_steps
 
-На фиолетовом драйвере с делителем шага 1/32 мотор будет стабильно работать при минимальной задержке между шагами step_delay=30 микросекунд (ок, самый минимальный вариант - 20мкс, но он уже не очень стабильный; 10 микросекунд - мотор просто гудит). На PIC32MX (ChipKIT Uno32) с библиотекой stepper_h с такой задержкой можно крутить одновременно 2 мотора.
+На фиолетовом драйвере с делителем шага 1/32 мотор будет стабильно работать при минимальной задержке между шагами min_step_delay=30 микросекунд (ок, самый минимальный вариант - 20мкс, но он уже не очень стабильный; 10 микросекунд - мотор просто гудит). На PIC32MX (ChipKIT Uno32) с библиотекой stepper_h с такой задержкой можно крутить одновременно 2 мотора.
 
 для количества шагов step_count знаковое целое (long) можно на один цикл задать максимальное количество шагов (знак задаёт направление):  
 2^31=2147483648
@@ -653,7 +669,7 @@ https://duckduckgo.com/?q=2%5E31*30%2F1000%2F1000%2F60%2F60&t=canonical&atb=v76-
 
 пожалуй, хватит на цикл без int64_t
 
-для step_delay=20 микросекунд (прям совсем максимальная скорость на китайском бросовом железе)  
+для min_step_delay=20 микросекунд (прям совсем максимальная скорость на китайском бросовом железе)  
 2^31*20/1000/1000/60/60=12 часов  
 https://duckduckgo.com/?q=2%5E31*20%2F1000%2F1000%2F60%2F60&t=canonical&atb=v76-1&ia=calculator
 
