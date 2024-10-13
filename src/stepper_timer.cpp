@@ -18,7 +18,6 @@ extern "C"{
 }
 
 #include "stepper.h"
-
 #include "stepper_lib_config.h"
 
 /**
@@ -47,6 +46,7 @@ typedef struct {
      * Направление движения в текущей серии
      *  1: вперед (увеличение виртуальной координаты curr_pos),
      * -1: назад (уменьшение виртуальной координаты curr_pos)
+     *  0: стоять на месте (не делать шаг)
      */
     int dir;
     
@@ -135,6 +135,7 @@ typedef struct {
      * Варианты значений каждого элемента:
      *    1 - вращение вперед
      *   -1 - вращение назад
+     *    0 - стоять на месте (не делать шаг)
      */
     int* dir_buffer;
 
@@ -324,7 +325,7 @@ volatile static error_handle_strategy_t _cycle_timing_exceed_handle = CANCEL_CYC
  * шагов, направление и задержку между шагами для регулирования скорости (0 для максимальной скорости).
  * 
  * @param step_count - количество шагов
- * @param dir - направление вращения: 1 - вращать вперед, -1 - назад.
+ * @param dir - направление вращения: 1 - вращать вперед, -1 - назад, 0 - стоять на месте.
  * @param step_delay - задержка между двумя шагами, микросекунды (0 для максимальной скорости)
  * @param calibrate_mode - режим калибровки
  *     NONE: режим калибровки выключен - останавливать вращение при выходе за виртуальные границы
@@ -346,7 +347,7 @@ void prepare_steps(stepper *smotor, unsigned long step_count, int dir, unsigned 
     _cstatuses[sm_i].dir = dir;
     if(_cstatuses[sm_i].dir * _smotors[sm_i]->dir_inv > 0) {
         digitalWrite(_smotors[sm_i]->pin_dir, HIGH); // туда
-    } else {
+    } else if(_cstatuses[sm_i].dir * _smotors[sm_i]->dir_inv < 0) {
         digitalWrite(_smotors[sm_i]->pin_dir, LOW); // обратно
     }
     
@@ -387,7 +388,7 @@ void prepare_steps(stepper *smotor, unsigned long step_count, int dir, unsigned 
  *
  * Мотор будет вращаться до тех пор, пока не будет вручную остановлен вызовом finish_stepper_cycle()
  *
- * @param dir - направление вращения: 1 - вращать вперед, -1 - назад.
+ * @param dir - направление вращения: 1 - вращать вперед, -1 - назад, 0 - стоять на месте.
  * @param step_delay - задержка между двумя шагами, микросекунды (0 для максимальной скорости).
  * @param calibrate_mode - режим калибровки
  *     NONE: режим калибровки выключен - останавливать вращение при выходе за виртуальные границы
@@ -409,7 +410,7 @@ void prepare_whirl(stepper *smotor, int dir, unsigned long step_delay, calibrate
     _cstatuses[sm_i].dir = dir;
     if(_cstatuses[sm_i].dir * _smotors[sm_i]->dir_inv > 0) {
         digitalWrite(_smotors[sm_i]->pin_dir, HIGH); // туда
-    } else {
+    } else if(_cstatuses[sm_i].dir * _smotors[sm_i]->dir_inv < 0) {
         digitalWrite(_smotors[sm_i]->pin_dir, LOW); // обратно
     }
     
@@ -490,7 +491,7 @@ void prepare_whirl(stepper *smotor, int dir, unsigned long step_delay, calibrate
  * @param step_count - масштабирование шага - количество аппаратных шагов мотора в одном
  *     виртуальном шаге.
  *     Значение по умолчанию step_count=1: виртуальные шаги соответствуют аппаратным.
- * @param dir - направление вращения: 1 - вращать вперед, -1 - назад.
+ * @param dir - направление вращения: 1 - вращать вперед, -1 - назад, 0 - стоять на месте.
  *     Значение по умолчанию dir=1.
  */
 void prepare_simple_buffered_steps(stepper *smotor, int buf_size, unsigned long* delay_buffer, unsigned long step_count, int dir) {
@@ -507,7 +508,7 @@ void prepare_simple_buffered_steps(stepper *smotor, int buf_size, unsigned long*
     _cstatuses[sm_i].dir = dir;
     if(_cstatuses[sm_i].dir * _smotors[sm_i]->dir_inv > 0) {
         digitalWrite(_smotors[sm_i]->pin_dir, HIGH); // туда
-    } else {
+    } else if(_cstatuses[sm_i].dir * _smotors[sm_i]->dir_inv < 0) {
         digitalWrite(_smotors[sm_i]->pin_dir, LOW); // обратно
     }
     
@@ -578,6 +579,7 @@ void prepare_simple_buffered_steps(stepper *smotor, int buf_size, unsigned long*
  *     Варианты значений:
  *        1 - вращение вперед
  *       -1 - вращение назад
+ *        0 - стоять на месте (не делать шаг)
  *     Должен содержать buf_size элементов.
  * @param delay_buffer - (step delay buffer) - массив задержек между шагами для каждой из серий, микросекунды.
  *     Должен содержать buf_size элементов.
@@ -605,7 +607,7 @@ void prepare_buffered_steps(stepper *smotor, int buf_size, unsigned long* step_b
     _cstatuses[sm_i].dir = _cstatuses[sm_i].dir_buffer[0];
     if(_cstatuses[sm_i].dir * _smotors[sm_i]->dir_inv > 0) {
         digitalWrite(_smotors[sm_i]->pin_dir, HIGH); // туда
-    } else {
+    } else if(_cstatuses[sm_i].dir * _smotors[sm_i]->dir_inv < 0) {
         digitalWrite(_smotors[sm_i]->pin_dir, LOW); // обратно
     }
     
@@ -639,7 +641,7 @@ void prepare_buffered_steps(stepper *smotor, int buf_size, unsigned long* step_b
  * шагов, направление и указатель на функцию, вычисляющую задержку перед каждым шагом для регулирования скорости.
  * 
  * @param step_count - количество шагов.
- * @param dir - направление вращения: 1 - вращать вперед, -1 - назад.
+ * @param dir - направление вращения: 1 - вращать вперед, -1 - назад, 0 - стоять на месте.
  * @param curve_context - указатель на объект, содержащий всю необходимую информацию для вычисления
  *     времени до следующего шага.
  * @param next_step_delay - указатель на функцию, вычисляющую задержку перед следующим шагом, микросекунды.
@@ -659,7 +661,7 @@ void prepare_dynamic_steps(stepper *smotor, unsigned long step_count, int dir,
     _cstatuses[sm_i].dir = dir;
     if(_cstatuses[sm_i].dir * _smotors[sm_i]->dir_inv > 0) {
         digitalWrite(_smotors[sm_i]->pin_dir, HIGH); // туда
-    } else {
+    } else if(_cstatuses[sm_i].dir * _smotors[sm_i]->dir_inv < 0) {
         digitalWrite(_smotors[sm_i]->pin_dir, LOW); // обратно
     }
     
@@ -694,7 +696,7 @@ void prepare_dynamic_steps(stepper *smotor, unsigned long step_count, int dir,
  * Подготовить мотор к запуску на беспрерывное вращение с переменной скоростью - задать нужное количество
  * шагов и указатель на функцию, вычисляющую задержку перед каждым шагом для регулирования скорости.
  * 
- * @param dir - направление вращения: 1 - вращать вперед, -1 - назад.
+ * @param dir - направление вращения: 1 - вращать вперед, -1 - назад, 0 - стоять на месте.
  * @param curve_context - указатель на объект, содержащий всю необходимую информацию для вычисления
  *     времени до следующего шага
  * @param next_step_delay - указатель на функцию, вычисляющую задержку перед следующим шагом, микросекунды
@@ -714,7 +716,7 @@ void prepare_dynamic_whirl(stepper *smotor, int dir,
     _cstatuses[sm_i].dir = dir;
     if(_cstatuses[sm_i].dir * _smotors[sm_i]->dir_inv > 0) {
         digitalWrite(_smotors[sm_i]->pin_dir, HIGH); // туда
-    } else {
+    } else if(_cstatuses[sm_i].dir * _smotors[sm_i]->dir_inv < 0) {
         digitalWrite(_smotors[sm_i]->pin_dir, LOW); // обратно
     }
     
@@ -1230,39 +1232,49 @@ void _timer_handle_interrupts(int timer) {
                 
                 // _cstatuses[i].step_timer ~ _timer_period_us с учетом погрешности таймера (_timer_period_us) =>
                 // импульс1 - готовим шаг
-                digitalWrite(_smotors[i]->pin_step, HIGH);
+                if(_cstatuses[i].dir != 0) {
+                    digitalWrite(_smotors[i]->pin_step, HIGH);
+                }
             } else if(_cstatuses[i].step_timer < _timer_period_us) {
                 // >>>Таймер обнулился
                 // Шагаем
                 // _cstatuses[i].step_timer ~ 0 с учетом погрешности таймера (_timer_period_us) =>
                 // импульс2 (спустя _timer_period_us микросекунд после импульса1) - совершаем шаг
-                digitalWrite(_smotors[i]->pin_step, LOW);
+                if(_cstatuses[i].dir != 0) {
+                    digitalWrite(_smotors[i]->pin_step, LOW);
+                }
                 
                 // шагнули, отметимся в разных местах и приготовимся к следующему шагу (если он будет)
+                // даже если dir=0, аппаратный шаг не делаем, координату не двигаем,
+                // но учитываем его в счетчике пройденных шагов
                 
                 // посчитаем шаг
                 if(!_cstatuses[i].non_stop) {
                     _cstatuses[i].step_counter--;
                 }
                 
-                // Текущее положение координаты
-                if(_cstatuses[i].calibrate_mode == NONE || _cstatuses[i].calibrate_mode == CALIBRATE_BOUNDS_MAX_POS) {
-                    // не калибруем или калибруем ширину рабочего поля
-                    
-                    // обновим текущее положение координаты
-                    if(_cstatuses[i].dir > 0) {
-                        _smotors[i]->current_pos += _smotors[i]->distance_per_step;
-                    } else {
-                        _smotors[i]->current_pos -= _smotors[i]->distance_per_step;
+                // текущее положение координаты
+                if(_cstatuses[i].dir != 0) {
+                    // если значение направвления dir=0, ничего не делаем с текущим положением
+                    // иначе - в зависимости от обстоятельств
+                    if(_cstatuses[i].calibrate_mode == NONE || _cstatuses[i].calibrate_mode == CALIBRATE_BOUNDS_MAX_POS) {
+                        // не калибруем или калибруем ширину рабочего поля
+                        
+                        // обновим текущее положение координаты
+                        if(_cstatuses[i].dir > 0) {
+                            _smotors[i]->current_pos += _smotors[i]->distance_per_step;
+                        } else if(_cstatuses[i].dir < 0) {
+                            _smotors[i]->current_pos -= _smotors[i]->distance_per_step;
+                        } // else // _cstatuses[i].dir == 0 // сюда все равно не попадаем
+                        
+                        // калибруем ширину рабочего поля - сдвинем правую границу в текущее положение
+                        if(_cstatuses[i].calibrate_mode == CALIBRATE_BOUNDS_MAX_POS) {
+                            _smotors[i]->max_pos = _smotors[i]->current_pos;
+                        }
+                    } else if(_cstatuses[i].calibrate_mode == CALIBRATE_START_MIN_POS) {
+                        // режим калибровки начального положения - сбрасываем current_pos в min_pos на каждом шаге
+                        _smotors[i]->current_pos = _smotors[i]->min_pos;
                     }
-                    
-                    // калибруем ширину рабочего поля - сдвинем правую границу в текущее положение
-                    if(_cstatuses[i].calibrate_mode == CALIBRATE_BOUNDS_MAX_POS) {
-                        _smotors[i]->max_pos = _smotors[i]->current_pos;
-                    }
-                } else if(_cstatuses[i].calibrate_mode == CALIBRATE_START_MIN_POS) {
-                    // режим калибровки начального положения - сбрасываем current_pos в min_pos на каждом шаге
-                    _smotors[i]->current_pos = _smotors[i]->min_pos;
                 }
                 
                 // сделали последний шаг в серии
@@ -1279,9 +1291,15 @@ void _timer_handle_interrupts(int timer) {
                         _cstatuses[i].dir = _cstatuses[i].dir_buffer[_cstatuses[i].series_counter];
                         if(_cstatuses[i].dir * _smotors[i]->dir_inv > 0) {
                             digitalWrite(_smotors[i]->pin_dir, HIGH); // туда
-                        } else {
+                        } else if(_cstatuses[i].dir * _smotors[i]->dir_inv < 0) {
                             digitalWrite(_smotors[i]->pin_dir, LOW); // обратно
-                        }
+                        } // else // _cstatuses[i].dir == 0
+                            // здесь можно было бы дополнительно выключить мотор
+                            // ножкой EN, но можно этого не делать, т.к. все равно
+                            // не будем пускать импульсы на движение, плюс формально
+                            // он все еще находится в рабочем состоянии, просто
+                            // ожидает шаг, который может появиться, к примеру,
+                            // в следующей серии
                         
                         // скорость вращения (задержка между шагами)
                         _cstatuses[i].step_delay = _cstatuses[i].delay_buffer[_cstatuses[i].series_counter];
